@@ -14,8 +14,10 @@
 #	Please refer to file version.h for the
 #	copyright notice regarding this software
 #
-#
 
+
+MAJOR=3
+MINOR=0
 XTINC = /usr/X11R6/include
 XTLIB = /usr/X11R6/lib 
 CC=gcc
@@ -90,8 +92,11 @@ install: all
 	install -m644 libgivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/lib
 	install -m644 libxtivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/X11R6/lib
 	ln -s /usr/lib/libivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/lib/libivy.so
+	ln -s /usr/lib/libivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/lib/libivy.so.$(MAJOR)
 	ln -s /usr/lib/libgivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/lib/libgivy.so
+	ln -s /usr/lib/libgivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/lib/libgivy.so.$(MAJOR)
 	ln -s /usr/X11R6/lib/libxtivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/X11R6/lib/libxtivy.so
+	ln -s /usr/X11R6/lib/libxtivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/X11R6/lib/libxtivy.so.$(MAJOR)
 
 	install -m644 *.h $(PREFIX)/usr/include
 rpm::
