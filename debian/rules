@@ -10,7 +10,7 @@ package=ivy-c
 
 build:
 	$(checkdir)
-	cd src && make all MAJOR=$(MAJOR) MINOR=$(MINOR) TCLINC=$(-I/usr/include/tcl8.2/) TCLLIB=$(-ltcl8.2) CFLAGS="-g -fPIC -D_REENTRANT"
+	cd src && make all MAJOR=$(MAJOR) MINOR=$(MINOR) TCLINC=$(-I/usr/include/tcl8.3/) TCLLIB=$(-ltcl8.3) CFLAGS="-g -fPIC -D_REENTRANT"
 	touch build
 
 clean:
@@ -34,6 +34,7 @@ binary-arch:	checkroot build
 
 	cd src && make installlibs PREFIX=`pwd`/../debian/tmp MAJOR=$(MAJOR) MINOR=$(MINOR)
 	cd src && make installbins PREFIX=`pwd`/../debian/tmp
+	cd src && make installdocs PREFIX=`pwd`/../debian/tmp
 
 	-rm debian/tmp/usr/include/list.h # it's yet in utils-c-dev
 	-cp src/version.h debian/copyright
