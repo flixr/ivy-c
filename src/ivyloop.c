@@ -1,20 +1,20 @@
 /*
  *	Ivy, C interface
  *
- *      Copyright (C) 1997-1999
- *      Centre d'Études de la Navigation Aérienne
+ *	Copyright (C) 1997-1999
+ *	Centre d'Études de la Navigation Aérienne
  *
- * 	Main loop handling around select
+ * 	Main loop based on select
  *
- *      Authors: François-Régis Colin <colin@cenatoulouse.dgac.fr>
+ *	Authors: François-Régis Colin <colin@cenatoulouse.dgac.fr>
  *		 Stéphane Chatty <chatty@cenatoulouse.dgac.fr>
  *
  *	$Id$
  * 
- *      Please refer to file version.h for the
- *      copyright notice regarding this software
- *
+ *	Please refer to file version.h for the
+ *	copyright notice regarding this software
  */
+
 #ifdef WIN32
 #include <windows.h>
 #endif
@@ -158,9 +158,9 @@ void IvyChannelInit(void)
 
 #ifdef WIN32
 	error = WSAStartup( 0x0101, &WsaData );
-        if ( error == SOCKET_ERROR ) {
-            printf( "WSAStartup failed.\n" );
-        }
+	  if ( error == SOCKET_ERROR ) {
+	      printf( "WSAStartup failed.\n" );
+	  }
 #endif
 	channel_initialized = 1;
 }
