@@ -205,8 +205,6 @@ installliblinks: installlibs
 	ln -fs /usr/lib/libgivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/lib/libgivy.so.$(MAJOR)
 	ln -fs /usr/X11R6/lib/libxtivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/X11R6/lib/libxtivy.so
 	ln -fs /usr/X11R6/lib/libxtivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/X11R6/lib/libxtivy.so.$(MAJOR)
-	ln -fs /usr/X11R6/lib/libgtkivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/X11R6/lib/libgtkivy.so
-	ln -fs /usr/X11R6/lib/libgtkivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/X11R6/lib/libgtkivy.so.$(MAJOR)
 	ln -fs /usr/lib/libtclivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/lib/libtclivy.so
 	ln -fs /usr/lib/libtclivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/lib/libtclivy.so.$(MAJOR)
 
@@ -229,7 +227,6 @@ installdocs:
         done
 	test -d $(PREFIX)/usr/share/doc/ivy-c/examples || mkdirhier $(PREFIX)/usr/share/doc/ivy-c/examples
 	install -m 644 version.h $(PREFIX)/usr/share/doc/ivy-c/copyright
-	install -m 644 ../examples/gtkIvyButton.c $(PREFIX)/usr/share/doc/ivy-c/examples
 	install -m 644 ../examples/motifButtonIvy.c $(PREFIX)/usr/share/doc/ivy-c/examples
 	install -m 644 ../examples/testUnbind.c $(PREFIX)/usr/share/doc/ivy-c/examples
 	install -m 766 ../examples/Test.tcl $(PREFIX)/usr/share/doc/ivy-c/examples
