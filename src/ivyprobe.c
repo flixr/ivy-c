@@ -21,7 +21,7 @@
 #ifdef XTMAINLOOP
 #undef IVYMAINLOOP
 #endif
-#ifdef GTKMAINLOOP
+#ifdef GLIBMAINLOOP
 #undef IVYMAINLOOP
 #endif
 
