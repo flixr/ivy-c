@@ -37,9 +37,12 @@ binary-arch:	checkroot build
 
 	-rm debian/tmp/usr/include/list.h # it's yet in utils-c-dev
 	-cp src/version.h debian/copyright
-	dh_strip debian/tmp/usr/lib/libivy.so.$(MAJOR).$(MINOR)
-	dh_strip debian/tmp/usr/lib/libtclivy.so.$(MAJOR).$(MINOR)
-	dh_strip debian/tmp/usr/X11R6/lib/libxtivy.so.$(MAJOR).$(MINOR)
+	#dh_strip debian/tmp/usr/lib/libivy.so.$(MAJOR).$(MINOR)
+	strip debian/tmp/usr/lib/libivy.so.$(MAJOR).$(MINOR)
+	#dh_strip debian/tmp/usr/lib/libtclivy.so.$(MAJOR).$(MINOR)
+	strip debian/tmp/usr/lib/libtclivy.so.$(MAJOR).$(MINOR)
+	#dh_strip debian/tmp/usr/X11R6/lib/libxtivy.so.$(MAJOR).$(MINOR)
+	strip debian/tmp/usr/X11R6/lib/libxtivy.so.$(MAJOR).$(MINOR)
 
 	dh_link usr/lib/libivy.so.$(MAJOR).$(MINOR) usr/lib/libivy.so.$(MAJOR)
 	dh_link usr/lib/libgivy.so.$(MAJOR).$(MINOR) usr/lib/libgivy.so.$(MAJOR)

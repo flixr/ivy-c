@@ -1,3 +1,20 @@
+ivy-c (3.6) unstable; urgency=low
+
+  * now uses PCRE ( Perl Compatible Regular Expressions ). Please use -livy -lpcre
+    now when compiling. See http://www.pcre.org or man pcre for more details
+  * tclivy.c : many bugfixes to support spaces in parameters captured by
+    regexp
+  * added an example directory, with gtk motif and tk bindings
+  * fixed a nasty bug in the IvyUnbindMsg, where new client still were sent a
+    binding to the unbound regexps
+  * added a help message for ivyprobe, when called with -? or with unknown
+    command line switches
+  * added a -n switch to ivyprobe to change the name of the ivyprobe
+  * added a -v switch to ivyprobe to check the ivy-c version
+  * Makefile merges solaris, linux, and OSX versions. edit before compiling...
+
+ -- Yannick Jestin <jestin@cena.fr>  Thu, 24 Jun 2004 18:28:10 +0200
+
 ivy-c (3.5) unstable; urgency=low
 
   * ivyprobe: removed the trailing "\n" at the end of the messages sent by ivyprobe when
@@ -5,7 +22,7 @@ ivy-c (3.5) unstable; urgency=low
   * ivyprobe: added a DirectCallback to display direct messages sent by peers,
   * ivyprobe: prevents binding to invalid regexps. Fails with an error message
 
- -- Yannick Jestin <jestni@cena.fr>  Mon, 17 Feb 2003 17:45:00 +0100
+ -- Yannick Jestin <jestin@cena.fr>  Mon, 17 Feb 2003 17:45:00 +0100
 
 ivy-c (3.4) unstable; urgency=low
 
