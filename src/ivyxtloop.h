@@ -2,7 +2,7 @@
  *
  * Ivy, C interface
  *
- * Copyright 1997-1998 
+ * Copyright 1997-1999
  * Centre d'Etudes de la Navigation Aerienne
  *
  * Main loop based on X Toolkit
@@ -33,18 +33,18 @@ extern "C" {
 
 #include "ivychannel.h"
 
-extern void BusXtChannelInit(void);
+extern void IvyXtChannelInit(void);
 
-extern Channel BusXtChannelSetUp(
-						HANDLE fd,
-						void *data,
-						ChannelHandleDelete handle_delete,
-						ChannelHandleRead handle_read
-						);
+extern Channel IvyXtChannelSetUp(
+		HANDLE fd,
+		void *data,
+		ChannelHandleDelete handle_delete,
+		ChannelHandleRead handle_read
+);
 
-extern void BusXtChannelClose( Channel channel );
+extern void IvyXtChannelClose( Channel channel );
 
-extern void BusXtChannelAppContext( XtAppContext cntx );
+extern void IvyXtChannelAppContext( XtAppContext cntx );
 
 #ifdef __cplusplus
 }

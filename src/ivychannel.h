@@ -2,7 +2,7 @@
  *
  * Ivy, C interface
  *
- * Copyright 1997-1998 
+ * Copyright 1997-1999
  * Centre d'Etudes de la Navigation Aerienne
  *
  * Basic I/O handling
@@ -38,16 +38,18 @@ typedef void (*ChannelInit)(void);
 						
 /* fonction appele par le bus pour mise en place des callback sur le canal */
 typedef Channel (*ChannelSetUp)(
-						HANDLE fd,
-						void *data,
-						ChannelHandleDelete handle_delete,
-						ChannelHandleRead handle_read
-						);
+	HANDLE fd,
+	void *data,
+	ChannelHandleDelete handle_delete,
+	ChannelHandleRead handle_read
+);
+
 /* fonction appele par le bus pour fermeture du canal */
 typedef void (*ChannelClose)( Channel channel );
 
-/* mise en place des fonction de gestion des canaux */
-void BusSetChannelManagement( ChannelInit init_chan, ChannelSetUp setup_chan, ChannelClose close_chan );
+extern ChannelInit channel_init;
+extern ChannelClose channel_close;
+extern ChannelSetUp channel_setup;
 
 #ifdef __cplusplus
 }
