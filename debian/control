@@ -2,17 +2,22 @@ Source: ivy-c
 Section: devel
 Priority: extra
 Maintainer: Herve Damiano <damiano@cena.fr>
-Standards-Version: 2.3.0.0
+Standards-Version: 3.1.1.1
 
 Package: ivy-c
 Architecture: any
 Depends: ${shlibs:Depends}
 Conflicts: ivy-tcl
-Description: Bus logiciel PII.
- Bus logiciel PII. Fichiers de runtime.
+Description: Ivy software bus. runtime Package
+ Ivy is mostly a communication convention between processes, implemented
+ through a collection of libraries in several languages and for several platforms:
+ from  C to Perl, from Macintosh or WindowsNT to Linux or Unix.
 
 Package: ivy-c-dev
 Architecture: any
 Depends: ivy-c (= 3.2-1), libc6-dev, xlib6g-dev, tcl8.2-dev
-Description: Bus logiciel PII.
- Bus logiciel PII. Fichiers nécessaires au développement.
+Description: Ivy software bus. development Package
+ This package is needed for compiling applications using ivy-c.
+ Ivy is mostly a communication convention between processes, implemented
+ through a collection of libraries in several languages and for several platforms:
+ from  C to Perl, from Macintosh or WindowsNT to Linux or Unix.
