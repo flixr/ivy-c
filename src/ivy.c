@@ -123,6 +123,10 @@ static  void *direct_user_data = 0;
 static IvyApplicationCallback application_callback;
 static void *application_user_data = 0;
 
+/* callback appele sur ajout suppression de regexp */
+static IvyBindCallback application_bind_callback;
+static void *application_bind_data = 0;
+
 /* callback appele sur demande de terminaison d'application */
 static IvyDieCallback application_die_callback;
 static void *application_die_user_data = 0;
@@ -385,6 +389,10 @@ static void Receive( Client client, void *data, char *line )
 					snd->id = id;
 					snd->str_regexp = strdup( arg );
 					snd->regexp = regexp;
+					if ( application_bind_callback )
+					  {
+					    (*application_bind_callback)( clnt, application_bind_data, id, snd->str_regexp, IvyAddBind );
+					  }
 					}
 				}
 			else
@@ -409,6 +417,11 @@ static void Receive( Client client, void *data, char *line )
 						{
 						  printf("Error studying %s, message: %s\n",arg,errbuf);
 						}
+					
+					if ( application_bind_callback )
+					  {
+					    (*application_bind_callback)( clnt, application_bind_data, id, snd->str_regexp, IvyAddBind );
+					  }
 					}
 				}
 			else
@@ -426,6 +439,10 @@ static void Receive( Client client, void *data, char *line )
 			IVY_LIST_ITER( clnt->msg_send, snd, ( id != snd->id ));
 			if ( snd )
 				{
+				  if ( application_bind_callback )
+				    {
+				      (*application_bind_callback)( clnt, application_bind_data, id, snd->str_regexp, IvyRemoveBind );
+				    }
 #ifndef USE_PCRE_REGEX
 				free( snd->str_regexp );
 #else
@@ -651,6 +668,19 @@ void IvyInit (const char *appname, const char *ready,
 	ready_message = ready;
 }
 
+void IvySetBindCallback(IvyBindCallback bind_callback, void *bind_data
+			)
+{
+  application_bind_callback=bind_callback;
+  application_bind_data=bind_data;
+}
+
+void IvyDelBindCallback()
+{
+  application_bind_callback=0;
+  free(application_bind_data);
+  application_bind_data=0;
+}
 void IvyClasses( int argc, const char **argv)
 {
 	messages_classes_count = argc;
@@ -895,6 +925,20 @@ void IvyDefaultApplicationCallback( IvyClientPtr app, void *user_data, IvyApplic
 		break;
 	case IvyApplicationDisconnected:
 		printf("Application: %s bye on %s\n", IvyGetApplicationName( app ), IvyGetApplicationHost(app));
+		break;
+	default:
+		printf("Application: %s unkown event %d\n",IvyGetApplicationName( app ), event);
+		break;
+	}
+}
+void IvyDefaultBindCallback( IvyClientPtr app, void *user_data, int id, char* regexp,  IvyBindEvent event)
+{
+	switch ( event )  {
+	case IvyAddBind:
+		printf("Application: %s on %s add regexp %d : %s\n", IvyGetApplicationName( app ), IvyGetApplicationHost(app), id, regexp);
+		break;
+	case IvyRemoveBind:
+		printf("Application: %s on %s remove regexp %d :%s\n", IvyGetApplicationName( app ), IvyGetApplicationHost(app), id, regexp);
 		break;
 	default:
 		printf("Application: %s unkown event %d\n",IvyGetApplicationName( app ), event);

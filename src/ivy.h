@@ -29,11 +29,17 @@ extern "C" {
 typedef struct _clnt_lst *IvyClientPtr;
 
 typedef enum { IvyApplicationConnected, IvyApplicationDisconnected } IvyApplicationEvent;
+typedef enum { IvyAddBind, IvyRemoveBind } IvyBindEvent;
 
 extern void IvyDefaultApplicationCallback( IvyClientPtr app, void *user_data, IvyApplicationEvent event ) ;
+extern void IvyDefaultBindCallback( IvyClientPtr app, void *user_data, int id, char* regexp,  IvyBindEvent event ) ;
+
 
 /* callback callback appele sur connexion deconnexion d'une appli */
 typedef void (*IvyApplicationCallback)( IvyClientPtr app, void *user_data, IvyApplicationEvent event ) ;
+
+/* callback callback appele sur ajout ou suppression d'un bind */
+typedef void (*IvyBindCallback)( IvyClientPtr app, void *user_data, int id, char* regexp,  IvyBindEvent event ) ;
 
 /* callback appele sur reception de die */
 typedef void (*IvyDieCallback)( IvyClientPtr app, void *user_data, int id ) ;
@@ -56,8 +62,13 @@ void IvyInit(
 	 IvyApplicationCallback callback, /* callback appele sur connection deconnection d'une appli */
 	 void *data,			/* user data passe au callback */
 	 IvyDieCallback die_callback,	/* last change callback before die */
-	 void *die_data	);		/* user data */
-
+	 void *die_data 		/* user data */
+	 );
+  
+  void IvySetBindCallback(	 
+			  IvyBindCallback bind_callback,
+			  void *bind_data );
+  void IvyDelBindCallback(); 
 void IvyStart (const char*);
 void IvyStop ();
 
