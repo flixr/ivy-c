@@ -39,7 +39,7 @@
 #define ARG_START "\002"
 #define ARG_END "\003"
 
-#define DEFAULT_DOMAIN 127.255.255.255
+#define DEFAULT_DOMAIN "127.255.255.255"
 
 /* stringification et concatenation du domaine et du port en 2 temps :
  * Obligatoire puisque la substitution de domain, et de bus n'est pas
@@ -107,15 +107,15 @@ static const char **messages_classes = 0;
 
 /* callback appele sur reception d'un message direct */
 static MsgDirectCallback direct_callback = 0;
-static *direct_user_data = 0;
+static  void *direct_user_data = 0;
 
 /* callback appele sur changement d'etat d'application */
 static IvyApplicationCallback application_callback;
-static *application_user_data = 0;
+static void *application_user_data = 0;
 
 /* callback appele sur demande de terminaison d'application */
 static IvyDieCallback application_die_callback;
-static *application_die_user_data = 0;
+static void *application_die_user_data = 0;
 
 /* liste des messages a recevoir */
 static MsgRcvPtr msg_recv = 0;
@@ -187,7 +187,7 @@ MsgCall (const char *message, MsgSndPtr msg,  Client client)
 	SocketSend( client, "%d %d" ARG_START ,Msg, msg->id);
 
 #ifdef DEBUG
-	printf( "Send matching args count %d\n",msg->regexp.re_nsub);
+	printf( "Send matching args count %ld\n",msg->regexp.re_nsub);
 #endif //DEBUG
 
 #ifdef GNU_REGEXP
@@ -202,10 +202,10 @@ MsgCall (const char *message, MsgSndPtr msg,  Client client)
 		if ( match[i].rm_so != -1 ) {
 #ifdef DEBUG
 			printf ("Send matching arg%d %d %d\n",i,match[i].rm_so , match[i].rm_eo);
-			printf ("Send matching arg%d %.*s\n",i,match[i].rm_eo - match[i].rm_so, 
+			printf ("Send matching arg%d %.*s\n",i,(int)(match[i].rm_eo - match[i].rm_so), 
 				message + match[i].rm_so);
 #endif
-			SocketSend (client, "%.*s" ARG_END ,match[i].rm_eo - match[i].rm_so, 
+			SocketSend (client, "%.*s" ARG_END ,(int)(match[i].rm_eo - match[i].rm_so), 
 				message + match[i].rm_so);
 		} else {
 			SocketSend (client, ARG_END);
@@ -579,6 +579,7 @@ void IvyClasses( int argc, const char **argv)
 
 void IvyStart (const char* bus)
 {
+
 	struct in_addr baddr;
 	unsigned long mask = 0xffffffff; 
 	unsigned char elem = 0;
@@ -648,6 +649,7 @@ void IvyStart (const char* bus)
 
 			/* addresses are terminated by a comma or end of string */
 			} else {
+
 				baddr.s_addr = htonl(mask);
 				printf ("Broadcasting on network %s, port %d\n", inet_ntoa(baddr), SupervisionPort);
 				// test mask value agaisnt CLASS D
