@@ -45,7 +45,14 @@
 extern char *optarg;
 extern int optind;
 #endif
-#include <regex.h>
+#ifndef USE_PCRE_REGEX
+#include <regex.h> 
+#else
+#define OVECSIZE 60 /* must be multiple of 3, for regexp return */
+#include <pcre.h>
+#endif
+
+
 #endif
 #ifdef XTMAINLOOP
 #include "ivyxtloop.h"
@@ -144,22 +151,29 @@ void HandleStdin (Channel channel, HANDLE fd, void *data)
 			}
 			
 		} else if (strcmp(cmd,  "bind") == 0) {
-			arg = strtok (NULL, "'");
-			if  (arg) {
-			  	regex_t reg;
-				int err;
-			  	Chop(arg);
-				if (err=regcomp(&reg,arg,REG_ICASE|REG_EXTENDED)!=0)	
-				{
-				  char errbuf[4096];
-				  regerror (err, &reg, errbuf, 4096);
-				  printf("Error compiling '%s', %s, not bound\n", arg, errbuf);
-				}
-				else
-				{
-					IvyBindMsg (Callback, NULL, Chop(arg));
-				}
-			}
+		  arg = strtok (NULL, "'");
+		  if  (arg) {
+#ifndef USE_PCRE_REGEX
+		    regex_t reg;
+		    int err;
+		    Chop(arg);
+		    if (err=regcomp(&reg,arg,REG_ICASE|REG_EXTENDED)!=0) {
+		      char errbuf[4096];
+		      regerror (err, &reg, errbuf, 4096);
+		      printf("Error compiling '%s', %s, not bound\n", arg, errbuf);
+#else
+		    pcre *regexp;
+		    const char *errbuf;
+		    int erroffset;
+		    Chop(arg);
+		    regexp = pcre_compile(arg, 0,&errbuf,&erroffset,NULL);
+		    if (regexp==NULL) {
+		      printf("Error compiling '%s', %s, not bound\n", arg, errbuf);
+#endif
+		    } else {
+		      IvyBindMsg (Callback, NULL, Chop(arg));
+		    }
+		  }
 
 		} else if  (strcmp(cmd,  "where") == 0) {
 			arg = strtok (NULL, " \n");

@@ -25,9 +25,11 @@ GTKINC = `gtk-config --cflags`
 GTKLIB = `gtk-config --libs`
 GLUTINC = -I/usr/include -I.
 GLUTLIB = -L. -lglut -lGLU -lGL -lX11 -lXmu 
-# use these if you want standard Tcl
-TCLINCL	= -I/usr/include/tcl8.4
-TCLLIB = -ltcl8.4
+# use these if you want standard Tcl ( 8.3 on debian woody ... )
+TCLINCL	= -I/usr/include/tcl8.3
+TCLLIB = -ltcl8.3
+#TCLINCL	= -I/usr/include/tcl8.4
+#TCLLIB = -ltcl8.4
 # use these if you want to use Aqua Tcl on macOSX
 #TCLINC	= -I/Library/Frameworks/Tcl.framework/Headers
 #TCLLIB = -framework Tcl
@@ -92,20 +94,23 @@ ivygtkloop.o: ivygtkloop.c ivygtkloop.h
 ivyprobe: ivyprobe.o
 	$(CC)  $(CFLAGS) -o $@ ivyprobe.o -L. -livy $(PCRELIB) $(EXTRALIB)
 
+ivyprobe.o : ivyprobe.c
+	$(CC)  $(CFLAGS) $(REGEXP) -c ivyprobe.c -o $@
+
 ivyxtprobe.o : ivyprobe.c
-	$(CC)  $(CFLAGS) -DXTMAINLOOP -c ivyprobe.c -o $@ $(XTINC)
+	$(CC)  $(CFLAGS) $(REGEXP) -DXTMAINLOOP -c ivyprobe.c -o $@ $(XTINC)
 
 ivyxtprobe: ivyxtprobe.o libxtivy.a
 	$(CC) -o $@ ivyxtprobe.o -L. $(XTLIB) -lxtivy  $(PCRELIB) $(EXTRALIB)
 
 ivygtkprobe.o : ivyprobe.c
-	$(CC)  $(CFLAGS) -DGTKMAINLOOP -c ivyprobe.c -o ivygtkprobe.o $(XTINC)
+	$(CC)  $(CFLAGS) $(REGEXP) -DGTKMAINLOOP -c ivyprobe.c -o ivygtkprobe.o $(XTINC)
 
 ivygtkprobe: ivygtkprobe.o libgtkivy.a
 	$(CC) -o ivygtkprobe ivygtkprobe.o -L. $(GTKLIB) -lgtkivy $(PCRELIB) $(EXTRALIB)
 
 ivyglutprobe.o : ivyprobe.c
-	$(CC)  $(CFLAGS) -DGLUTMAINLOOP -c ivyprobe.c -o ivyglutprobe.o $(GLUTINC)
+	$(CC)  $(CFLAGS) $(REGEXP) -DGLUTMAINLOOP -c ivyprobe.c -o ivyglutprobe.o $(GLUTINC)
 
 ivyglutprobe: ivyglutprobe.o libglutivy.a
 	$(CC) -o ivyglutprobe ivyglutprobe.o -L. $(GLUTLIB) -lglutivy $(PCRELIB) $(EXTRALIB)
