@@ -1,9 +1,17 @@
-load ivytcl.so.3.0
-Ivy::init TESTTCL "TESTTCL Ready" echo echo
+load libtclivy.so.3.5
+proc conCB { app str2 } {
+ puts "TCL:Application:$app $str2"
+}
+proc discCB { app str2 } {
+ puts "TCL:Application:$app $str2"
+}
+proc msgCB {str} {
+ puts "TCL:Message:$str"
+}
+Ivy::init TESTTCL "TESTTCL Ready" conCB discCB 
 Ivy::start 143.196.53.255:2011
-Ivy::bind "(.*)" echo
+Ivy::bind "(.*)" msgCB 
 Ivy::applist
 Ivy::send test
 Ivy::applist
-mainloop
-
+vwait tcl_interactive
