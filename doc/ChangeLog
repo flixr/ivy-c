@@ -1,0 +1,40 @@
+ivy-c (3.1)
+
+  * src/Makefile : Ajout de liens pour les libs paratagées
+  *                Ajout du majeur et du mineur
+  * Making ivyprobe ivy-3.0 compliant
+  * Bug correction which appears at ivy closing
+  
+ --
+
+ivy-c (3.0)
+
+  * new api : see documentation
+  * src/Makefile : updates
+  * src/ivy.c
+  * - bug correction when broadcast socket can't be opened
+  * src/ivychannel.c :
+  * - bug correction when handling expceptions on channels
+  * Clean headers
+  * testivy -> ivyprobe
+
+ -- 
+
+ivy-c (1.2)
+
+  * Mise au propre
+  * Ajout du mecanisme de choix des adresses de broadcast
+
+ -- 
+
+ivy-c (1.1)
+
+  * Suppression du header list.h qui est aussi défini dans utils-c.
+  * Ajout du soname à la bibliothèque dynamique.
+  
+ -- 
+
+ivy-c (1.1)
+
+  * Initial Release.
+
