@@ -1,9 +1,7 @@
-<!doctype linuxdoc system>
-
 <!--
 	The Ivy C guide
 
-	Copyright (c) 1999
+	Copyright (c) 1999-2000
 	Centre d'Etudes de la Navigation Aerienne
 
 	SGML source file
@@ -17,23 +15,58 @@
 -->
 
 
-<article>
+<?xml version='1.0' ?>
+<!doctype article PUBLIC "-//OASIS//DTD DocBook V3.1//EN">
 
-<title>The Ivy C library guide
-<author>Stéphane Chatty, <tt/chatty@cena.dgac.fr/
-<date>12 April 1999
+<article>
+<artheader>
+
+<title>The Ivy C library guide</title>
+
+<authorgroup>
+<author>
+<firstname>Francois-Régis</firstname><surname>Colin</surname>
+<affiliation><address><email>fcolin@cena.fr</email></address></affiliation>
+</author>
+<author>
+<firstname>Stéphane</firstname><surname>Chatty</surname>
+<affiliation><address><email>chatty@cena.fr</email></address></affiliation>
+</author>
+</authorgroup>
+<date>August 4, 2000</date>
+
+<copyright>
+<year>2000</year>
+<holder>Centre d'Études de la Navigation Aérienne</holder>
+</copyright>
+
 <abstract>
+<para>
 This document is a programmer's guide that describes how to use the Ivy C
 library to connect applications to an Ivy bus. This guide describes version 3.0
 of the library.
+</para>
 </abstract>
+</artheader>
 
-<toc>
+<sect1>
+<title>Foreword</title>
 
-<sect>General information
-<sect1>What is Ivy?
-<p>
+<para>
+This document was written in SGML according to the DocBook DTD, so as to be able to
+generate PDF and html output. However, the authors have not yet mastered the
+intricacies of SGML, the DocBook DTD, the DocBook Stylesheets and the related
+tools, which have achieved the glorious feat of being far more complex than
+LaTeX and Microsoft Word combined together. This explains why this document, in addition
+to being incomplete, is so ugly. We'll try and improve it.
+</para>
+</sect1>
 
+
+<sect1>
+<title>What is Ivy?</title>
+
+<para>
 Ivy is a software bus designed at CENA (France). A software bus is a system 
 that allows software applications to exchange information with the illusion of
 broadcasting that information, selection being performed by the receiving
@@ -44,218 +77,87 @@ have a certain type or follow a certain pattern. Software buses are mainly aimed
 at facilitating the rapid development of new agents, and at managing a dynamic
 collection of agents on the bus: agents show up, emit messages and receive some, 
 then leave the bus without blocking the others.
+</para>
 
-<sect2>Architecture and principles
-<p>
-As opposed to other software buses, Ivy does not depend on a centralised
-server. Actually, Ivy is mostly a communication convention between processes,
-implemented through a collection of libraries in several languages.
+<para>
+Ivy is implemented as a collection of libaries for several languages and
+platforms. If you want to read more about the principles Ivy before reading this guide of the C 
+library, please refer to <citetitle>The Ivy sofware bus: a white
+paper</citetitle>. If you want more details about the internals of Ivy, have a
+look at <citetitle>The Ivy architecture and protocol</citetitle>. And finally,
+if you are more interested in other languages, refer to other guides such as
+<citetitle>The Ivy Perl library guide</citetitle>. All those documents should be 
+available from the Ivy Web site at <ulink URL="http://www.tls.cena.fr/products/ivy/">http://www.tls.cena.fr/products/ivy/</ulink>.
+</para>
+</sect1>
 
-<p>
-
-From the programmer's point of view, Ivy is an information  broadcasting
-channel. The main functions are:
-
-<itemize>
-<item> connecting to a bus.<em> Example: IvyInit (b, "192.126:2011")</em>
-<item> sending a message.<em> Example: IvySend (b, "HELLO %s", world)</em>
-<item> bind a message pattern to a callback function.<em> Example: IvyBind (b, "HELLO (.*)", cb)</em>
-<item> the main loop.<em> Example : IvyLoop ()</em>
-</itemize>
-
-Ivy's
-decentralised connection scheme probably incurs limitations in terms of how many
-applications can be connected to an Ivy bus, but this simplifies management a
-lot. Basically, an Ivy bus is just a set of applications that decide to
-communicate together. The only conventions between these applications are:
-<enum>
-<item> the use of the Ivy protocol (for obvious reasons)
-<item> a bus address, made of a broadcast port number (a bit like a citizen band
-channel) and a set of networks addresses
-</enum>
-When an application wants to connect to a bus, it sends a broadcast message on the
-networks specified in the bus address, so that all applications present on those 
-networks and listening on the specified port number connect to it. It then
-becomes part of the bus, and listens like the other ones.
-<p>
-The messages are exchanged in text format, and bindings are based on regular
-expressions with captures. If an application subscribes to 
-    <tt/HELLO (.*)/ an if another application emits the message <tt/HELLO WORLD/, a
-callback will be called in the first application with <tt/WORLD/ as an argument.
-
-
-<sect2>Using Ivy
-<p>
-You can use Ivy through applications that have been provided to you. This is the 
-case for <tt/ivyprobe/, an Ivy agent that allows you to examine the messages
-exchanged on a given bus and to send messages on that bus. You can refer to the
-web site <tt/http:/ for a list of available agents. However, what you will
-usually want to do is to develop your own applications. In order to do that you
-can use an Ivy connection kit, that is a library that implements Ivy.
-
-
-<p>
-Libraries that implement Ivy are available in the following environments:
-<itemize>
-<item> in C on Unix and Windows platforms, with it own communication library
-<item> in C++ on Windows platforms
-<item> in C++ on Unix platforms, integrated with the Uch communication library
-<item> in C++ on Unix platforms, integrated with  OpenInventor
-<item> in C++ on Macintosh
-<item> in Perl and in Perl/Tk
-<item> integrated with Object Caml on Unix platforms
-<item> in Scheme on Unix platforms
-<item> in Java
-</itemize>
-<p>
-
-Connecting your application to an Ivy bus just consists in choosing the
-appropriate library, add the appropriate message emission and reception calls to
-your code, use the main loop provided in the library or make the necessary
-integrations, and get your code running! 
-
-<sect1>The Ivy C library
-<p>
+<sect1>
+<title>The Ivy C library</title>
+<sect2>
+<title>What is it?</title>
+<para>
 The Ivy C library (aka Ivy-C or ivy-c) is a C library that allows you to connect 
 applications to an Ivy bus. You can use it to write applications in C or any
-other language that supports C extensions. This guide documents how you can do
-that.
-<p>
+other language that supports C extensions. You can also use it to integrate an
+application that already has a main loop (such as a GUI application) within an
+Ivy bus. This guide is here to help you do that.
+</para>
+
+<para>
 The Ivy C library is known to compile and work in WindowsNT and Linux
 environments. It should be easy to use on most Posix environments. 
-<p>
+</para>
+
+<para>
 The Ivy C library was originally developed by François-Régis Colin at CENA. It
-is maintained by the CENA-Toulouse team.
+is maintained by a group at CENA (Toulouse, France)
+</para>
+</sect2>
 
-<sect>Getting and installing the Ivy C library
-<p>
-You can get the latest versions of the Ivy C library from CENA (http://XXX) or
-from one of the Fairway sites (for instance http://XXX). Depending whether you
-use a supported distribution of Linux or not, you have the following options:
+<sect2>
+<title>Getting and installing the Ivy C library</title>
 
-<sect1>Installing RedHat or Debian packages
-<p>
+<para>
+You can get the latest versions of the Ivy C library from CENA
+(<ulink URL="http://www.tls.cena.fr/products/ivy/">http://www.tls.cena.fr/products/ivy/</ulink>). Depending on whether you
+use a supported binary distribution, you can retrieve binary RPM or
+Debian packages for Linux (do not forget to get the development package as well as the
+run-time package), or retrieve the source files and compile them.
+</para>
+</sect2>
 
-<sect1>Getting and compiling the sources
-<p>
+</sect1>
 
+<sect1>
+<title>Your first Ivy application</title>
+<para>
+We are going to write a "Hello world translater" for an Ivy bus. The application 
+will subscribe to all messages starting with "Hello", and re-emit them after
+translating "Hello" into "Bonjour". In addition, the application will quit when
+it receives any message containing exactly "Bye".
+</para>
 
-
-<sect>Basic functions
-
-<sect1>Initialization and main loop
-<p>
-Initializing an Ivy agent with the Ivy C library is a two step process. First of 
-all, you should initialize the library by calling function <tt/IvyInit/. Once
-the library is initialized you can create timers and add subscriptions, but your 
-agent is still not connected to any bus. In order to connect, you should call
-function <tt/IvyStart/. In theory, initialization is then over. However in
-practice, as for any asynchronous communication or interaction library, nothing
-happens until your application has reached the main loop.
-<p>
-The Ivy C library provides its own main loop: <tt/IvyMainLoop/. You should use
-it unless you already use a toolkit that provides its own main loop and you want 
-to use that one. If it is the case, please refer to section XX. Otherwise, just
-call <tt/IvyMainLoop/. From within the main loop, you can call <tt/IvyStop/ to
-exit the loop.
-
-Here are more details on those functions:
-
-<tscreen><verb>
-void IvyInit (const char* agentname,
-			const char* hello_msg,
-			IvyApplicationCallback app_cb,
-			void *app_data,
-			IvyDieCallback die_cb,
-			void *die_data);
-</verb></tscreen>
-initializes the library. blahblah
-
-<tscreen><verb>
-void IvyStart (const char* bus);
-</verb></tscreen>
-connects your application to the bus specified in <tt/bus/. The string provided
-should follow the convention described in section XX. Example: <tt/"127:2010"/.
-
-<tscreen><verb>
-void IvyMainLoop (void (*hook) (void));
-</verb></tscreen>
-makes your application enter the main loop in which it will handle asynchronous
-communications and signals.
-
-<tscreen><verb>
-void IvyStop ();
-</verb></tscreen>
-makes your application exit the main loop.
+<sect2>
+<title>The code</title>
+<para>
+Here is the code of "hellotranslater.c":
 
 
-<sect1>Emitting messages
-<p>
-Emitting a message on an Ivy bus is much like printing a message on the standard 
-output. However, do not forget that your message will not be emitted if Ivy has
-not been properly initialized and if you do not have a main loop of some sort
-running. To emit a message, use <tt/IvySendMsg/, which works like <tt/printf/:
+<programlisting>
+#include &lt;stdlib.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;getopt.h&gt;
+#include &lt;ivy.h&gt;
+#include &lt;ivyloop.h&gt;
 
-<tscreen><verb>
-void IvySendMsg (const char* format, ...);
-</verb></tscreen>
-sends a message on the bus. This function has exactly the same behaviour as
-<tt/printf/, <tt/sprintf/ or <tt/fprintf/.
-
-
-<sect1>Subscribing to messages
-<p>
-Subscribing to messages consists in binding a callback function to a message
-pattern. Patterns are described by regular expressions with captures. When a
-message matching the regular expression is detected on the bus, the callback
-function is called. The captures (ie the bits of the message that match the
-parts of regular expression delimited by brackets) are passed to the callback
-function much like options are passed to <tt/main/. Use function <tt/IvyBindMsg/ 
-to bind a callback to a pattern, and function <tt/IvyUnbindMsg/ to delete the
-binding.
-<tscreen><verb>
-MsgRcvPtr IvyBindMsg (MsgCallback cb,
-		void* data,
-		const char* regex_format, ...);
-</verb></tscreen>
-binds callback function <tt/cb/ to the regular expression specified by
-<tt/regex_format/ and the optional following arguments. <tt/regex_format/ and
-the following arguments are handled as in <tt/printf/.
-
-<tscreen><verb>
-void IvyUnbindMsg (MsgRcvPtr id);
-</verb></tscreen>
-deletes the binding specified by <tt/id/
-
-<p>
-In what precedes, <tt/MsgRcvPtr/ is an opaque type used to identify bindings,
-<tt/data/ is a user pointer passed to the callback whenever it is called, and
-<tt/MsgCallback/ is defined as follows:
-<tscreen><verb>
-typedef void (*MsgCallback)(IvyClientPtr app, void *data, int argc, char **argv);
-</verb></tscreen>
-
-
-<sect1>Example
-<p>
-The following application connects to an Ivy bus, translates messages <tt/"Hi
-[name]"/ to <tt/"Bonjour [name]"/, and quits on message <tt/"Bye"/.
-<tscreen><verb>
-#include <stdlib.h>
-#include <stdio.h>
-#include <getopt.h>
-#include <ivy.h>
-#include <ivyloop.h>
-
-/* callback associated to "Hi" messages */
-void HiCallback (IvyClientPtr app, void *data, int argc, char **argv)
+/* callback associated to "Hello" messages */
+void HelloCallback (IvyClientPtr app, void *data, int argc, char **argv)
 {
-	if (argc != 1)
-		fprintf (stderr, "wrong format!\n");
-	else
-		IvySendMsg ("Bonjour %s", argv[0]);
+	const char* arg = (argc &lt; 1) ? "" : argv[0];
+	IvySendMsg ("Bonjour%s", arg);
 }
 
+/* callback associated to "Bye" messages */
 void ByeCallback (IvyClientPtr app, void *data, int argc, char **argv)
 {
 	IvyStop ();
@@ -279,124 +181,374 @@ main (int argc, char**argv)
 		bus = getenv ("IVYBUS");
 
 	/* initializations */
-	IvyInit ("MagicTranslater", "Hello le monde", 0, 0, 0, 0);
+	IvyInit ("IvyTranslater", "Hello le monde", 0, 0, 0, 0);
 	IvyStart (bus);
 
-	/* bindings */
-	IvyBindMsg (HiCallback, 0, "^Hi (.*)");
+	/* binding of HelloCallback to messages starting with 'Hello' */
+	IvyBindMsg (HelloCallback, 0, "^Hello(.*)");
+
+	/* binding of ByeCallback to 'Bye' */
 	IvyBindMsg (ByeCallback, 0, "^Bye$");
 
 	/* main loop */
 	IvyMainLoop (0);
 }
 
-</verb></tscreen>
+</programlisting>
+</para>
+
+</sect2>
+
+<sect2>
+<title>Compiling it</title>
+<para>
+On a Unix computer, you should be able to compile the application with the
+following command:
+<screen>
+$ <userinput>cc -o ivytranslater ivytranslater.c -livy</userinput>
+$
+</screen>
+</para>
+</sect2>
 
 
+<sect2>
+<title>Testing</title>
+<para>
+We are going to test our application with <command>ivyprobe</command>. In a
+terminal window, launch <command>ivytranslater</command>.
+<screen>
+$ <userinput>ivytranslater</userinput>
+
+</screen>
+Then in another
+terminal window, launch <command>ivyprobe '(.*)'</command>. You are then ready
+to start. Type "Hello Paul", and you should get "Bonjour Paul". Type "Bye", and
+your application should quit:
+<screen>
+$ <userinput>ivyprobe</userinput>
+IvyTranslater connected from localhost
+IvyTranslater subscribes to 'Hello (.*)'
+IvyTranslater subscribes to 'Bye'
+<userinput>Hello Paul</userinput>
+IvyTranslater sent 'Bonjour Paul'
+<userinput>Bye</userinput>
+IvyTranslater disconnected from localhost
+<userinput>&lt;Ctrl-D&gt;</userinput>
+$
+</screen>
+
+</para>
+</sect2>
+</sect1>
+
+<sect1>
+<title>Basic functions</title>
+
+<sect2>
+<title>Initialization and main loop</title>
+<para>
+Initializing an Ivy agent with the Ivy C library is a two step process. First of 
+all, you should initialize the library by calling function <function>IvyInit</function>. Once
+the library is initialized you can create timers and add subscriptions, but your 
+agent is still not connected to any bus. In order to connect, you should call
+function <function>IvyStart</function>. In theory, initialization is then over. However in
+practice, as for any asynchronous communication or interaction library, nothing
+happens until your application has reached the main loop.
+</para>
+<para>
+The Ivy C library provides its own main loop: <function>IvyMainLoop</function>. You should use
+it unless you already use a toolkit that provides its own main loop and you want 
+to use that one. If it is the case, please refer to section XX. Otherwise, just
+call <function>IvyMainLoop</function>. From within the main loop, you can call <function>IvyStop</function> to
+exit the loop.
+</para>
+<para>
+Here are more details on those functions:
+
+<programlisting>
+void IvyInit (const char* agentname,
+			const char* ready_msg,
+			IvyApplicationCallback app_cb,
+			void *app_data,
+			IvyDieCallback die_cb,
+			void *die_data);
+</programlisting>
+initializes the library.
+<parameter>agentname</parameter> is the name of your application on the Ivy
+bus. It will be transmitted to other applications and possibly used by them, as
+does <command>ivyprobe</command>.
+<parameter>ready_msg</parameter> is the first message that is going to be sent
+to peer applications, bypassing the normal broadcasting scheme of Ivy (see
+<citetitle>The Ivy architecture and protocol</citetitle> for more details). If a zero
+value is passed, no message will be sent.
+<parameter>app_cb</parameter> is a callback that will be called every time a new
+peer is detected. If a zero value is passed, no callback is called.
+<parameter>app_data</parameter> is a pointer that will be passed to the
+application-connection callback.
+<parameter>die_cb</parameter> is a callback that will be called every time a
+peer disconnects. If a zero value is passed, no callback is called.
+<parameter>die_data</parameter> is a pointer that will be passed to the
+application-disconnection callback.
+
+<programlisting>
+void IvyStart (const char* bus);
+</programlisting>
+connects your application to the bus specified in
+<parameter>bus</parameter>. The string provided should follow the convention
+described in section XX. Example:
+<parameter>"10.192.33,10.192.34:2345"</parameter>. If a null value is passed,
+the library will use the value of the environment variable
+<parameter>IVYBUS</parameter>, which should have the same syntax. If the
+environment variable is not defined, the default value
+<parameter>"127:2010"</parameter> is used.
+
+<programlisting>
+void IvyMainLoop (void (*hook) (void));
+</programlisting>
+makes your application enter the main loop in which it will handle asynchronous
+communications and signals. This is the default Ivy main loop, based on the
+<function>select</function> POSIX system call.
+If non-null, <parameter>hook</parameter> is called every time the main loop is
+about to enter <function>select</function>, and can be used (with care!) to
+extend the main loop.
+
+<programlisting>
+void IvyStop ();
+</programlisting>
+makes your application exit the main loop.
+
+</para>
+</sect2>
+
+<sect2>
+<title>Emitting messages</title>
+<para>
+Emitting a message on an Ivy bus is much like printing a message on the standard 
+output. However, do not forget that your message will not be emitted if Ivy has
+not been properly initialized and if you do not have a main loop of some sort
+running. To emit a message, use <function>IvySendMsg</function>, which works like <function>printf</function>:
+
+<programlisting>
+void IvySendMsg (const char* format, ...);
+</programlisting>
+sends a message on the bus. This function has exactly the same behaviour as
+<function>printf</function>, <function>sprintf</function> or <function>fprintf</function>.
+
+</para>
+</sect2>
+
+<sect2>
+<title>Subscribing to messages</title>
+<para>
+Subscribing to messages consists in binding a callback function to a message
+pattern. Patterns are described by regular expressions with captures. When a
+message matching the regular expression is detected on the bus, the callback
+function is called. The captures (ie the bits of the message that match the
+parts of regular expression delimited by brackets) are passed to the callback
+function much like options are passed to <function>main</function>. Use function <function>IvyBindMsg</function> 
+to bind a callback to a pattern, and function <function>IvyUnbindMsg</function> to delete the
+binding.
 
 
-<sect>Advanced functions
-<sect1>Utilities
-<sect1>Direct messages
+<programlisting>
+MsgRcvPtr IvyBindMsg (MsgCallback cb,
+		void* data,
+		const char* regex_format, ...);
+</programlisting>
+binds callback function <function>cb</function> to the regular expression specified by
+<parameter>regex_format</parameter> and the optional following arguments. <parameter>regex_format</parameter> and
+the following arguments are handled as in <function>printf</function>. The return
+value is an identifier that can be used later for cancelling the subscription.
 
-<sect>Managing timers and other channels
-<p>
+<programlisting>
+void IvyUnbindMsg (MsgRcvPtr id);
+</programlisting>
+deletes the binding specified by <parameter>id</parameter>.
+</para>
+
+<para>
+In what precedes, <type>MsgRcvPtr</type> is an opaque type used to identify bindings,
+<parameter>data</parameter> is a user pointer passed to the callback whenever it is called, and
+<parameter>MsgCallback</parameter> is defined as follows:
+<programlisting>
+typedef void (*MsgCallback)(IvyClientPtr app, void *data, int argc, char **argv);
+</programlisting>
+
+</para>
+</sect2>
+</sect1>
+
+
+<sect1>
+<title>Advanced functions</title>
+
+<sect2>
+<title>Utilities</title>
+<para>
+[to be written]
+</para>
+</sect2>
+
+<sect2>
+<title>Direct messages</title>
+<para>
+[to be written]
+</para>
+</sect2>
+
+<sect2>
+<title>Managing timers and other channels</title>
+<para>
 
 In your applications, you may need to manage other input/output channels than an
 Ivy bus: a serial driver, the channels defined by a graphical toolkit, or simply 
 stdin and stdout. The same applies for timers. You can either manage those
 channels or timers from the Ivy main loop, or instead use the main loop provided by
 another library.
+</para>
 
-<sect1>Adding channels and timers to the Ivy main loop
-<sect2>Channels
-<p>
+<sect3>
+<title>Channels</title>
+<para>
 You can get a channel to be managed from the Ivy main loop by using functions
-<tt/IvyChannelSetUp/ and <tt/IvyChannelClose/.
-<tscreen><verb>
+<function>IvyChannelSetUp</function> and <function>IvyChannelClose</function>.
+<programlisting>
 Channel IvyChannelSetUp (HANDLE fd,
 			void* data,
 			ChannelHandleDelete handle_delete,
 			ChannelHandleRead handle_read);
-</verb></tscreen>
-ensures that function <tt/handle_read/ is called whenever data is read on file
-descriptor <tt/fd/, and function <tt/handle_delete/ whenever <tt/fd/ is
+</programlisting>
+ensures that function <function>handle_read</function> is called whenever data is read on file
+descriptor <parameter>fd</parameter>, and function <parameter>handle_delete</parameter> whenever <parameter>fd</parameter> is
 closed, and
 
-<tscreen><verb>
+<programlisting>
 void IvyChannelClose (Channel ch);
-</verb></tscreen>
-terminates the management of channel <tt/ch/.
+</programlisting>
+terminates the management of channel <parameter>ch</parameter>.
+</para>
 
-<p>
-In what precedes, <tt/Channel/ is an opaque type defined by the Ivy C library, <tt/data/ is a pointer that will be passed to functions <tt/handle_read/ 
-and <tt/handle_delete/. It can be defined at will by users. 
-The types HANDLE, ChannelHandleDelete and
-ChannelHandleRead are as follows:
-<tscreen>Unix: <verb>typedef int HANDLE;</verb>
-Windows: <verb>typedef SOCKET HANDLE;</verb>
-<verb>
+<para>
+In what precedes, <type>Channel</type> is an opaque type defined by the Ivy C
+library, <parameter>data</parameter> is a pointer that will be passed to
+functions <function>handle_read</function> and
+<function>handle_delete</function>. It can be defined at will by users.  The
+types <type>HANDLE</type>, <type>ChannelHandleDelete</type> and
+<type>ChannelHandleRead</type> are as follows:
+
+<programlisting>
+typedef int HANDLE; (for Unix)
+typedef SOCKET HANDLE; (for Windows)
 typedef void (*ChannelHandleDelete)(void *data);
 typedef void (*ChannelHandleRead)(Channel ch, HANDLE fd, void* data);
-</verb></tscreen>
-<p>
+</programlisting>
+</para>
+</sect3>
 
-<sect2>Timers
-<p>
+<sect3>
+<title>Adding timers</title>
+<para>
 You can get a function to be repeatedly called by using function
-<tt/TimerRepeatAfter/:
+<function>TimerRepeatAfter</function>:
 
-<tscreen><verb>
+<programlisting>
 TimerId TimerRepeatAfter (int nbticks, long delay, TimerCb handle_timer, void* data);
-</verb></tscreen>
-ensures that function <tt/handle_timer/ is called <tt/nbticks/ times at
-intervals of <tt/delay/ seconds, thus creating a timer.
+</programlisting>
+ensures that function <parameter>handle_timer</parameter> is called <parameter>nbticks</parameter> times at
+intervals of <parameter>delay</parameter> seconds, thus creating a timer.
 
-<tscreen><verb>
+<programlisting>
 void TimerModify (TimerId id, long delay);
-</verb></tscreen>
-changes the delay used for timer <tt/id/.
+</programlisting>
+changes the delay used for timer <parameter>id</parameter>.
 
-<tscreen><verb>
+<programlisting>
 void TimerRemove (TimerId id);
-</verb></tscreen>
-deletes timer <tt/id/, thus stopping it.
+</programlisting>
+deletes timer <parameter>id</parameter>, thus stopping it.
+</para>
 
-In what precedes, <tt/data/ is passed to <tt/handle_timer/ every time it is
-called. <tt/delay/ is expressed in milliseconds.
-If <tt/nbticks/ is set to <tt/TIMER_LOOP/, then <tt/handle_timer/ will
-be called forever. <tt/TimerCb/ is as follows:
-<tscreen><verb>
+<para>
+In what precedes, <parameter>data</parameter> is passed to <parameter>handle_timer</parameter> every time it is
+called. <parameter>delay</parameter> is expressed in milliseconds.
+If <parameter>nbticks</parameter> is set to <parameter>TIMER_LOOP</parameter>, then <parameter>handle_timer</parameter> will
+be called forever. <type>TimerCb</type> is as follows:
+<programlisting>
 typedef void (*TimerCb)(TimerId id, void *data, unsigned long delta);
-</verb></tscreen>
+</programlisting>
 
-<p>
-<sect1>Adding Ivy to another main loop
+</para>
+</sect3>
+</sect2>
+</sect1>
 
-<sect2>Functions to be provided
-<p>
-You can decide to use the main loop from another toolkit such as the X Toolkit
+<sect1>
+<title>Conventions for writing applications</title>
+<para>
+In addition to the Ivy protocol, Ivy applications
+should respect two conventions when used in a Posix environment:
+
+<itemizedlist>
+<listitem><para>They should accept the option <option>-b</option> or
+<option>-bus</option> to specify the Ivy bus on which they will connect. The Ivy
+C library provides no support for that.
+</para>
+
+
+<listitem><para>They should refer to the environment variable
+<parameter>IVYBUS</parameter> when the above option is not used. With the Ivy C
+library, this is obtained by passing a null value to <function>IvyStart</function></para>
+</itemizedlist>
+</para>
+</sect1>
+
+<sect1>
+<title>Using Ivy with another main loop</title>
+
+<sect2>
+<title>Using Ivy with the X Toolkit</title>
+<para>to be written</para>
+</sect2>
+
+<sect2>
+<title>Using Ivy with Tcl/Tk</title>
+<para>to be written</para>
+</sect2>
+
+<sect2>
+<title>Using Ivy with Gtk</title>
+<para>to be written</para>
+</sect2>
+
+<sect2>
+<title>Adding Ivy to another main loop</title>
+
+<sect3>
+<title>Functions to be provided</title>
+<para>
+You can decide to use the main loop from another toolkit than the X Toolkit
 or the Tk toolkit. If you do that, you'll have to define three functions that
 Ivy will use to get its own channels managed by the other toolkit. The three
 following global variables should be defined:
-<tscreen><verb>
+<programlisting>
 ChannelInit channel_init;
 ChannelSetUp channel_setup;
 ChannelClose channel_close;
-</verb></tscreen>
+</programlisting>
 
 They should point to functions that respectively:
-<itemize>
-<item> make the necessary global initializations before entering the main loop
-<item> initialize a channel and ensure that it is managed by the main loop
-<item> close a channel
-</itemize>
-<p>
-
-The types <tt/ChannelInit/, <tt/ChannelSetUp/ and <tt/ChannelClose/ are defined
+<itemizedlist>
+<listitem><para> make the necessary global initializations before entering the main loop</para>
+<listitem><para> initialize a channel and ensure that it is managed by the main loop</para>
+<listitem><para> close a channel</para>
+</itemizedlist>
+</para>
+<para>
+The types <type>ChannelInit</type>, <type>ChannelSetUp</type> and <type>ChannelClose</type> are defined
 as follows:
 
-<tscreen><verb>
+<programlisting>
 typedef void (*ChannelInit)(void);
 typedef Channel (*ChannelSetUp)(
         HANDLE fd,
@@ -404,32 +556,31 @@ typedef Channel (*ChannelSetUp)(
         ChannelHandleDelete handle_delete,
         ChannelHandleRead handle_read);
 typedef void (*ChannelClose)( Channel channel );
-</verb></tscreen>
+</programlisting>
+</para>
+</sect3>
 
-
-<sect2>Type to be defined
-<p>
+<sect3>
+<title>Type to be defined</title>
+<para>
 In order to implement the three previous functions, you will need to define the
-hidden type <tt/struct _channel/ (the type <tt/Channel/ is defined as <tt/struct 
-_channel*/). Use it to store the data provided by the other toolkit.
+hidden type <type>struct _channel</type> (the type <type>Channel</type> is
+defined as <type>struct _channel*</type>). Use it to store the data provided by
+the other toolkit.
+</para>
+</sect3>
+</sect2>
+</sect1>
 
-<sect2>Overriding the Ivy main loop
-<p>
-In order to override the default definition of the three previous variables, you 
-will need:
-<itemize>
-<item> either to create a new library by replacing file <tt/ivyloop.o/ with the file
-that contains your definitions
-<item> or ...
-</itemize>
-
-<p>
-
-
-
-
-<sect>Conventions for writing applications
-<p>
-... the environment variable <tt/IVYBUS/ ..., ... the option <tt/-b/ ...
+<sect1>
+<title>Contacting the authors</title>
+<para>
+The Ivy C library was mainly written by Francois-Régis Colin, with support
+from Stéphane Chatty. For bug reports or comments on the library itself or
+about this document, please send them an email: fcolin@cena.fr and
+chatty@cena.fr. For comments and ideas about Ivy itself (protocol,
+applications, etc), please use the Ivy mailing list: ivy@tls.cena.fr. 
+</para>
+</sect1>
 
 </article> 

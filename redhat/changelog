@@ -1,5 +1,5 @@
 $Version = "3.2";
-$Release = 3;
+$Release = 4;
 
 $ChangeLog = ' * Sat Feb 20 1999 Stéphane Chatty <chatty@cenatoulouse.dgac.fr>
 - Generation of ivy-c-3.0-2
@@ -34,5 +34,9 @@ $ChangeLog = ' * Sat Feb 20 1999 Stéphane Chatty <chatty@cenatoulouse.dgac.fr>
 - Generation of version 3.2-3
 - The ivyprobe man page is now part of the main package
 - The URL has been fixed
+
+ * Mon Aug 7 2000 Stéphane Chatty <chatty@cena.fr>
+- Generation of version 3.2-4
+- Just an upgrade of the documentation and fixes in the copyright headers
 
 ';
