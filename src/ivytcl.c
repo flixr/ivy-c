@@ -383,7 +383,7 @@ IvyUnbindCmd(ClientData	clientData,
   }
 
   filter = (filter_struct *) Tcl_GetHashValue(entry);
-  UnbindMsg(filter->id);
+  IvyUnbindMsg(filter->id);
   ckfree(filter->script);
   ckfree(filter->filter);
   ckfree((char *) filter);

@@ -674,7 +674,7 @@ void IvyStart (const char* bus)
 
 /* desabonnements */
 void
-UnbindMsg (MsgRcvPtr msg)
+IvyUnbindMsg (MsgRcvPtr msg)
 {
 	IvyClientPtr clnt;
 	/* Send to already connected clients */
