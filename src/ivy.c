@@ -376,7 +376,7 @@ static void Receive( Client client, void *data, char *line )
 				return;
 				}
 #ifndef USE_PCRE_REGEX
-			reg = regcomp(&regexp, arg, REG_ICASE|REG_EXTENDED);
+			reg = regcomp(&regexp, arg, REGCOMP_OPT|REG_EXTENDED);
 			if ( reg == 0 )
 				{
 				IVY_LIST_ADD( clnt->msg_send, snd )
@@ -395,7 +395,7 @@ static void Receive( Client client, void *data, char *line )
 			MsgSendTo( client, Error, reg, errbuf );
 			}
 #else
-			regexp = pcre_compile(arg, 0,&errbuf,&erroffset,NULL);
+			regexp = pcre_compile(arg, PCRE_OPT,&errbuf,&erroffset,NULL);
 			if ( regexp != NULL )
 				{
 				IVY_LIST_ADD( clnt->msg_send, snd )

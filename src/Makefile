@@ -42,6 +42,15 @@ TCLLIB = -ltcl$(TCLVERS)
 #TCLLIB = -framework Tcl
 PCREINC = `pcre-config --cflags`
 PCRELIB = `pcre-config --libs`
+CASESENSITIVE = "yes"
+ifeq ($(CASESENSITIVE), "no")
+	PCRE_OPT=PCRE_CASELESS
+	REGCOMP_OPT=REG_ICASE
+else
+	PCRE_OPT=0
+	REGCOMP_OPT=REG_EXTENDED	
+endif
+
 #PCREOBJ = `pcre-config --prefix`/lib/libpcre.a
 PCREOBJ = 
 
@@ -52,8 +61,8 @@ CC=gcc
 LIBTOOL=ar q # linux and solaris
 #LIBTOOL=libtool -static -o
 
-#REGEXP = -DGNU_REGEXP  # deprecated !
-REGEXP = -DUSE_PCRE_REGEX 
+#REGEXP = -DGNU_REGEXP  -DREGCOMP_OPT=$(REGCOMP_OPT) # deprecated !
+REGEXP= -DUSE_PCRE_REGEX -DPCRE_OPT=$(PCRE_OPT)
 # on activeTCL , set #define CHANNEL to null, and add ivyloop.o in the ivytcl target,
 # see below
 CHANNEL = -DTCL_CHANNEL_INTEGRATION 
@@ -90,7 +99,7 @@ ivy.o: ivy.c
 	$(CC) -c $(CFLAGS) $(REGEXP) $(PCREINC) ivy.c
 
 givy.o: ivy.c
-	$(CC) -c $(CFLAGS) -o givy.o ivy.c
+	$(CC) -c $(CFLAGS) -DGNU_REGEXP -DREGCOMP_OPT=$(REGCOMP_OPT) -o givy.o ivy.c
 
 ivyglutloop.o: ivyglutloop.c ivyglutloop.h
 	$(CC) -c $(CFLAGS) $(GLUTINC) ivyglutloop.c
