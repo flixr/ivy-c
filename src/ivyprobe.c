@@ -189,23 +189,16 @@ void TimerCall(TimerId id, void *user_data, unsigned long delta)
 
 int main(int argc, char *argv[])
 {
-	unsigned short bport = DEFAULT_BUS;
 	int c;
 	int timer_test = 0;
-	char dbuf [1024] = "";
+	char busbuf [1024] = "";
 	const char* bus = 0;
 	while ((c = getopt(argc, argv, "d:b:w:t")) != EOF)
 			switch (c) {
 			case 'b':
-				bport = atoi(optarg) ;
+				strcpy (busbuf, optarg);
+				bus = busbuf;
 				break;
-			case 'd':
-				if (bus)
-					strcat (dbuf, ",");
-				else
-					bus = dbuf;
-				strcat (dbuf, optarg);
-			break;
 			case 'w':
 				wait_count = atoi(optarg) ;
 				break;
