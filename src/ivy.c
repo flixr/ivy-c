@@ -2,7 +2,7 @@
  *
  * Ivy, C interface
  *
- * Copyright 1997-1998 
+ * Copyright 1997-1999 
  * Centre d'Etudes de la Navigation Aerienne
  *
  * Main functions
@@ -16,6 +16,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
+#include <ctype.h>
 
 #include <regex.h>
 
@@ -36,9 +37,9 @@
 
 #if 1
 /* temporary hack for compatibility */
-char* DefaultBusDomains = "143.196.1.255, 143.196.2.255, 143.196.53.255";
+static char* DefaultIvyDomains = "143.196.1.255, 143.196.2.255, 143.196.53.255";
 #else
-char* DefaultBusDomains = "127.0.0.255";
+static char* DefaultIvyDomains = "127.0.0.255";
 #endif
 
 typedef enum {
@@ -49,40 +50,42 @@ typedef enum {
 	Error,			/* error message */
 	DelRegexp,		/* Remove expression reguliere */
 	EndRegexp,		/* end of the regexp list */
-	StartRegexp,	/* debut des expressions */
+	StartRegexp,		/* debut des expressions */
 	DirectMsg,		/* message direct a destination de l'appli */
-	Die				/* demande de terminaison de l'appli */
+	Die			/* demande de terminaison de l'appli */
 
-}MsgType;	
+} MsgType;	
 
 
 typedef struct _msg_snd *MsgSndPtr;
 
-struct _msg_rcv {				/* requete d'emission d'un client */
+struct _msg_rcv {			/* requete d'emission d'un client */
 	MsgRcvPtr next;
 	int id;
-	const char *regexp;			/* regexp du message a recevoir */
+	const char *regexp;		/* regexp du message a recevoir */
 	MsgCallback callback;		/* callback a declanche a la reception */
-	void *user_data;			/* stokage d'info client */
+	void *user_data;		/* stokage d'info client */
 };
 
 
-struct _msg_snd {				/* requete de reception d'un client */
+struct _msg_snd {			/* requete de reception d'un client */
 	MsgSndPtr next;
 	int id;
-	char *str_regexp;			/* la regexp sous forme inhumaine */
-	regex_t regexp;				/* la regexp sous forme machine */
+	char *str_regexp;		/* la regexp sous forme inhumaine */
+	regex_t regexp;			/* la regexp sous forme machine */
 };
 
 struct _clnt_lst {
-	BusClientPtr next;
-	Client client;				/* la socket  client */
-	MsgSndPtr msg_send;			/* liste des requetes recues */
-	char *app_name;				/* nom de l'application */
+	IvyClientPtr next;
+	Client client;			/* la socket  client */
+	MsgSndPtr msg_send;		/* liste des requetes recues */
+	char *app_name;			/* nom de l'application */
 	unsigned short app_port;	/* port de l'application */
-	};
+};
+
 /* server  pour la socket application */
 static Server server;
+
 /* numero de port TCP en mode serveur */
 static unsigned short ApplicationPort;
 
@@ -92,55 +95,57 @@ static unsigned short SupervisionPort;
 /* client pour la socket supervision */
 static Client broadcast;
 
-static const char *ApplicationName = NULL;
+static const char *ApplicationName = 0;
 
 /* classes de messages emis par l'application utilise pour le filtrage */
 static int	messages_classes_count = 0;
-static const char **messages_classes = NULL;
+static const char **messages_classes = 0;
 
 /* callback appele sur reception d'un message direct */
-static MsgDirectCallback direct_callback = NULL;
-static *direct_user_data = NULL;
+static MsgDirectCallback direct_callback = 0;
+static *direct_user_data = 0;
 
 /* callback appele sur changement d'etat d'application */
-static BusApplicationCallback application_callback;
-static *application_user_data = NULL;
+static IvyApplicationCallback application_callback;
+static *application_user_data = 0;
 
 /* callback appele sur demande de terminaison d'application */
-static BusDieCallback application_die_callback;
-static *application_die_user_data = NULL;
+static IvyDieCallback application_die_callback;
+static *application_die_user_data = 0;
 
 /* liste des messages a recevoir */
-static MsgRcvPtr msg_recv = NULL;
+static MsgRcvPtr msg_recv = 0;
 
 
 /* liste des clients connectes */
-static BusClientPtr clients = NULL;
+static IvyClientPtr clients = 0;
 
-static const char *ready_message = NULL;
+static const char *ready_message = 0;
 
-static void MsgSendTo( Client client,MsgType msgtype, int id, const char *message )
+static void MsgSendTo( Client client, MsgType msgtype, int id, const char *message )
 {
-SocketSend( client, "%d %d" ARG_START "%s\n",msgtype,id,message);
+	SocketSend( client, "%d %d" ARG_START "%s\n", msgtype, id, message);
 }
 
-static void BusCleanup()
+static void IvyCleanup()
 {
-BusClientPtr clnt,next;
+	IvyClientPtr clnt,next;
 
 	/* destruction des connexion  clients */
 	LIST_EACH_SAFE( clients, clnt, next )
 	{
 		/* on dit au revoir */
-	MsgSendTo( clnt->client, Bye, 0, "" );
-	SocketClose( clnt->client );
-	LIST_EMPTY( clnt->msg_send );
+		MsgSendTo( clnt->client, Bye, 0, "" );
+		SocketClose( clnt->client );
+		LIST_EMPTY( clnt->msg_send );
 	}
 	LIST_EMPTY( clients );
 	/* destruction des socket serveur et supervision */
 	SocketServerClose( server );
 	SocketClose( broadcast );
 }
+
+
 static int MsgCall( const char *message, MsgSndPtr msg,  Client client )
 {
 	regmatch_t match[MAX_MATCHING_ARGS+1];
@@ -196,10 +201,10 @@ static int MsgCall( const char *message, MsgSndPtr msg,  Client client )
 	return 0;
 }
 	
-int ClientCall( BusClientPtr clnt, const char *message )
+static int ClientCall( IvyClientPtr clnt, const char *message )
 {
-MsgSndPtr msg;
-int match_count = 0;
+	MsgSndPtr msg;
+	int match_count = 0;
 	/* recherche dans la liste des requetes recues de ce client */
 	LIST_EACH( clnt->msg_send, msg )
 	{
@@ -207,6 +212,8 @@ int match_count = 0;
 	}
 	return match_count;
 }
+
+
 static int CheckRegexp(char *exp)
 {
 	/* accepte tout par default */
@@ -224,11 +231,12 @@ static int CheckRegexp(char *exp)
 	return regexp_ok;
 }
 
-static int CheckConnected( BusClientPtr clnt )
+static int CheckConnected( IvyClientPtr clnt )
 {
-BusClientPtr client;
-struct in_addr *addr1;
-struct in_addr *addr2;
+	IvyClientPtr client;
+	struct in_addr *addr1;
+	struct in_addr *addr2;
+
 	if ( clnt->app_port == 0 )
 		return 0;
 	/* recherche dans la liste des clients de la presence de clnt */
@@ -250,7 +258,7 @@ struct in_addr *addr2;
 
 static void Receive( Client client, void *data, char *line )
 {
-	BusClientPtr clnt;
+	IvyClientPtr clnt;
 	int err,id,reg;
 	MsgSndPtr snd;
 	MsgRcvPtr rcv;
@@ -262,7 +270,7 @@ static void Receive( Client client, void *data, char *line )
 
 	err = sscanf( line ,"%d %d", &kind_of_msg, &id );
 	arg = strstr( line , ARG_START );
-	if ( (err != 2) || (arg == NULL)  )
+	if ( (err != 2) || (arg == 0)  )
 		{
 		printf("Quitting bad format  %s\n",  line);
 		MsgSendTo( client, Error, Error, "bad format request expected 'type id ...'" );
@@ -271,7 +279,7 @@ static void Receive( Client client, void *data, char *line )
 		return;
 		}
 	arg++;
-	clnt = (BusClientPtr)data;
+	clnt = (IvyClientPtr)data;
 	switch( kind_of_msg )
 		{
 		case Bye:
@@ -332,7 +340,7 @@ static void Receive( Client client, void *data, char *line )
 		case StartRegexp:
 			
 #ifdef DEBUG
-			printf("Regexp Start id=%d App='%s'\n",  id, arg);
+			printf("Regexp Start id=%d Application='%s'\n",  id, arg);
 #endif //DEBUG
 			clnt->app_name = strdup( arg );
 			clnt->app_port = id;
@@ -341,7 +349,7 @@ static void Receive( Client client, void *data, char *line )
 #ifdef DEBUG
 			printf("Quitting  already connected %s\n",  line);
 #endif //DEBUG
-			SendError( clnt, 0, "Application already connected" );
+			IvySendError( clnt, 0, "Applicationlication already connected" );
 			SocketClose( client );
 			}
 			break;
@@ -352,7 +360,7 @@ static void Receive( Client client, void *data, char *line )
 #endif //DEBUG
 			if ( application_callback )
 				{
-				(*application_callback)( clnt, application_user_data, BusApplicationConnected );
+				(*application_callback)( clnt, application_user_data, IvyApplicationConnected );
 				}
 			if ( ready_message )
 				{
@@ -379,7 +387,7 @@ static void Receive( Client client, void *data, char *line )
 					while ( arg )
 						{
 						argv[argc++] = arg;
-						arg = strtok( NULL, ARG_END );
+						arg = strtok( 0, ARG_END );
 						}
 #ifdef DEBUG
 					printf("Calling  id=%d argc=%d for %s\n", id, argc,rcv->regexp);
@@ -408,7 +416,7 @@ static void Receive( Client client, void *data, char *line )
 
 			if ( application_die_callback)
 				(*application_die_callback)( clnt, application_die_user_data, id );
-			BusCleanup();
+			IvyCleanup();
 			exit(0);
 			break;
 
@@ -419,14 +427,14 @@ static void Receive( Client client, void *data, char *line )
 		
 }
 
-static BusClientPtr SendService( Client client )
+static IvyClientPtr SendService( Client client )
 {
-	BusClientPtr clnt;
+	IvyClientPtr clnt;
 	MsgRcvPtr msg;
 	LIST_ADD( clients, clnt )
 	if ( clnt )
 		{
-		clnt->msg_send = NULL;
+		clnt->msg_send = 0;
 		clnt->client = client;
 		clnt->app_name = strdup("Unknown");
 		clnt->app_port = 0;
@@ -442,14 +450,16 @@ static BusClientPtr SendService( Client client )
 
 static void ClientDelete( Client client, void *data )
 {
-	BusClientPtr clnt;
+	IvyClientPtr clnt;
 	MsgSndPtr msg;
+#ifdef DEBUG
 	char *remotehost;
 	unsigned short remoteport;
-	clnt = (BusClientPtr)data;
+#endif
+	clnt = (IvyClientPtr)data;
 	if ( application_callback )
 				{
-				(*application_callback)( clnt, application_user_data, BusApplicationDisconnected );
+				(*application_callback)( clnt, application_user_data, IvyApplicationDisconnected );
 				}
 	
 #ifdef DEBUG
@@ -501,7 +511,7 @@ static void BroadcastReceive( Client client, void *data, char *line )
 	if ( version != VERSION )
 		{
 		/* ignore the message */
-		printf(" Bad Bus verion number expected %d receive %d from %s:%d\n", VERSION,version,remotehost, remoteport);
+		printf(" Bad Ivy verion number expected %d receive %d from %s:%d\n", VERSION,version,remotehost, remoteport);
 		return;
 		}
 	/* check if we receive our own message 
@@ -513,22 +523,24 @@ static void BroadcastReceive( Client client, void *data, char *line )
 #endif //DEBUG
 
 	/* connect to the service and send the regexp */
-	app = SocketConnectAddr(SocketGetRemoteAddr(client), serviceport, NULL, Receive, ClientDelete );
+	app = SocketConnectAddr(SocketGetRemoteAddr(client), serviceport, 0, Receive, ClientDelete );
 	if ( app )
 		{
-		BusClientPtr clnt;
+		IvyClientPtr clnt;
 		clnt = SendService( app );
 		SocketSetData( app, clnt);
 		}
 }
-void BusInit(const char *AppName, unsigned short busnumber, const char *ready, 
-			 BusApplicationCallback callback, void *data,
-			 BusDieCallback die_callback, void *die_data
+
+
+void IvyInit(const char *appname, unsigned short busnumber, const char *ready, 
+			 IvyApplicationCallback callback, void *data,
+			 IvyDieCallback die_callback, void *die_data
 			 )
 {
 	SocketInit();
 
-	ApplicationName = AppName;
+	ApplicationName = appname;
 	SupervisionPort = busnumber;
 	application_callback = callback;
 	application_user_data = data;
@@ -537,39 +549,34 @@ void BusInit(const char *AppName, unsigned short busnumber, const char *ready,
 	ready_message = ready;
 	server = SocketServer( ANYPORT, ClientCreate, ClientDelete, Receive );
 	ApplicationPort = SocketServerGetPort(server);
-	broadcast =  SocketBroadcastCreate( SupervisionPort, NULL, BroadcastReceive );
+	broadcast =  SocketBroadcastCreate( SupervisionPort, 0, BroadcastReceive );
 
 }
 
-void BusClasses( int argc, const char **argv)
+void IvyClasses( int argc, const char **argv)
 {
 	messages_classes_count = argc;
 	messages_classes = argv;
 }
 
 
-void BusStart()
+void IvyStart (const char* domains)
 {
 
-#if 1
 	unsigned long mask = 0xffffffff; 
 	unsigned char elem = 0;
 	int numdigit = 0;
 	int numelem = 0;
 	int error = 0;
-#else
-	char* nextcomma;
-	int end = 0;
-	struct in_addr in;
-	unsigned long addr;
-#endif
+
 	/* find broadcast address list */
 
-	char* p = getenv ("IVYDOMAINS");
+	const char* p = domains;
+	if (!p)
+		p = getenv ("IVYDOMAINS");
 	if (!p) 
-		p = DefaultBusDomains;
+		p = DefaultIvyDomains;
 
-#if 1
 	/* parse broadcast address list
 	   This is painful but inet_aton is sloppy.
 	   If someone knows other builtin routines that do that... */
@@ -593,7 +600,7 @@ void BusStart()
 
 			/* addresses are terminated by a comma or end of string */
 			} else {
-				printf ("Brodadcasting on network %x, port %d\n", mask, SupervisionPort);
+				printf ("Broadcasting on network %lx, port %d\n", mask, SupervisionPort);
 				SocketSendBroadcast (broadcast, mask, SupervisionPort, "%d %hu\n", VERSION, ApplicationPort); 
 				numelem = 0;
 				mask = 0xffffffff;
@@ -623,28 +630,6 @@ void BusStart()
 			break;
 		++p;
 	}
-#else
-	while (*p) {
-		while (*p == ' ')
-			p++;
-		nextcomma = index (p, ',');
-		if (nextcomma)
-			*nextcomma = '\0';
-		else
-			end = 1;
-		if (inet_aton (p, &in)) {
-			printf ("%x\n", ntohl (in.s_addr));
-			SocketSendBroadcast (broadcast, ntohl (in.s_addr), SupervisionPort, "%d %hu\n", VERSION, ApplicationPort);
-			printf ("%x\n", 143 << 24 | 196 << 16 | 1 << 8 | 255);
-		} else {
-			printf ("bad broadcast address %s\n", p);
-		}
-		if (end)
-			break;
-		else
-			p = nextcomma+1;
-	}
-#endif
 
 	fprintf (stderr,"Listening on TCP:%hu\n",ApplicationPort);
 }
@@ -652,7 +637,7 @@ void BusStart()
 /* desabonnements */
 void UnbindMsg( MsgRcvPtr msg )
 {
-BusClientPtr clnt;
+IvyClientPtr clnt;
 	/* Send to already connected clients */
 	LIST_EACH( clients, clnt )
 	{
@@ -664,7 +649,7 @@ BusClientPtr clnt;
 static MsgRcvPtr _BindMsg( MsgCallback callback, void *user_data, const char *regexp )
 {
 	static int recv_id = 0;
-	BusClientPtr clnt;
+	IvyClientPtr clnt;
 	MsgRcvPtr msg;
 	/* add Msg to the query list */
 	LIST_ADD( msg_recv, msg );
@@ -683,7 +668,8 @@ static MsgRcvPtr _BindMsg( MsgCallback callback, void *user_data, const char *re
 	}
 	return msg;
 }
-MsgRcvPtr BindMsg( MsgCallback callback, void *user_data, const char *fmt_regex, ... )
+
+MsgRcvPtr IvyBindMsg( MsgCallback callback, void *user_data, const char *fmt_regex, ... )
 {
 	char buffer[4096];
 	va_list ap;
@@ -693,10 +679,11 @@ MsgRcvPtr BindMsg( MsgCallback callback, void *user_data, const char *fmt_regex,
 	va_end ( ap );
 	return _BindMsg( callback, user_data, buffer );
 }
+
 static int _SendMsg( const char *message )
 {
-BusClientPtr clnt;
-int match_count = 0;
+	IvyClientPtr clnt;
+	int match_count = 0;
 
 	/* recherche dans la liste des requetes recues de mes clients */
 	LIST_EACH( clients, clnt )
@@ -709,7 +696,7 @@ int match_count = 0;
 	return match_count;
 }
 
-int SendMsg(const char *fmt, ...)
+int IvySendMsg(const char *fmt, ...)
 {
 	char buffer[4096];
 	va_list ap;
@@ -720,7 +707,7 @@ int SendMsg(const char *fmt, ...)
 	return _SendMsg( buffer );
 }
 
-void SendError( BusClientPtr app, int id, const char *fmt, ... )
+void IvySendError( IvyClientPtr app, int id, const char *fmt, ... )
 {
 	char buffer[4096];
 	va_list ap;
@@ -731,62 +718,62 @@ void SendError( BusClientPtr app, int id, const char *fmt, ... )
 	MsgSendTo( app->client, Error, id, buffer);
 }
 
-void BindDirectMsg( MsgDirectCallback callback, void *user_data)
+void IvyBindDirectMsg( MsgDirectCallback callback, void *user_data)
 {
-direct_callback = callback;
-direct_user_data = user_data;
+	direct_callback = callback;
+	direct_user_data = user_data;
 }
 
-void SendDirectMsg( BusClientPtr app, int id, char *msg )
+void IvySendDirectMsg( IvyClientPtr app, int id, char *msg )
 {
 	MsgSendTo( app->client, DirectMsg, id, msg);
 }
 
-void SendDieMsg( BusClientPtr app )
+void IvySendDieMsg( IvyClientPtr app )
 {
 	MsgSendTo( app->client, Die, 0, "" );
 }
 
-char *GetApplicationName( BusClientPtr app )
+char *IvyGetApplicationName( IvyClientPtr app )
 {
 	if ( app && app->app_name ) 
 		return app->app_name;
 	else return "Unknown";
 }
 
-char *GetApplicationHost( BusClientPtr app )
+char *IvyGetApplicationHost( IvyClientPtr app )
 {
 	if ( app && app->client ) 
 		return SocketGetPeerHost( app->client );
-	else return NULL;
+	else return 0;
 }
 
-void BusDefaultApplicationCallback( BusClientPtr app, void *user_data, BusApplicationEvent event)
+void IvyDefaultApplicationCallback( IvyClientPtr app, void *user_data, IvyApplicationEvent event)
 {
 	switch ( event )  {
-	case BusApplicationConnected:
-		printf("Application: %s ready on %s\n",GetApplicationName( app ), GetApplicationHost(app));
+	case IvyApplicationConnected:
+		printf("Application: %s ready on %s\n", IvyGetApplicationName( app ), IvyGetApplicationHost(app));
 		break;
-	case BusApplicationDisconnected:
-		printf("Application: %s bye on %s\n",GetApplicationName( app ), GetApplicationHost(app));
+	case IvyApplicationDisconnected:
+		printf("Application: %s bye on %s\n", IvyGetApplicationName( app ), IvyGetApplicationHost(app));
 		break;
 	default:
-		printf("Application: %s unkown event %d\n",GetApplicationName( app ), event);
+		printf("Application: %s unkown event %d\n",IvyGetApplicationName( app ), event);
 		break;
 	}
 }
 
-BusClientPtr GetApplication( char *name )
+IvyClientPtr IvyGetApplication( char *name )
 {
-	BusClientPtr app = NULL;
+	IvyClientPtr app = 0;
 	LIST_ITER( clients, app, strcmp(name, app->app_name) != 0 );
 	return app;
 }
 
-char *GetApplicationList()
+char *IvyGetApplicationList()
 {
 	static char applist[4096];
-	BusClientPtr app;
+	IvyClientPtr app;
 	applist[0] = '\0';
 	LIST_EACH( clients, app )
 		{
@@ -796,7 +783,7 @@ char *GetApplicationList()
 	return applist;
 }
 
-char **GetApplicationMessages( BusClientPtr app )
+char **IvyGetApplicationMessages( IvyClientPtr app )
 {
 	static char *messagelist[200];
 	MsgSndPtr msg;
