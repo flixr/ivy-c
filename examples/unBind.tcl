@@ -1,5 +1,5 @@
 #!/usr/bin/tclsh
-load ./libtclivy.so.3.6
+load ../src/libtclivy.so.3.6
 
 proc connect { client action } { }
 

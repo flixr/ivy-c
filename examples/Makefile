@@ -31,6 +31,5 @@ motifButtonIvy.o: motifButtonIvy.c
 motifButtonIvy: motifButtonIvy.o
 	$(CC) -o $@ $< $(MOTIFLIB) -lxtivy -lpcre $(EXTRALIB)
 
-
 clean:
 	rm -fR $(OBJS) $(TARGETS)
