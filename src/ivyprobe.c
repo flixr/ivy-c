@@ -13,6 +13,14 @@
  *	Please refer to file version.h for the
  *	copyright notice regarding this software
  */
+#define IVYMAINLOOP
+
+#ifdef XTMAINLOOP
+#undef IVYMAINLOOP
+#endif
+#ifdef GTKMAINLOOP
+#undef IVYMAINLOOP
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -25,7 +33,11 @@
 #endif
 #ifdef XTMAINLOOP
 #include "ivyxtloop.h"
-#else
+#endif
+#ifdef GTKMAINLOOP
+#include "ivygtkloop.h"
+#endif
+#ifdef IVYMAINLOOP
 #include "ivyloop.h"
 #endif
 #include "ivysocket.h"
@@ -61,7 +73,11 @@ void HandleStdin (Channel channel, HANDLE fd, void *data)
 	if  (!line)	{
 #ifdef XTMAINLOOP
 		IvyXtChannelClose (channel);
-#else
+#endif
+#ifdef GTKMAINLOOP
+		IvyGtkChannelClose(channel);
+#endif
+#ifdef IVYMAINLOOP
 		IvyChannelClose (channel);
 		IvyStop();
 #endif
@@ -160,7 +176,11 @@ void ApplicationCallback (IvyClientPtr app, void *user_data, IvyApplicationEvent
 		if  (app_count == wait_count)
 #ifdef XTMAINLOOP
 		IvyXtChannelSetUp (0, NULL, NULL, HandleStdin);
-#else
+#endif
+#ifdef GTKMAINLLOP
+		IvyGtkChannelSetUp( 0, NULL, NULL, HandleStdin);
+#endif
+#ifdef IVYMAINLOOP
 		IvyChannelSetUp (0, NULL, NULL, HandleStdin);
 #endif
 		break;
@@ -220,14 +240,18 @@ int main(int argc, char *argv[])
 	if  (wait_count == 0)
 #ifdef XTMAINLOOP
 		IvyXtChannelSetUp (0, NULL, NULL, HandleStdin);
-#else
+#endif
+#ifdef GTKMAINLOOP
+		IvyGtkChannelSetUp (0, NULL, NULL, HandleStdin);
+#endif
+#ifdef IVYMAINLOOP
 		IvyChannelSetUp (0, NULL, NULL, HandleStdin);
 #endif
 
 	IvyStart (bus);
 
 	if  (timer_test) {
-#ifndef XTMAINLOOP
+#ifdef IVYMAINLOOP
 		TimerRepeatAfter (TIMER_LOOP, 1000, TimerCall, (void*)1);
 		TimerRepeatAfter (5, 5000, TimerCall, (void*)5);
 #endif
@@ -235,7 +259,11 @@ int main(int argc, char *argv[])
 
 #ifdef XTMAINLOOP
 	XtAppMainLoop (cntx);
-#else
+#endif
+#ifdef GTKMAINLOOP
+	gtk_main();
+#endif
+#ifdef IVYMAINLOOP
 	IvyMainLoop (0);
 #endif
 	return 0;
