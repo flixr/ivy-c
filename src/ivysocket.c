@@ -30,6 +30,9 @@
 #include <unistd.h>
 #include <sys/time.h>
 #include <sys/types.h>
+#ifdef __APPLE__
+#define _BSD_SOCKLEN_T_ int
+#endif
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>

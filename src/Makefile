@@ -27,8 +27,8 @@ GTKLIB = `gtk-config --libs`
 #GTKLIB = -L/usr/lib -L/usr/X11R6/lib
 GLUTINC = -I/usr/include -I.
 GLUTLIB = -L.
-TCLINCL	= -I/usr/include/tcl8.2
-TCLLIB = -ltcl8.2
+TCLINCL	= -I/usr/include/tcl8.4
+TCLLIB = -ltcl8.4
 
 CC=gcc
 CFLAGS = -g

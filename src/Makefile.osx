@@ -17,10 +17,10 @@
 
 
 MAJOR=3
-MINOR=4
+MINOR=5
 
 CC=gcc
-CFLAGS = -g
+CFLAGS = -g -I/usr/X11R6/include
 OBJ = ivyloop.o timer.o ivysocket.o ivy.o 
 GOBJ = ivyloop.o timer.o ivysocket.o givy.o
 #GLUTOBJ = ivyglutloop.o ivysocket.o ivy.o
@@ -85,7 +85,7 @@ libivy.$(MAJOR).$(MINOR).dylib: $(OBJ)
 #	$(GLUTOBJ) $(GLUTLIB) -lX11 -lc
 
 clean:
-	-rm -f $(TARGETS) *.o *.a *.so *.so.* *~
+	-rm -f $(TARGETS) *.o *.a *.so *.so.* *~ *.dylib
 
 installlibs: static-libs shared-libs
 	test -d $(PREFIX)/usr/lib || mkdirhier $(PREFIX)/usr/lib
