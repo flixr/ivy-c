@@ -165,7 +165,7 @@ IvyAppCB(IvyClientPtr	app,
 
   size = strlen(filter->script) + INTEGER_SPACE;
   if (entry) {
-    size += strlen(IvyGetApplicationName(app)) + 1;
+    size += strlen(IvyGetApplicationName(app)) + 3;
   }
   else {
     size += 4;
@@ -174,7 +174,9 @@ IvyAppCB(IvyClientPtr	app,
   strcpy(script_to_call, filter->script);
   strcat(script_to_call, " ");
   if (entry) {
+	strcat(script_to_call, " \"");
     strcat(script_to_call, IvyGetApplicationName(app));
+	strcat(script_to_call, "\"");
   }
   else {
     strcat(script_to_call, "???");
