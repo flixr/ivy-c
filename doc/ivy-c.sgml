@@ -32,18 +32,22 @@
 <firstname>Stéphane</firstname><surname>Chatty</surname>
 <affiliation><address><email>chatty@cena.fr</email></address></affiliation>
 </author>
+<author>
+<firstname>Yannick</firstname><surname>Jestin</surname>
+<affiliation><address><email>jestin@cena.fr</email></address></affiliation>
+</author>
 </authorgroup>
-<date>August 4, 2000</date>
+<date>December 11, 2002</date>
 
 <copyright>
-<year>2000</year>
+<year>1998-2002</year>
 <holder>Centre d'Études de la Navigation Aérienne</holder>
 </copyright>
 
 <abstract>
 <para>
 This document is a programmer's guide that describes how to use the Ivy C
-library to connect applications to an Ivy bus. This guide describes version 3.0
+library to connect applications to an Ivy bus. This guide describes version 3.2
 of the library.
 </para>
 </abstract>
@@ -505,20 +509,171 @@ library, this is obtained by passing a null value to <function>IvyStart</functio
 
 <sect1>
 <title>Using Ivy with another main loop</title>
+<para>
+The ivyprobe source code holds examples of use of Ivy within other main loops,
+namely Xt and Gtk.
+</para>
 
 <sect2>
+
 <title>Using Ivy with the X Toolkit</title>
-<para>to be written</para>
+<para>The basics for using the Ivy withing the XtAppMainLoop() are the
+following ones:
+</para>
+
+<itemizedlist>
+<listitem><para>include the ivy.h and ivyxtloop.h</para>
+<listitem><para>link with libxtivy.o ( add the <option>-lxtivy</option> ld flag and NOT the <option>-livy</option> )</para>
+<listitem><para>create the ivy bus</para>
+  <itemizedlist>
+  <listitem><para>IvyXtChannelAppContect(app_context) with an existing Xt
+  context</para>
+  <listitem><para>You can add channels to be handled by Ivy, for instance,
+  stdin, with the IvyXtChannelSetUp function
+  <listitem><para>IvyInit(char *name,char *readyMessage,IvyApplicationCallback
+  cb,void *cbUserData,IvyDieCallback dieCb,void *dieCbUserdata)</para>
+  <listitem><para>IvyBindMsg() for the behavior</para>
+  <listitem><para>IvyStart(char *domain)</para>
+  </itemizedlist>
+<listitem><para>run the Xt main loop with XtAppMainLoop(app_context)</para>
+</itemizedlist>
+
+<para>Here is an example, motifButtonIvy.c. You can compile it with the
+following command line:
+<programlisting>
+cc -o motifButtonIvy motifButtonIvy.c -lxtivy
+</programlisting>
+The result is a simple single-buttoned application emitting a message on the
+bus. The message defaults to "foo", but can be updated via an Ivy Button
+text=bar message.
+
+<programlisting>
+#include &lt;stdlib.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;strings.h&gt;
+#include &lt;Xm/PushB.h&gt;
+#include &lt;ivy.h&gt;
+#include &lt;ivyxtloop.h&gt;
+
+void myMotifCallback(Widget w,XtPointer client_d,XtPointer call_d){
+  IvySendMsg (*((char**)client_d));
+}
+void textCallback(IvyClientPtr app, void *user_data, int argc, char *argv[]){
+  *((char **)user_data)=argv[0];
+}
+void DieCallback (IvyClientPtr app, void *data, int id){
+  exit(0);
+}
+int main(int argc,char *argv[]){
+  Widget toplevel,pushb;
+  XtAppContext app_context;
+  Arg myargs[10];
+  char *bus=getenv("IVYBUS");
+  char *tosend="foo";
+  toplevel=XtAppInitialize(&amp;app_context,"Ivy Button",NULL,0,&amp;argc,argv,NULL,myargs,0);
+  pushb=XmCreatePushButton(toplevel,"send message",myargs,1);
+  XtManageChild(pushb);
+  XtAddCallback(pushb,XmNactivateCallback,myMotifCallback,&amp;tosend);
+  XtRealizeWidget(toplevel);
+  IvyXtChannelAppContext(app_context);
+  IvyInit("IvyMotif","IvyMotif connected",NULL,NULL,DieCallback,NULL);
+  IvyBindMsg(textCallback,&amp;tosend,"^Ivy Button text=(.*)");
+  IvyStart(bus);
+  XtAppMainLoop(app_context);
+}
+</programlisting>
+</para>
 </sect2>
 
 <sect2>
 <title>Using Ivy with Tcl/Tk</title>
-<para>to be written</para>
+<para>Just load the libtclivy.so package, and use the following commands
+<programlisting>
+#!/usr/bin/tclsh
+Ivy::init $name $hellomessge connectproc dieproc
+Ivy::start $domain
+Ivy::bind $regexp ballback
+Ivy::applist
+Ivy::send $message
+Ivy::applist
+mainloop
+</programlisting>
+A full example in Tcl/Tk is provided here:
+<programlisting>
+#!/usr/bin/wish
+load libtclivy.so.3.4
+proc connect {args} { }
+proc send { } {
+  global tosend
+  Ivy::send $tosend
+}
+proc dotext {text} {
+  global tosend
+  set tosend $text
+}
+Ivy::init "IvyTCLTK" "IvyTCLTK READY" connect echo
+Ivy::start 127.255.255.255:2010
+Ivy::bind "^Ivy Button text=(.*)" dotext
+set tosend foo
+button .send -command send -text "send msg"
+pack .send
+</programlisting>
+</para>
 </sect2>
 
 <sect2>
 <title>Using Ivy with Gtk</title>
-<para>to be written</para>
+<para>There is little to do to make your gtk applications Ivy aware: just add
+the following lines into your code:
+<programlisting>
+#include &lt;ivy.h&gt;
+#include &lt;ivygtkloop.h&gt;
+...
+IvyInit ("IvyGtkButton", "IvyGtkButton READY",NULL,NULL,NULL,NULL);
+IvyBindMsg(textCallback,&amp;tosend,"^Ivy Button text=(.*)");
+IvyStart (bus);
+</programlisting>
+</para>
+
+<para>A full example: gtkIvyButton.c  is provided below, compile it with the
+-lgtkivy flag. The other flags depend on your system installation ( replace
+pkg-config with gtk-config for older gnome1 libs)
+<programlisting>
+#include &lt;gtk/gtk.h&gt;
+#include &lt;ivy.h&gt;
+#include &lt;ivygtkloop.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+
+void hello( GtkWidget *widget, gpointer   data ) {
+  fprintf(stderr,"%s\n",*((char**)data));
+  IvySendMsg(*((char**)data));
+}
+
+void textCallback(IvyClientPtr app, void *user_data, int argc, char *argv[]){
+  *((char **)user_data)=argv[0];
+}
+
+int main( int   argc, char *argv[] ) {
+    GtkWidget *window;
+    GtkWidget *button;
+    char *bus=getenv("IVYBUS");
+    char *tosend="foo";
+    gtk_init (&amp;argc, &amp;argv);
+    window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+    gtk_container_set_border_width (GTK_CONTAINER (window), 10);
+    button = gtk_button_new_with_label ("send message");
+    g_signal_connect (G_OBJECT(button),"clicked",G_CALLBACK(hello),&amp;tosend); 
+    gtk_container_add (GTK_CONTAINER(window),button);
+    gtk_widget_show (button);
+    gtk_widget_show (window);
+    IvyInit ("IvyGtkButton", "IvyGtkButton READY",NULL,NULL,NULL,NULL);
+    IvyBindMsg(textCallback,&amp;tosend,"^Ivy Button text=(.*)");
+    IvyStart (bus);
+    gtk_main ();
+    return 0;
+}
+</programlisting>
 </sect2>
 
 <sect2>
