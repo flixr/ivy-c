@@ -1,3 +1,10 @@
+ivy-c (3.2-3) unstable; urgency=low
+
+  * bad version dependency of ivy-c-dev
+  * the ivygtkprobe is added to the package
+
+ -- Christophe Mertz <mertz@tls.cena.fr>  Mon, 13 Mar 2000 15:44:52 +0100
+
 ivy-c (3.2-2) unstable; urgency=low
 
   * html docs are re-included in /usr/share/doc
