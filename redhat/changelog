@@ -79,4 +79,21 @@ $ChangeLog = ' * Sat Feb 20 1999 Stéphane Chatty <chatty@cenatoulouse.dgac.fr>
 - Generation of version 3.6-1
 - updates redhat files to coorect rules file for rpmize
 
+ * Tue Sep 7 2004 Alexandre Bustico <bustico@cena.fr>
+- Generation of version 3.6-1
+- update rules file
+
+ * Tue Sep 7 2004 Alexandre Bustico <bustico@cena.fr>
+- Generation of version 3.6-1
+
+ * Tue Sep 7 2004 Alexandre Bustico <bustico@cena.fr>
+- Generation of version 3.6-1
+- no more libgtkivy, replaced by libgivy, changing redhat/files rules to take change
+
+ * Tue Sep 7 2004 Alexandre Bustico <bustico@cena.fr>
+- Generation of version 3.6-1
+
+ * Tue Sep 7 2004 Alexandre Bustico <bustico@cena.fr>
+- Generation of version 3.6-1
+
 ';

@@ -10,9 +10,6 @@
 /usr/man/man1/ivyprobe.1
 /usr/X11R6/bin/ivygtkprobe
 /usr/X11R6/bin/ivyxtprobe
-/usr/X11R6/lib/libgtkivy.so
-/usr/X11R6/lib/libgtkivy.so.3
-/usr/X11R6/lib/libgtkivy.so.3.6
 /usr/X11R6/lib/libxtivy.so
 /usr/X11R6/lib/libxtivy.so.3
 /usr/X11R6/lib/libxtivy.so.3.6
