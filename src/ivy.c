@@ -451,9 +451,10 @@ static void ClientDelete( Client client, void *data )
 				{
 				(*application_callback)( clnt, application_user_data, BusApplicationDisconnected );
 				}
-	SocketGetRemote( client, &remotehost, &remoteport );
 	
 #ifdef DEBUG
+	/* probably bogus call, but this is for debug only anyway */
+	SocketGetRemote( client, &remotehost, &remoteport );
 	printf("Deconnexion de %s:%hu\n", remotehost, remoteport );
 #endif //DEBUG
 
