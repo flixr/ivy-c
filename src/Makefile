@@ -23,28 +23,35 @@ XTINC = /usr/X11R6/include
 XTLIB = /usr/X11R6/lib 
 GTKINC = /usr/include -I/usr/lib/glib/include
 GTKLIB = /usr/lib -L/usr/X11R6/lib
+GLUTINC = /usr/include -I.
+GLUTLIB = .
+
 CC=gcc
-CFLAGS = -g 
+CFLAGS = -g
 OBJ = ivyloop.o timer.o ivysocket.o ivy.o 
 GOBJ = ivyloop.o timer.o ivysocket.o givy.o
 XTOBJ = ivyxtloop.o ivysocket.o ivy.o
 GTKOBJ = ivygtkloop.o ivysocket.o ivy.o
+GLUTOBJ = ivyglutloop.o ivysocket.o ivy.o
 TCLOBJ = ivytcl.o ivysocket.o givy.o
-TARGETS = ivyprobe ivygtkprobe ivyxtprobe
+TARGETS = ivyprobe ivygtkprobe ivyxtprobe ivyglutprobe
 
 .c.o:
 	$(CC) $(CFLAGS) -c $*.c
 
 all: static-libs commands shared-libs
 
-static-libs: libivy.a libgivy.a libxtivy.a libgtkivy.a libtclivy.a
+static-libs: libivy.a libgivy.a libxtivy.a libgtkivy.a libtclivy.a libglutivy.a
 
-shared-libs: libivy.so.$(MAJOR).$(MINOR) libgivy.so.$(MAJOR).$(MINOR) libxtivy.so.$(MAJOR).$(MINOR) libgtkivy.so.$(MAJOR).$(MINOR) libtclivy.so.$(MAJOR).$(MINOR)
+shared-libs: libivy.so.$(MAJOR).$(MINOR) libgivy.so.$(MAJOR).$(MINOR) libxtivy.so.$(MAJOR).$(MINOR) libgtkivy.so.$(MAJOR).$(MINOR) libtclivy.so.$(MAJOR).$(MINOR) libglutivy.so.$(MAJOR).$(MINOR)
 
 commands: $(TARGETS)
 
 givy.o: ivy.c
 	$(CC) -DGNU_REGEXP -c $(CFLAGS) -o givy.o ivy.c
+
+ivyglutloop.o: ivyglutloop.c ivyglutloop.h
+	$(CC) -c $(CFLAGS) -I$(GLUTINC) -o ivyglutloop.o ivyglutloop.c
 
 ivygtkloop.o: ivygtkloop.c ivygtkloop.h
 	$(CC) -c $(CFLAGS) -I$(GTKINC) -o ivygtkloop.o ivygtkloop.c
@@ -64,6 +71,12 @@ ivygtkprobe.o : ivyprobe.c
 ivygtkprobe: ivygtkprobe.o libgtkivy.a
 	$(CC) -o ivygtkprobe ivygtkprobe.o -L. -L$(GTKLIB) -lgtkivy -lgtk -lgdk -lX11 -lSM -lICE
 
+ivyglutprobe.o : ivyprobe.c
+	$(CC)  $(CFLAGS) -c ivyprobe.c -o ivyglutprobe.o -I$(GLUTINC) -DGLUTMAINLOOP
+
+ivyglutprobe: ivyglutprobe.o libglutivy.a
+	$(CC) -o ivyglutprobe ivyglutprobe.o -L. -L$(GLUTLIB) -lglutivy -lglut -lGLU -lGL -lX11 -lXmu
+
 libivy.a: $(OBJ)
 	rm -f $@
 	ar q $@ $(OBJ)
@@ -79,6 +92,10 @@ libxtivy.a: $(XTOBJ)
 libgtkivy.a: $(GTKOBJ)
 	rm -f $@
 	ar cq $@ $(GTKOBJ)
+
+libglutivy.a: $(GLUTOBJ)
+	rm -f $@
+	ar cq $@ $(GLUTOBJ)
 
 libtclivy.a: $(TCLOBJ)
 	rm -f $@
@@ -97,6 +114,10 @@ libxtivy.so.$(MAJOR).$(MINOR): $(XTOBJ)
 libgtkivy.so.$(MAJOR).$(MINOR): $(GTKOBJ)
 	$(CC) -shared -Wl,-soname,libgtkivy.so.$(MAJOR) -o $@ \
 	$(GTKOBJ) -L$(GTKLIB) -lX11 -lc
+
+libglutivy.so.$(MAJOR).$(MINOR): $(GTKOBJ)
+	$(CC) -shared -Wl,-soname,libglutivy.so.$(MAJOR) -o $@ \
+	$(GLUTOBJ) -L$(GLUTLIB) -lX11 -lc
 
 libtclivy.so.$(MAJOR).$(MINOR): $(TCLOBJ)
 	$(CC) -shared -Wl,-soname,libtclivy.so.$(MAJOR) -o $@ \
@@ -142,6 +163,7 @@ installbins: commands
 	install -m755 ivyprobe $(PREFIX)/usr/bin
 	install -m755 ivyxtprobe $(PREFIX)/usr/X11R6/bin
 	install -m755 ivygtkprobe $(PREFIX)/usr/X11R6/bin
+	install -m755 ivyglutprobe $(PREFIX)/usr/X11R6/bin
 
 installdocs:
 	test -d $(PREFIX)/usr/doc/ivy-c || mkdirhier $(PREFIX)/usr/doc/ivy-c
