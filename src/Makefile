@@ -12,7 +12,7 @@
 XTINC = /usr/X11R6/include
 XTLIB = /usr/X11R6/lib 
 CC=gcc
-CFLAGS =  -g
+CFLAGS =  -g -Wall
 OBJ = ivyloop.o timer.o ivysocket.o ivy.o 
 GOBJ = ivyloop.o timer.o ivysocket.o givy.o
 XTOBJ = ivyxtloop.o ivysocket.o ivy.o
