@@ -579,3 +579,39 @@ void SocketSendBroadcast (Client client, unsigned long host, unsigned short port
 		perror ("*** send ***");
 	}	va_end (ap );
 }
+
+/* Socket Multicast */
+
+int SocketAddMember(Client client, unsigned long host )
+{
+	struct ip_mreq imr;
+/*
+Multicast datagrams with initial TTL 0 are restricted to the same host. 
+Multicast datagrams with initial TTL 1 are restricted to the same subnet. 
+Multicast datagrams with initial TTL 32 are restricted to the same site. 
+Multicast datagrams with initial TTL 64 are restricted to the same region. 
+Multicast datagrams with initial TTL 128 are restricted to the same continent. 
+Multicast datagrams with initial TTL 255 are unrestricted in scope. 
+*/
+	unsigned char ttl = 64 ; // Arbitrary TTL value.
+	/* wee need to broadcast */
+
+	imr.imr_multiaddr.s_addr = htonl( host );
+	imr.imr_interface.s_addr = INADDR_ANY; 
+	if(setsockopt(client->fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char *)&imr,sizeof(struct ip_mreq)) == -1 )
+		{
+      	perror("setsockopt() Cannot join group");
+      	fprintf(stderr, "Does your kernel support IP multicast extensions ?\n");
+      	return 0;
+    		}
+				
+  	if(setsockopt(client->fd, IPPROTO_IP, IP_MULTICAST_TTL, (char *)&ttl, sizeof(ttl)) < 0 )
+		{
+      	perror("setsockopt() Cannot set TTL");
+      	fprintf(stderr, "Does your kernel support IP multicast extensions ?\n");
+      	return 0;
+    		}
+
+	return 1;
+}
+

@@ -6,7 +6,7 @@
  *
  * 	Main and only file
  *
- *	Authors: François-Régis Colin <fcolin@cena.dgac.fr>
+ *	Authors: François-Régis Colin <fcolin@cena.fr>
  *
  *	$Id$
  * 
@@ -24,6 +24,10 @@
 #undef IVYMAINLOOP
 #endif
 
+#ifdef GLUTMAINLOOP
+#undef IVYMAINLOOP
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -38,6 +42,9 @@
 #endif
 #ifdef GTKMAINLOOP
 #include "ivygtkloop.h"
+#endif
+#ifdef GLUTMAINLOOP
+#include "ivyglutloop.h"
 #endif
 #ifdef IVYMAINLOOP
 #include "ivyloop.h"
@@ -78,6 +85,9 @@ void HandleStdin (Channel channel, HANDLE fd, void *data)
 #endif
 #ifdef GTKMAINLOOP
 		IvyGtkChannelClose(channel);
+#endif
+#ifdef GLUTMAINLOOP
+		IvyGlutChannelClose(channel);
 #endif
 #ifdef IVYMAINLOOP
 		IvyChannelClose (channel);
@@ -183,6 +193,9 @@ void ApplicationCallback (IvyClientPtr app, void *user_data, IvyApplicationEvent
 #ifdef GTKMAINLLOP
 		IvyGtkChannelSetUp( 0, NULL, NULL, HandleStdin);
 #endif
+#ifdef GLUTMAINLLOP
+		IvyGlutChannelSetUp( 0, NULL, NULL, HandleStdin);
+#endif
 #ifdef IVYMAINLOOP
 		IvyChannelSetUp (0, NULL, NULL, HandleStdin);
 #endif
@@ -208,7 +221,14 @@ void TimerCall(TimerId id, void *user_data, unsigned long delta)
 	/*if  ((int)user_data == 5) TimerModify (id, 2000);*/
 }
 #endif
-
+#ifdef GLUTMAINLLOP
+void
+display(void)
+{
+  glClear(GL_COLOR_BUFFER_BIT);
+  glFlush();
+}
+#endif
 
 int main(int argc, char *argv[])
 {
@@ -236,6 +256,12 @@ int main(int argc, char *argv[])
 	cntx = XtCreateApplicationContext();
 	IvyXtChannelAppContext (cntx);
 #endif
+#ifdef GLUTMAINLLOOP
+	glutInit(&argc, argv);
+	glutCreateWindow("IvyProbe Test");
+	glClearColor(0.49, 0.62, 0.75, 0.0);
+	glutDisplayFunc(display);
+#endif
 	IvyInit ("IVYPROBE", "IVYPROBE READY", ApplicationCallback,NULL,NULL,NULL);
 	for  (; optind < argc; optind++)
 		IvyBindMsg (Callback, NULL, argv[optind]);
@@ -246,6 +272,9 @@ int main(int argc, char *argv[])
 #endif
 #ifdef GTKMAINLOOP
 		IvyGtkChannelSetUp (0, NULL, NULL, HandleStdin);
+#endif
+#ifdef GLUTMAINLOOP
+		IvyGlutChannelSetUp (0, NULL, NULL, HandleStdin);
 #endif
 #ifdef IVYMAINLOOP
 		IvyChannelSetUp (0, NULL, NULL, HandleStdin);
@@ -266,6 +295,10 @@ int main(int argc, char *argv[])
 #ifdef GTKMAINLOOP
 	gtk_main();
 #endif
+#ifdef GLUTMAINLOOP
+	glutMainLoop();
+#endif
+
 #ifdef IVYMAINLOOP
 	IvyMainLoop (0);
 #endif

@@ -608,7 +608,7 @@ void IvyStart (const char* bus)
 	 */
 	broadcast =  SocketBroadcastCreate (SupervisionPort, 0, BroadcastReceive );
 
-
+		
 	/* then, if we only have a port number, resort to default value for network */
 	if (p == q)
 		p = DefaultIvyBus;
@@ -636,6 +636,10 @@ void IvyStart (const char* bus)
 			/* addresses are terminated by a comma or end of string */
 			} else {
 				printf ("Broadcasting on network %lx, port %d\n", mask, SupervisionPort);
+				// test mask value agaisnt CLASS D
+				if ( IN_MULTICAST( mask ) )
+					SocketAddMember (broadcast , mask );
+
 				SocketSendBroadcast (broadcast, mask, SupervisionPort, "%d %hu\n", VERSION, ApplicationPort); 
 				numelem = 0;
 				mask = 0xffffffff;
