@@ -300,7 +300,7 @@ static int CheckConnected( IvyClientPtr clnt )
 	struct in_addr *addr1;
 	struct in_addr *addr2;
 
-	if ( clnt->app_port == 0 )
+	if ( clnt->app_port == 0 ) /* Old Ivy Protocol Dont check */
 		return 0;
 	/* recherche dans la liste des clients de la presence de clnt */
 	IVY_LIST_EACH( clients, client )
