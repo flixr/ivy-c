@@ -1,7 +1,18 @@
+#
+# Ivy, C interface
+#
+# Copyright 1997-1998
+# Centre d'Etudes de la Navigation Aerienne
+#
+# Makefile
+#
+# $Id$
+#
+
 XTINC = /usr/X11R6/include
 XTLIB = /usr/X11R6/lib 
 CC=gcc
-CFLAGS =  -g -DDEBUG
+CFLAGS =  -g
 OBJ = ivyloop.o timer.o ivysocket.o ivy.o 
 GOBJ = ivyloop.o timer.o ivysocket.o givy.o
 XTOBJ = ivyxtloop.o ivysocket.o ivy.o
@@ -33,13 +44,16 @@ testxtivy: testxtivy.o libxtivy.a
 	$(CC) -o testxtivy testxtivy.o -L. -L$(XTLIB) -lxtivy -lXt -lX11
 
 libivy.a: $(OBJ)
+	rm -f $@
 	ar q $@ $(OBJ)
 
 libgivy.a: $(GOBJ)
+	rm -f $@
 	ar q $@ $(GOBJ)
 
 libxtivy.a: $(XTOBJ)
-	ar q $@ $(XTOBJ)
+	rm -f $@
+	ar cq $@ $(XTOBJ)
 
 libivy.so.$(VERSION).$(MAJOR): $(OBJ)
 	$(CC) -shared -Wl,-soname,libivy.so.$(VERSION) -o $@ $(OBJ) -lc
