@@ -15,7 +15,7 @@ Description: Ivy software bus. runtime Package
 
 Package: ivy-c-dev
 Architecture: any
-Depends: ivy-c (>= 3.2-3), libc6-dev, xlib6g-dev, tcl8.2-dev
+Depends: ivy-c (>= 3.2-3), libc6-dev, xlib6g-dev, tcl8.2-dev, libgtk1.2-dev
 Description: Ivy software bus. development Package
  This package is needed for compiling applications using ivy-c.
  Ivy is mostly a communication convention between processes, implemented
