@@ -1,7 +1,7 @@
 #
 #	Ivy, C interface
 #
-#	Copyright (C) 1997-2000
+#	Copyright (C) 1997-2002
 #	Centre d'Études de la Navigation Aérienne
 #
 # 	Makefile
@@ -19,12 +19,17 @@
 MAJOR=3
 MINOR=2
 
-XTINC = /usr/X11R6/include
-XTLIB = /usr/X11R6/lib 
-GTKINC = /usr/include -I/usr/lib/glib/include
-GTKLIB = /usr/lib -L/usr/X11R6/lib
-GLUTINC = /usr/include -I.
-GLUTLIB = .
+XTINC = -I/usr/X11R6/include
+XTLIB = -L/usr/X11R6/lib 
+GTKINC = `gtk-config --cflags`
+#GTKINC = -I/usr/include/gtk-1.2 -I/usr/include/glib-1.2 -I/usr/lib/glib/include -I/usr/X11R6/include
+GTKLIB = `gtk-config --libs`
+#GTKLIB = -L/usr/lib -L/usr/X11R6/lib
+GLUTINC = -I/usr/include -I.
+GLUTLIB = -L.
+TCLVERSION = 8.2
+TCLINC = -I/usr/include/tcl$(TCLVERSION)
+
 
 CC=gcc
 CFLAGS = -g
@@ -50,35 +55,38 @@ shared-libs: libivy.so.$(MAJOR).$(MINOR) libgivy.so.$(MAJOR).$(MINOR) libxtivy.s
 
 commands: $(TARGETS)
 
+ivytcl.o: ivytcl.c
+	$(CC) -DGNU_REGEXP -c $(CFLAGS) $(TCLINC) -o ivytcl.o ivytcl.c
+
 givy.o: ivy.c
 	$(CC) -DGNU_REGEXP -c $(CFLAGS) -o givy.o ivy.c
 
 ivyglutloop.o: ivyglutloop.c ivyglutloop.h
-	$(CC) -c $(CFLAGS) -I$(GLUTINC) -o ivyglutloop.o ivyglutloop.c
+	$(CC) -c $(CFLAGS) $(GLUTINC) -o ivyglutloop.o ivyglutloop.c
 
 ivygtkloop.o: ivygtkloop.c ivygtkloop.h
-	$(CC) -c $(CFLAGS) -I$(GTKINC) -o ivygtkloop.o ivygtkloop.c
+	$(CC) -c $(CFLAGS) $(GTKINC) -o ivygtkloop.o ivygtkloop.c
 
 ivyprobe: ivyprobe.o libivy.a
 	$(CC)  $(CFLAGS) -o ivyprobe ivyprobe.o -L. -livy
 
 ivyxtprobe.o : ivyprobe.c
-	$(CC)  $(CFLAGS) -c ivyprobe.c -o ivyxtprobe.o -I$(XTINC) -DXTMAINLOOP
+	$(CC)  $(CFLAGS) -c ivyprobe.c -o ivyxtprobe.o $(XTINC) -DXTMAINLOOP
 
 ivyxtprobe: ivyxtprobe.o libxtivy.a
-	$(CC) -o ivyxtprobe ivyxtprobe.o -L. -L$(XTLIB) -lxtivy -lXt -lX11 -lSM -lICE
+	$(CC) -o ivyxtprobe ivyxtprobe.o -L. $(XTLIB) -lxtivy -lXt -lX11 -lSM -lICE
 
 ivygtkprobe.o : ivyprobe.c
-	$(CC)  $(CFLAGS) -c ivyprobe.c -o ivygtkprobe.o -I$(XTINC) -DGTKMAINLOOP
+	$(CC)  $(CFLAGS) -c ivyprobe.c -o ivygtkprobe.o $(XTINC) -DGTKMAINLOOP
 
 ivygtkprobe: ivygtkprobe.o libgtkivy.a
-	$(CC) -o ivygtkprobe ivygtkprobe.o -L. -L$(GTKLIB) -lgtkivy -lgtk -lgdk -lglib -lX11 -lSM -lICE -lm
+	$(CC) -o ivygtkprobe ivygtkprobe.o -L. $(GTKLIB) -lgtkivy -lgtk -lgdk -lglib -lX11 -lSM -lICE -lm
 
 ivyglutprobe.o : ivyprobe.c
-	$(CC)  $(CFLAGS) -c ivyprobe.c -o ivyglutprobe.o -I$(GLUTINC) -DGLUTMAINLOOP
+	$(CC)  $(CFLAGS) -c ivyprobe.c -o ivyglutprobe.o $(GLUTINC) -DGLUTMAINLOOP
 
 ivyglutprobe: ivyglutprobe.o libglutivy.a
-	$(CC) -o ivyglutprobe ivyglutprobe.o -L. -L$(GLUTLIB) -lglutivy -lglut -lGLU -lGL -lX11 -lXmu
+	$(CC) -o ivyglutprobe ivyglutprobe.o -L. $(GLUTLIB) -lglutivy -lglut -lGLU -lGL -lX11 -lXmu
 
 libivy.a: $(OBJ)
 	rm -f $@
@@ -112,19 +120,19 @@ libgivy.so.$(MAJOR).$(MINOR): $(GOBJ)
 
 libxtivy.so.$(MAJOR).$(MINOR): $(XTOBJ)
 	$(CC) -shared -Wl,-soname,libxtivy.so.$(MAJOR) -o $@ \
-	$(XTOBJ) -L$(XTLIB) -lXt -lX11 -lc
+	$(XTOBJ) $(XTLIB) -lXt -lX11 -lc
 
 libgtkivy.so.$(MAJOR).$(MINOR): $(GTKOBJ)
 	$(CC) -shared -Wl,-soname,libgtkivy.so.$(MAJOR) -o $@ \
-	$(GTKOBJ) -L$(GTKLIB) -lX11 -lc
+	$(GTKOBJ) $(GTKLIB) -lX11 -lc
 
 libglutivy.so.$(MAJOR).$(MINOR): $(GTKOBJ)
 	$(CC) -shared -Wl,-soname,libglutivy.so.$(MAJOR) -o $@ \
-	$(GLUTOBJ) -L$(GLUTLIB) -lX11 -lc
+	$(GLUTOBJ) $(GLUTLIB) -lX11 -lc
 
 libtclivy.so.$(MAJOR).$(MINOR): $(TCLOBJ)
 	$(CC) -shared -Wl,-soname,libtclivy.so.$(MAJOR) -o $@ \
-	$(TCLOBJ) -L$(TCLLIB) -ltcl -lc
+	$(TCLOBJ) $(TCLLIB) -ltcl$(TCLVERSION) -lc
 
 clean:
 	-rm -f $(TARGETS) *.o *.a *.so *.so.* *~
