@@ -4,8 +4,8 @@
 
 package=ivy-c
 
-version=$(shell expr `pwd` : '.*-\([0-9.]*\)')
-version_major=$(shell expr `pwd` : '.*-\([0-9]*\).[0-9.]*')
+VERSION=`sed -n 's/.*(\([^)]*\)).*/\1/p' changelog | head -1 | sed -n 's/\([0-9]*\)\..*/\1/p'`
+MAJOR_MINOR=`sed -n 's/.*(\([^)]*\)).*/\1/p' changelog | head -1 | sed -n 's/[0-9]*\.\([0-9\.]*\).*/\1/p'`
 
 build:
 	$(checkdir)
@@ -33,7 +33,7 @@ binary-arch:	checkroot build
 	install -d debian/tmp
 	cd debian/tmp && install -d `cat ../dirs`
 
-	cd src && make install DESTDIR=`pwd`/../debian/tmp
+	cd src && make install DESTDIR=`pwd`/../debian/tmp VERSION=$(VERSION) MAJOR=$(MAJOR) MINOR=$MINOR
 
 	debstd
 	-rmdir debian/tmp/usr/include

@@ -1,3 +1,10 @@
+ivy-c (1.1.1-1) unstable; urgency=low
+
+  * Mise au propre
+  * Ajout du mecanisme de choix des adresses de broadcast
+
+ -- Herve Damiano <damiano@cenatoulouse.dgac.fr>  Tue, 22 Dec 1998 16:13:18 +0100
+
 ivy-c (1.1-2) unstable; urgency=low
 
   * Suppression du header list.h qui est aussi défini dans utils-c.
@@ -13,5 +20,5 @@ ivy-c (1.1-1) unstable; urgency=low
 
 Local variables:
 mode: debian-changelog
-add-log-mailing-address: "lecoanet@cena.dgac.fr"
+add-log-mailing-address: "damiano@cenatoulouse.dgac.fr"
 End:

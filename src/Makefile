@@ -17,9 +17,6 @@ OBJ = ivyloop.o timer.o ivysocket.o ivy.o
 GOBJ = ivyloop.o timer.o ivysocket.o givy.o
 XTOBJ = ivyxtloop.o ivysocket.o ivy.o
 
-VERSION=1
-MAJOR=1
-
 .c.o:
 	$(CC) -fPIC $(CFLAGS) -c $*.c
 
@@ -27,7 +24,7 @@ all: static-libs commands shared-libs
 
 static-libs: libivy.a libgivy.a libxtivy.a
 
-shared-libs: libivy.so.$(VERSION).$(MAJOR) libgivy.so.$(VERSION).$(MAJOR) libxtivy.so.$(VERSION).$(MAJOR)
+shared-libs: libivy.so.$(VERSION).$(MAJOR_MINOR) libgivy.so.$(VERSION).$(MAJOR_MINOR libxtivy.so.$(VERSION).$(MAJOR_MINOR)
 
 commands: testivy testxtivy
 
@@ -55,13 +52,13 @@ libxtivy.a: $(XTOBJ)
 	rm -f $@
 	ar cq $@ $(XTOBJ)
 
-libivy.so.$(VERSION).$(MAJOR): $(OBJ)
+libivy.so.$(VERSION).$(MAJOR_MINOR): $(OBJ)
 	$(CC) -shared -Wl,-soname,libivy.so.$(VERSION) -o $@ $(OBJ) -lc
 
-libgivy.so.$(VERSION).$(MAJOR): $(GOBJ)
+libgivy.so.$(VERSION).$(MAJOR_MINOR): $(GOBJ)
 	$(CC) -shared -Wl,-soname,libgivy.so.$(VERSION) -o $@ $(GOBJ) -lc
 
-libxtivy.so.$(VERSION).$(MAJOR): $(XTOBJ)
+libxtivy.so.$(VERSION).$(MAJOR_MINOR): $(XTOBJ)
 	$(CC) -shared -Wl,-soname,libxtivy.so.$(VERSION) -o $@ \
 	$(XTOBJ) -L$(XTLIB) -lXt -lX11 -lc
 
@@ -76,11 +73,11 @@ install: all
 	install -m644 libgivy.a $(DESTDIR)/usr/lib
 	install -m644 libxtivy.a $(DESTDIR)/usr/X11R6/lib
 
-	install -m644 libivy.so.$(VERSION).$(MAJOR) $(DESTDIR)/usr/lib
-	install -m644 libgivy.so.$(VERSION).$(MAJOR) $(DESTDIR)/usr/lib
-	install -m644 libxtivy.so.$(VERSION).$(MAJOR) $(DESTDIR)/usr/X11R6/lib
-	cd $(DESTDIR)/usr/lib && ln -s libivy.so.$(VERSION).$(MAJOR) libivy.so
-	cd $(DESTDIR)/usr/lib && ln -s libgivy.so.$(VERSION).$(MAJOR) libgivy.so
-	cd $(DESTDIR)/usr/X11R6/lib && ln -s libxtivy.so.$(VERSION).$(MAJOR) libxtivy.so
+	install -m644 libivy.so.$(VERSION).$(MAJOR_MINOR) $(DESTDIR)/usr/lib
+	install -m644 libgivy.so.$(VERSION).$(MAJOR_MINOR) $(DESTDIR)/usr/lib
+	install -m644 libxtivy.so.$(VERSION).$(MAJOR_MINOR) $(DESTDIR)/usr/X11R6/lib
+	cd $(DESTDIR)/usr/lib && ln -s libivy.so.$(VERSION).$(MAJOR_MINOR) libivy.so
+	cd $(DESTDIR)/usr/lib && ln -s libgivy.so.$(VERSION).$(MAJOR_MINOR) libgivy.so
+	cd $(DESTDIR)/usr/X11R6/lib && ln -s libxtivy.so.$(VERSION).$(MAJOR_MINOR) libxtivy.so
 
 	install -m644 *.h $(DESTDIR)/usr/include

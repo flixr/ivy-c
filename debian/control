@@ -1,7 +1,7 @@
 Source: ivy-c
 Section: devel
 Priority: extra
-Maintainer: Patrick Lecoanet <lecoanet@cena.dgac.fr>
+Maintainer: Herve Damiano <damiano@cenatoulouse.dgac.fr>
 Standards-Version: 2.3.0.0
 
 Package: ivy-c
