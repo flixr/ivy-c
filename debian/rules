@@ -4,8 +4,8 @@
 
 package=ivy-c
 
-VERSION=`sed -n 's/.*(\([^)]*\)).*/\1/p' changelog | head -1 | sed -n 's/\([0-9]*\)\..*/\1/p'`
-MAJOR_MINOR=`sed -n 's/.*(\([^)]*\)).*/\1/p' changelog | head -1 | sed -n 's/[0-9]*\.\([0-9\.]*\).*/\1/p'`
+VERSION=`sed -n 's/.*(\([^)]*\)).*/\1/p' debian/changelog | head -1 | sed -n 's/\([0-9]*\)\..*/\1/p'`
+MAJOR_MINOR=`sed -n 's/.*(\([^)]*\)).*/\1/p' debian/changelog | head -1 | sed -n 's/[0-9]*\.\([0-9\.]*\).*/\1/p'`
 
 build:
 	$(checkdir)
