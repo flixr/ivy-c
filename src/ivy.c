@@ -128,6 +128,25 @@ static IvyClientPtr clients = 0;
 
 static const char *ready_message = 0;
 
+/*
+ * function like strok but do not eat consecutive separator
+ * */
+static char * nextArg( char *s, const char *separator )
+{
+		static char *start = NULL;
+			static char *end = NULL;
+				if ( s ) 
+							{
+										end = s;
+												}
+					start = end;
+							
+						while ( *end && *end != *separator )
+									end++;
+							if ( *end == *separator ) *end++ = '\0';  
+								if ( end == start ) return NULL;
+									return start;
+}
 static void MsgSendTo( Client client, MsgType msgtype, int id, const char *message )
 {
 	SocketSend( client, "%d %d" ARG_START "%s\n", msgtype, id, message);
@@ -387,11 +406,11 @@ static void Receive( Client client, void *data, char *line )
 				{
 				if ( id == rcv->id )
 					{
-					arg = strtok( arg, ARG_END);	
+					arg = nextArg( arg, ARG_END);	
 					while ( arg )
 						{
 						argv[argc++] = arg;
-						arg = strtok( 0, ARG_END );
+						arg = nextArg( 0, ARG_END );
 						}
 #ifdef DEBUG
 					printf("Calling  id=%d argc=%d for %s\n", id, argc,rcv->regexp);
