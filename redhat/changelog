@@ -1,4 +1,4 @@
-$Version = "3.4";
+$Version = "3.6";
 $Release = 1;
 
 $ChangeLog = ' * Sat Feb 20 1999 Stéphane Chatty <chatty@cenatoulouse.dgac.fr>
@@ -57,5 +57,26 @@ $ChangeLog = ' * Sat Feb 20 1999 Stéphane Chatty <chatty@cenatoulouse.dgac.fr>
 -   * upgrade of the documentation and fixes in the copyright headers, by sc
 -   * miminal support of glut toolkit, by frc. However, there is currently no
 -     libglutivy in the bin package due to some glut loop limitation.
+
+
+
+ * Thu, 24 Jun 2004 Yannick Jestin <jestin@cena.fr>
+-  Generation of version 3.6	
+-    * now uses PCRE ( Perl Compatible Regular Expressions ). Please use -livy -lpcre
+-      now when compiling. See http://www.pcre.org or man pcre for more details
+-    * tclivy.c : many bugfixes to support spaces in parameters captured by
+-      regexp
+-    * added an example directory, with gtk motif and tk bindings
+-    * fixed a nasty bug in the IvyUnbindMsg, where new client still were sent a
+-      binding to the unbound regexps
+-    * added a help message for ivyprobe, when called with -? or with unknown
+-      command line switches
+-    * added a -n switch to ivyprobe to change the name of the ivyprobe
+-    * added a -v switch to ivyprobe to check the ivy-c version
+-    * Makefile merges solaris, linux, and OSX versions. edit before compiling...
+
+ * Thu Sep 2 2004 Alexandre Bustico <bustico@cena.fr>
+- Generation of version 3.6-1
+- updates redhat files to coorect rules file for rpmize
 
 ';
