@@ -31,12 +31,11 @@ static  ChannelClose channel_close = NULL;
 
 #define MAX_BUFFER 2048
 
-
-typedef struct _server *Server;
-
 struct _server {
 	Server next;
+	HANDLE fd;
 	Channel channel;
+	unsigned short port;
 	void *(*create)(Client client);
 	void (*handle_delete)(Client client, void *data);
 	SocketInterpretation interpretation;
@@ -173,7 +172,7 @@ static void HandleServer(Channel channel, HANDLE fd, void *data)
 	client->data = (*server->create)( client );
 	
 }
-int SocketServer(unsigned short port, 
+Server SocketServer(unsigned short port, 
 	void*(*create)(Client client),
 	void(*handle_delete)(Client client, void *data),
 	void(*interpretation)( Client client, void *data, char *ligne))
@@ -235,12 +234,26 @@ int SocketServer(unsigned short port,
 		fprintf(stderr,"NOK Memory Alloc Error\n");
 		exit(0);
 		}
+	server->fd = fd;
 	server->channel =	(*channel_setup)( fd, server, DeleteSocket, HandleServer );
 	server->create = create;
 	server->handle_delete = handle_delete;
 	server->interpretation = interpretation;
-	return ntohs(local.sin_port);
+	server->port = ntohs(local.sin_port);
+	return server;
 }
+unsigned short SocketServerGetPort( Server server )
+{
+	return server->port;
+}
+void SocketServerClose( Server server )
+{
+	(*channel_close)( server->channel );
+	shutdown( server->fd, 2 );
+	close( server->fd );
+	LIST_REMOVE( servers_list, server );
+}
+
 char *SocketGetPeerHost( Client client )
 {
 	int err;
