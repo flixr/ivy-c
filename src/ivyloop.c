@@ -139,7 +139,7 @@ static void IvyChannelHandleExcpt(fd_set *current)
 		if (FD_ISSET( channel->fd, current ) )
 			{
 			(*channel->handle_delete)(channel->data);
-//			IvyChannelClose( channel );
+/*			IvyChannelClose( channel ); */
 			}
 		}
 }
