@@ -55,7 +55,8 @@ void IvyInit(
 	 IvyDieCallback die_callback,	/* last change callback before die */
 	 void *die_data	);		/* user data */
 
-void IvyStart();			/* emission du bonjour */
+void IvyStart (const char*);
+void IvyStop ();
 
 /* query sur les applications connectees */
 char *IvyGetApplicationName( IvyClientPtr app );
