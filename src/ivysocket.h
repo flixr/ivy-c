@@ -28,6 +28,7 @@ extern "C" {
 #ifdef WIN32
 #include <windows.h>
 #define HANDLE SOCKET
+#define IN_MULTICAST(i)            (((long)(i) & 0xf0000000) == 0xe0000000)
 #else
 #define HANDLE int
 #include <netinet/in.h>
