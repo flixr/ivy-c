@@ -134,3 +134,10 @@ Channel IvyXtChannelSetUp(HANDLE fd, void *data,
 	return channel;
 }
 
+
+void
+IvyStop ()
+{
+  /* To be implemented */
+}
+
