@@ -281,7 +281,7 @@ static int
 IvyInitCmd(ClientData	clientData,
 	   Tcl_Interp	*interp,
 	   int		argc,
-	   char		**argv)
+	   const char	**argv)
 {
   char		*end;
   filter_struct	*app;
@@ -323,7 +323,7 @@ static int
 IvyStartCmd(ClientData	clientData,
 	   Tcl_Interp	*interp,
 	   int		argc,
-	   char		**argv)
+	   const char	**argv)
 {
   if (argc != 2) {
     Tcl_AppendResult(interp, "wrong # of args: \"",
@@ -340,7 +340,7 @@ static int
 IvyBindCmd(ClientData	clientData,
 	   Tcl_Interp	*interp,
 	   int		argc,
-	   char		**argv)
+	   const char	**argv)
 {
   filter_struct	*filter;
   Tcl_HashEntry	*entry;
@@ -373,7 +373,7 @@ static int
 IvyUnbindCmd(ClientData	clientData,
 	     Tcl_Interp	*interp,
 	     int	argc,
-	     char	**argv)
+	     const char	**argv)
 {
   unsigned long	filter_id;
   char		*end;
@@ -413,7 +413,7 @@ static int
 IvySendCmd(ClientData	clientData,
 	   Tcl_Interp	*interp,
 	   int		argc,
-	   char		**argv)
+	   const char	**argv)
 {
   if (argc != 2) {
     Tcl_AppendResult(interp, "wrong # of args: \"",
@@ -430,7 +430,7 @@ static int
 IvyApplicationListCmd(ClientData	clientData,
 		      Tcl_Interp	*interp,
 		      int		argc,
-		      char		**argv)
+		      const char	**argv)
 {
   Tcl_HashEntry	 *entry;
   Tcl_HashSearch search;
@@ -455,7 +455,7 @@ static int
 IvyApplicationHostCmd(ClientData	clientData,
 		      Tcl_Interp	*interp,
 		      int		argc,
-		      char		**argv)
+		      const char	**argv)
 {
   Tcl_HashEntry	 *entry;
 
@@ -482,7 +482,7 @@ static int
 IvyApplicationMsgsCmd(ClientData	clientData,
 		      Tcl_Interp	*interp,
 		      int		argc,
-		      char		**argv)
+		      const char	**argv)
 {
   Tcl_HashEntry	*entry;
   char		**msgs, **scan;
@@ -512,7 +512,7 @@ static int
 IvySendDirectCmd(ClientData	clientData,
 		 Tcl_Interp	*interp,
 		 int		argc,
-		 char		**argv)
+		 const char	**argv)
 {
   Tcl_HashEntry	*entry;
   unsigned long	id;
@@ -538,7 +538,7 @@ IvySendDirectCmd(ClientData	clientData,
     return TCL_ERROR;
   }
 
-  IvySendDirectMsg((IvyClientPtr) Tcl_GetHashValue(entry), id, argv[3]);
+  IvySendDirectMsg((IvyClientPtr) Tcl_GetHashValue(entry), id, (char*)argv[3]);
   
   return TCL_OK;
 }
@@ -547,7 +547,7 @@ static int
 IvyBindDirectCmd(ClientData	clientData,
 		 Tcl_Interp	*interp,
 		 int		argc,
-		 char		**argv)
+		 const char	**argv)
 {
   static filter_struct	*filter = NULL;
 
