@@ -17,7 +17,7 @@
  */
 
 #include <stdlib.h>
-
+#include <arpa/inet.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
@@ -322,7 +322,7 @@ static int CheckConnected( IvyClientPtr clnt )
 static void Receive( Client client, void *data, char *line )
 {
 	IvyClientPtr clnt;
-	int err,id,reg;
+	int err,id;
 	MsgSndPtr snd;
 	MsgRcvPtr rcv;
 	int argc = 0;
@@ -331,6 +331,7 @@ static void Receive( Client client, void *data, char *line )
 	int kind_of_msg = Bye;
 #ifndef USE_PCRE_REGEX
 	regex_t regexp;
+	int reg;
 #else
 	pcre *regexp;
 	const char *errbuf;

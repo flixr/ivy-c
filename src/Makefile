@@ -7,8 +7,8 @@
 # 	Makefile
 #
 #	Authors: François-Régis Colin <fcolin@cena.fr>
-# 		Stéphane Chatty <chatty@cena.fr>
-# 		Yannick Jestin <jestin@cena.fr>
+# 		 Stéphane Chatty <chatty@cena.fr>
+# 		 Yannick Jestin <jestin@cena.fr>
 #
 #	Please refer to file version.h for the
 #	copyright notice regarding this software
@@ -21,8 +21,8 @@ MINOR=6
 
 XTINC = -I/usr/X11R6/include
 XTLIB = -L/usr/X11R6/lib -lXt -lX11 -lSM -lICE
-GTKINC = `gtk-config --cflags`
-GTKLIB = `gtk-config --libs`
+GLIBINC = `pkg-config --cflags glib-2.0`
+GLIBLIB = `pkg-config --libs glib-2.0`
 GLUTINC = -I/usr/include -I.
 GLUTLIB = -L. -lglut -lGLU -lGL -lX11 -lXmu 
 # use these if you want standard Tcl ( 8.3 on debian woody ... )
@@ -50,17 +50,17 @@ REGEXP = -DUSE_PCRE_REGEX
 # on activeTCL , set #define CHANNEL to null, and add ivyloop.o in the ivytcl target,
 # see below
 CHANNEL = -DTCL_CHANNEL_INTEGRATION 
-CFLAGS = -g 
+CFLAGS = -g -Wall
 
 OBJ = ivyloop.o timer.o ivysocket.o ivy.o 
 GOBJ = ivyloop.o timer.o ivysocket.o givy.o
 XTOBJ = ivyxtloop.o ivysocket.o ivy.o
-GTKOBJ = ivygtkloop.o ivysocket.o ivy.o
+GLIBOBJ = ivyglibloop.o ivysocket.o ivy.o
 GLUTOBJ = ivyglutloop.o ivysocket.o ivy.o
 TCLOBJ = ivytcl.o  timer.o ivysocket.o givy.o
 # WINDOWS add ivyloop.o if TCL_CHANNEL_INTEGRATION is not set
-TARGETS = ivyprobe ivygtkprobe ivyxtprobe 
-TARGETLIBS=libivy.so.$(MAJOR).$(MINOR) libgivy.so.$(MAJOR).$(MINOR) libxtivy.so.$(MAJOR).$(MINOR) libgtkivy.so.$(MAJOR).$(MINOR) libtclivy.so.$(MAJOR).$(MINOR)
+TARGETS = ivyprobe ivyglibprobe ivyxtprobe 
+TARGETLIBS=libivy.so.$(MAJOR).$(MINOR) libgivy.so.$(MAJOR).$(MINOR) libxtivy.so.$(MAJOR).$(MINOR) libglibivy.so.$(MAJOR).$(MINOR) libtclivy.so.$(MAJOR).$(MINOR)
 # not yet need Modified Glut ivyglutprobe
 
 .c.o:
@@ -68,7 +68,7 @@ TARGETLIBS=libivy.so.$(MAJOR).$(MINOR) libgivy.so.$(MAJOR).$(MINOR) libxtivy.so.
 
 all: static-libs commands shared-libs
 
-static-libs: libivy.a libgivy.a libxtivy.a libgtkivy.a libtclivy.a 
+static-libs: libivy.a libgivy.a libxtivy.a libglibivy.a libtclivy.a 
 # not yet need Modified Glut libglutivy.a
 
 shared-libs: $(TARGETLIBS)
@@ -88,8 +88,8 @@ givy.o: ivy.c
 ivyglutloop.o: ivyglutloop.c ivyglutloop.h
 	$(CC) -c $(CFLAGS) $(GLUTINC) ivyglutloop.c
 
-ivygtkloop.o: ivygtkloop.c ivygtkloop.h
-	$(CC) -c $(CFLAGS) $(GTKINC) ivygtkloop.c
+ivyglibloop.o: ivyglibloop.c ivyglibloop.h
+	$(CC) -c $(CFLAGS) $(GLIBINC) ivyglibloop.c
 
 ivyprobe: ivyprobe.o
 	$(CC)  $(CFLAGS) -o $@ ivyprobe.o -L. -livy $(PCRELIB) $(EXTRALIB)
@@ -103,11 +103,11 @@ ivyxtprobe.o : ivyprobe.c
 ivyxtprobe: ivyxtprobe.o libxtivy.a
 	$(CC) -o $@ ivyxtprobe.o -L. $(XTLIB) -lxtivy  $(PCRELIB) $(EXTRALIB)
 
-ivygtkprobe.o : ivyprobe.c
-	$(CC)  $(CFLAGS) $(REGEXP) -DGTKMAINLOOP -c ivyprobe.c -o ivygtkprobe.o $(XTINC)
+ivyglibprobe.o : ivyprobe.c
+	$(CC)  $(CFLAGS) $(REGEXP) -DGLIBMAINLOOP -c ivyprobe.c -o ivyglibprobe.o $(GLIBINC)
 
-ivygtkprobe: ivygtkprobe.o libgtkivy.a
-	$(CC) -o ivygtkprobe ivygtkprobe.o -L. $(GTKLIB) -lgtkivy $(PCRELIB) $(EXTRALIB)
+ivyglibprobe: ivyglibprobe.o libglibivy.a
+	$(CC) -o ivyglibprobe ivyglibprobe.o -L. $(GLIBLIB) -lglibivy $(PCRELIB) $(EXTRALIB)
 
 ivyglutprobe.o : ivyprobe.c
 	$(CC)  $(CFLAGS) $(REGEXP) -DGLUTMAINLOOP -c ivyprobe.c -o ivyglutprobe.o $(GLUTINC)
@@ -127,9 +127,9 @@ libxtivy.a: $(XTOBJ)
 	rm -f $@
 	$(LIBTOOL) $@ $(XTOBJ)
 
-libgtkivy.a: $(GTKOBJ)
+libglibivy.a: $(GLIBOBJ)
 	rm -f $@
-	$(LIBTOOL) $@ $(GTKOBJ)
+	$(LIBTOOL) $@ $(GLIBOBJ)
 
 libglutivy.a: $(GLUTOBJ)
 	rm -f $@
@@ -155,12 +155,12 @@ libxtivy.so.$(MAJOR).$(MINOR): $(XTOBJ)
 #	$(CC) -G -Wl,-h,libxtivy.so.$(MAJOR) -o $@ $(XTOBJ) $(XTLIB) #solaris
 #	libtool -dynamic -o $@ $(XTOBJ) $(XTLIB) $(PCRELIB) -lc
 
-libgtkivy.so.$(MAJOR).$(MINOR): $(GTKOBJ)
-	$(CC) -shared -Wl,-soname,libgtkivy.so.$(MAJOR) -o $@ $(GTKOBJ) $(GTKLIB) $(PCRELIB)
-#	$(CC) -G -Wl,-h,libgtkivy.so.$(MAJOR) -o $@ $(GTKOBJ) $(GTKLIB)	#solaris
-#	libtool -dynamic -o $@ $(GTKOBJ) $(GTKLIB) $(PCRELIB) -lc
+libglibivy.so.$(MAJOR).$(MINOR): $(GLIBOBJ)
+	$(CC) -shared -Wl,-soname,libglibivy.so.$(MAJOR) -o $@ $(GLIBOBJ) $(GLIBLIB) $(PCRELIB)
+#	$(CC) -G -Wl,-h,libglibivy.so.$(MAJOR) -o $@ $(GLIBOBJ) $(GLIBLIB) #solaris
+#	libtool -dynamic -o $@ $(GLIBOBJ) $(GLIBLIB) $(PCRELIB) -lc
 
-libglutivy.so.$(MAJOR).$(MINOR): $(GTKOBJ)
+libglutivy.so.$(MAJOR).$(MINOR): $(GLIBOBJ)
 	$(CC) -shared -Wl,-soname,libglutivy.so.$(MAJOR) -o $@ $(GLUTOBJ) $(GLUTLIB) $(PCRELIB)
 #	$(CC) -G -Wl,-h,libglutivy.so.$(MAJOR) -o $@ $(GLUTOBJ) $(GLUTLIB) #	solaris
 #	libtool -dynamic -o $@ $(GLUTOBJ) $(GLUTLIB) $(PCRELIB) -lc
@@ -181,13 +181,13 @@ installlibs: static-libs shared-libs
 	install -m644 libgivy.a $(PREFIX)/usr/lib
 	install -m644 libxtivy.a $(PREFIX)/usr/X11R6/lib
 	install -m644 libtclivy.a $(PREFIX)/usr/lib
-	install -m644 libgtkivy.a $(PREFIX)/usr/X11R6/lib
+	install -m644 libglibivy.a $(PREFIX)/usr/lib
 
 	install -m644 libivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/lib
 	install -m644 libgivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/lib
 	install -m644 libxtivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/X11R6/lib
 	install -m644 libtclivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/lib
-	install -m644 libgtkivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/X11R6/lib
+	install -m644 libglibivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/lib
 
 	install -m644 *.h $(PREFIX)/usr/include
 
@@ -199,8 +199,8 @@ installliblinks: installlibs
 	ln -s /usr/lib/libgivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/lib/libgivy.so.$(MAJOR)
 	ln -s /usr/X11R6/lib/libxtivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/X11R6/lib/libxtivy.so
 	ln -s /usr/X11R6/lib/libxtivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/X11R6/lib/libxtivy.so.$(MAJOR)
-	ln -s /usr/X11R6/lib/libgtkivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/X11R6/lib/libgtkivy.so
-	ln -s /usr/X11R6/lib/libgtkivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/X11R6/lib/libgtkivy.so.$(MAJOR)
+	ln -s /usr/X11R6/lib/libglibivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/X11R6/lib/libglibivy.so
+	ln -s /usr/X11R6/lib/libglibivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/X11R6/lib/libglibivy.so.$(MAJOR)
 	ln -s /usr/X11R6/lib/libtclivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/X11R6/lib/libtclivy.so
 	ln -s /usr/X11R6/lib/libtclivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/X11R6/lib/libtclivy.so.$(MAJOR)
 
@@ -209,7 +209,7 @@ installbins: commands
 	test -d $(PREFIX)/usr/X11R6/bin || mkdirhier $(PREFIX)/usr/X11R6/bin
 	install -m755 ivyprobe $(PREFIX)/usr/bin
 	#install -m755 ivyxtprobe $(PREFIX)/usr/X11R6/bin
-	#install -m755 ivygtkprobe $(PREFIX)/usr/X11R6/bin
+	#install -m755 ivyglibprobe $(PREFIX)/usr/bin
 	#install -m755 ivyglutprobe $(PREFIX)/usr/X11R6/bin
 
 installdocs:

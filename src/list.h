@@ -52,7 +52,7 @@
 	}
 
 #define IVY_LIST_ADD(list, p ) \
-	if ( p = (TYPEOF(p)) (malloc( sizeof( *p ))))\
+        if ((p = (TYPEOF(p)) (malloc( sizeof( *p ))))) \
 		{ \
 		memset( p, 0 , sizeof( *p ));\
 		p->next = list; \

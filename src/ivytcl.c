@@ -108,7 +108,6 @@ Channel IvyTclChannelSetUp(HANDLE fd, void *data,
 				ChannelHandleRead handle_read
 				)						
 {
-	char channelName[16 + TCL_INTEGER_SPACE];
 	Channel channel;
 
 	channel = (Channel)ckalloc( sizeof (struct _channel) );
@@ -331,7 +330,6 @@ IvyInitCmd(ClientData	clientData,
 	   int		argc,
 	   const char	**argv)
 {
-  char		*end;
   filter_struct	*app;
   filter_struct	*die;
      
@@ -621,16 +619,16 @@ int
 Tclivy_Init(Tcl_Interp *interp)
 {
 
-  Tcl_CreateCommand(interp, "Ivy::init", IvyInitCmd, NULL, NULL);
-  Tcl_CreateCommand(interp, "Ivy::start", IvyStartCmd, NULL, NULL);
-  Tcl_CreateCommand(interp, "Ivy::bind", IvyBindCmd, NULL, NULL);
-  Tcl_CreateCommand(interp, "Ivy::unbind", IvyUnbindCmd, NULL, NULL);
-  Tcl_CreateCommand(interp, "Ivy::send", IvySendCmd, NULL, NULL);
-  Tcl_CreateCommand(interp, "Ivy::senddirect", IvySendDirectCmd, NULL, NULL);
-  Tcl_CreateCommand(interp, "Ivy::binddirect", IvyBindDirectCmd, NULL, NULL);
-  Tcl_CreateCommand(interp, "Ivy::applist", IvyApplicationListCmd, NULL, NULL);
-  Tcl_CreateCommand(interp, "Ivy::apphost", IvyApplicationHostCmd, NULL, NULL);
-  Tcl_CreateCommand(interp, "Ivy::appmsgs", IvyApplicationMsgsCmd, NULL, NULL);
+  Tcl_CreateCommand(interp, "Ivy::init", (Tcl_CmdProc*)IvyInitCmd, NULL, NULL);
+  Tcl_CreateCommand(interp, "Ivy::start", (Tcl_CmdProc*)IvyStartCmd, NULL, NULL);
+  Tcl_CreateCommand(interp, "Ivy::bind", (Tcl_CmdProc*)IvyBindCmd, NULL, NULL);
+  Tcl_CreateCommand(interp, "Ivy::unbind", (Tcl_CmdProc*)IvyUnbindCmd, NULL, NULL);
+  Tcl_CreateCommand(interp, "Ivy::send", (Tcl_CmdProc*)IvySendCmd, NULL, NULL);
+  Tcl_CreateCommand(interp, "Ivy::senddirect", (Tcl_CmdProc*)IvySendDirectCmd, NULL, NULL);
+  Tcl_CreateCommand(interp, "Ivy::binddirect", (Tcl_CmdProc*)IvyBindDirectCmd, NULL, NULL);
+  Tcl_CreateCommand(interp, "Ivy::applist", (Tcl_CmdProc*)IvyApplicationListCmd, NULL, NULL);
+  Tcl_CreateCommand(interp, "Ivy::apphost", (Tcl_CmdProc*)IvyApplicationHostCmd, NULL, NULL);
+  Tcl_CreateCommand(interp, "Ivy::appmsgs", (Tcl_CmdProc*)IvyApplicationMsgsCmd, NULL, NULL);
 #ifndef TCL_CHANNEL_INTEGRATION
 	Tcl_DoWhenIdle(IvyIdleProc,0);
 #endif

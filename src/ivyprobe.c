@@ -21,7 +21,7 @@
 #ifdef XTMAINLOOP
 #undef IVYMAINLOOP
 #endif
-#ifdef GTKMAINLOOP
+#ifdef GLIBMAINLOOP
 #undef IVYMAINLOOP
 #endif
 
@@ -57,8 +57,9 @@ extern int optind;
 #ifdef XTMAINLOOP
 #include "ivyxtloop.h"
 #endif
-#ifdef GTKMAINLOOP
-#include "ivygtkloop.h"
+#ifdef GLIBMAINLOOP
+#include <glib.h>
+#include "ivyglibloop.h"
 #endif
 #ifdef GLUTMAINLOOP
 #include "ivyglutloop.h"
@@ -114,8 +115,8 @@ void HandleStdin (Channel channel, HANDLE fd, void *data)
 #ifdef XTMAINLOOP
 		IvyXtChannelClose (channel);
 #endif
-#ifdef GTKMAINLOOP
-		IvyGtkChannelClose(channel);
+#ifdef GLIBMAINLOOP
+		IvyGlibChannelClose(channel);
 #endif
 #ifdef GLUTMAINLOOP
 		IvyGlutChannelClose(channel);
@@ -240,8 +241,8 @@ void ApplicationCallback (IvyClientPtr app, void *user_data, IvyApplicationEvent
 #ifdef XTMAINLOOP
 		IvyXtChannelSetUp (0, NULL, NULL, HandleStdin);
 #endif
-#ifdef GTKMAINLLOP
-		IvyGtkChannelSetUp( 0, NULL, NULL, HandleStdin);
+#ifdef GLIBMAINLLOP
+		IvyGlibChannelSetUp( 0, NULL, NULL, HandleStdin);
 #endif
 #ifdef GLUTMAINLLOP
 		IvyGlutChannelSetUp( 0, NULL, NULL, HandleStdin);
@@ -336,8 +337,8 @@ int main(int argc, char *argv[])
 #ifdef XTMAINLOOP
 		IvyXtChannelSetUp (0, NULL, NULL, HandleStdin);
 #endif
-#ifdef GTKMAINLOOP
-		IvyGtkChannelSetUp (0, NULL, NULL, HandleStdin);
+#ifdef GLIBMAINLOOP
+		IvyGlibChannelSetUp (0, NULL, NULL, HandleStdin);
 #endif
 #ifdef GLUTMAINLOOP
 		IvyGlutChannelSetUp (0, NULL, NULL, HandleStdin);
@@ -361,8 +362,11 @@ int main(int argc, char *argv[])
 #ifdef XTMAINLOOP
 	XtAppMainLoop (cntx);
 #endif
-#ifdef GTKMAINLOOP
-	gtk_main();
+#ifdef GLIBMAINLOOP
+	{
+	  GMainLoop *ml =  g_main_loop_new(NULL, FALSE);
+	  g_main_loop_run(ml);
+	}
 #endif
 #ifdef GLUTMAINLOOP
 	glutMainLoop();

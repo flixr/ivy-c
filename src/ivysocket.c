@@ -142,7 +142,7 @@ static void HandleSocket (Channel channel, HANDLE fd, void *data)
 		*ptr_nl = '\0';
 		if (client->interpretation )
 			(*client->interpretation) (client, client->data, ptr );
-			else fprintf (stderr,"Socket No interpretation function ???!\n");
+			else fprintf (stderr,"Socket No interpretation function ???\n");
 		ptr = ++ptr_nl;
 		}
 	if (*ptr != '\0' )

@@ -34,4 +34,5 @@ int main(int argc,char *argv[]){
   IvyBindMsg(textCallback,&tosend,"^Ivy Button text=(.*)");
   IvyStart(bus);
   XtAppMainLoop(app_context);
+  return 0;
 }
