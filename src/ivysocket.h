@@ -78,6 +78,9 @@ extern Client SocketBroadcastCreate(
 			void *data, 
 			SocketInterpretation interpretation
 			);
+/* Socket Multicast */
+extern int SocketAddMember( Client client, unsigned long host );
+
 /* recuperation de l'emetteur du message */
 extern struct in_addr * SocketGetRemoteAddr( Client client );
 extern void SocketGetRemoteHost (Client client, char **host, unsigned short *port );
