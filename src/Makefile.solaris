@@ -79,7 +79,7 @@ ivygtkprobe.o : ivyprobe.c
 	$(CC)  $(CFLAGS) -c ivyprobe.c -o ivygtkprobe.o $(XTINC) -DGTKMAINLOOP
 
 ivygtkprobe: ivygtkprobe.o libgtkivy.a
-	$(CC) -o ivygtkprobe ivygtkprobe.o -L. $(GTKLIB) -lgtkivy -lgtk -lgdk -lglib -lX11 -lSM -lICE -lm
+	$(CC) -o ivygtkprobe ivygtkprobe.o -L. $(GTKLIB) -lgtkivy -lgtk -lgdk -lglib -lX11 -lSM -lICE -lm -lnsl -lsocket
 
 ivyglutprobe.o : ivyprobe.c
 	$(CC)  $(CFLAGS) -c ivyprobe.c -o ivyglutprobe.o $(GLUTINC) -DGLUTMAINLOOP
