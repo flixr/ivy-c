@@ -1,5 +1,5 @@
-#ifndef _BUSSOCKET_H
-#define _BUSSOCKET_H
+#ifndef _IVYSOCKET_H
+#define _IVYSOCKET_H
 
 #ifdef __cplusplus
 extern "C" {

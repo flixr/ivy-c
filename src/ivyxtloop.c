@@ -22,8 +22,8 @@
 
 #include <X11/Intrinsic.h>
 
-#include "buschannel.h"
-#include "busxtloop.h"
+#include "ivychannel.h"
+#include "ivyxtloop.h"
 
 struct _channel {
 	XtInputId id_read;

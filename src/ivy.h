@@ -1,5 +1,5 @@
-#ifndef _BUS_H
-#define _BUS_H
+#ifndef _IVY_H
+#define _IVY_H
 
 #ifdef __cplusplus
 extern "C" {

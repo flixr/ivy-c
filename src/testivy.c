@@ -7,12 +7,12 @@
 #include <unistd.h>
 #endif
 #ifdef XTMAINLOOP
-#include "busxtloop.h"
+#include "ivyxtloop.h"
 #else
-#include "busloop.h"
+#include "ivyloop.h"
 #endif
-#include "bussocket.h"
-#include "bus.h"
+#include "ivysocket.h"
+#include "ivy.h"
 #include "timer.h"
 #ifdef XTMAINLOOP
 #include <X11/Intrinsic.h>

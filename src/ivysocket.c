@@ -22,8 +22,8 @@
 #endif
 
 #include "list.h"
-#include "buschannel.h"
-#include "bussocket.h"
+#include "ivychannel.h"
+#include "ivysocket.h"
 
 static  ChannelInit channel_init = NULL;
 static  ChannelSetUp channel_setup = NULL;

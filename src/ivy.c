@@ -12,10 +12,10 @@
 
 #include <fcntl.h>
 
-#include "buschannel.h"
-#include "bussocket.h"
+#include "ivychannel.h"
+#include "ivysocket.h"
 #include "list.h"
-#include "bus.h"
+#include "ivy.h"
 
 #define VERSION 3
 

@@ -1,11 +1,11 @@
-#ifndef _BUSXTLOOP_H
-#define _BUSXTLOOP_H
+#ifndef _IVYLOOP_H
+#define _IVYLOOP_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include <X11/Intrinsic.h>
+#include "ivychannel.h"
 
 /* general Handle */
 
@@ -18,20 +18,19 @@ extern "C" {
 #define HANDLE int
 #endif
 
-#include "buschannel.h"
+extern void BusLoopChannelInit(void);
+extern void BusLoopChannelStop(void);
+extern void BusLoopChannelMainLoop(void(*hook)(void) );
 
-extern void BusXtChannelInit(void);
-
-extern Channel BusXtChannelSetUp(
+extern Channel BusLoopChannelSetUp(
 						HANDLE fd,
 						void *data,
 						ChannelHandleDelete handle_delete,
 						ChannelHandleRead handle_read
 						);
 
-extern void BusXtChannelClose( Channel channel );
+extern void BusLoopChannelClose( Channel channel );
 
-extern void BusXtChannelAppContext( XtAppContext cntx );
 
 #ifdef __cplusplus
 }

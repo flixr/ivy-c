@@ -21,8 +21,8 @@
 
 
 #include "list.h"
-#include "buschannel.h"
-#include "busloop.h"
+#include "ivychannel.h"
+#include "ivyloop.h"
 #include "timer.h"
 
 struct _channel {

@@ -1,32 +1,32 @@
 XTINC =-I/usr/X11R6/include
 XTLIB =-L/usr/X11R6/lib 
 CC=gcc -g -DDEBUG
-OBJ = busloop.o timer.o bussocket.o bus.o 
-GOBJ = busloop.o timer.o bussocket.o gbus.o
-XTOBJ = busxtloop.o bussocket.o bus.o
+OBJ = ivyloop.o timer.o ivysocket.o ivy.o 
+GOBJ = ivyloop.o timer.o ivysocket.o givy.o
+XTOBJ = ivyxtloop.o ivysocket.o ivy.o
 
-all: libbus.a libgbus.a libxtbus.a testbus testxtbus
+all: libivy.a libgivy.a libxtivy.a testivy testxtivy
 
-gbus.o: bus.c
-	$(CC) -DGNU_REGEXP -c $(CFLAGS) -o gbus.o bus.c
+givy.o: ivy.c
+	$(CC) -DGNU_REGEXP -c $(CFLAGS) -o givy.o ivy.c
 
 
-testbus: testbus.o $(OBJ)
-	$(CC) -o testbus testbus.o $(OBJ)
+testivy: testivy.o $(OBJ)
+	$(CC) -o testivy testivy.o $(OBJ)
  
-testxtbus.o : testbus.c
-	$(CC) -c testbus.c -o testxtbus.o $(XTINC) -DXTMAINLOOP
+testxtivy.o : testivy.c
+	$(CC) -c testivy.c -o testxtivy.o $(XTINC) -DXTMAINLOOP
 
-testxtbus: testxtbus.o $(XTOBJ)
-	$(CC) -o testxtbus testxtbus.o $(XTOBJ) $(XTLIB) -lXt -lX11
+testxtivy: testxtivy.o $(XTOBJ)
+	$(CC) -o testxtivy testxtivy.o $(XTOBJ) $(XTLIB) -lXt -lX11
 
-libbus.a: $(OBJ)
-	ar q libbus.a $(OBJ)
+libivy.a: $(OBJ)
+	ar q libivy.a $(OBJ)
 
-libgbus.a: $(GOBJ)
-	ar q libgbus.a $(GOBJ)
+libgivy.a: $(GOBJ)
+	ar q libgivy.a $(GOBJ)
 
-libxtbus.a: $(XTOBJ)
-	ar q libxtbus.a $(XTOBJ)
+libxtivy.a: $(XTOBJ)
+	ar q libxtivy.a $(XTOBJ)
 
 
