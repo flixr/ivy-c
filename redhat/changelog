@@ -1,5 +1,5 @@
 $Version = "3.2";
-$Release = 2;
+$Release = 3;
 
 $ChangeLog = ' * Sat Feb 20 1999 Stéphane Chatty <chatty@cenatoulouse.dgac.fr>
 - Generation of ivy-c-3.0-2
@@ -29,5 +29,10 @@ $ChangeLog = ' * Sat Feb 20 1999 Stéphane Chatty <chatty@cenatoulouse.dgac.fr>
 - Generation of version 3.2-2
 - First packages made with rpmize 3.1
 - Separation between ivy-c and ivy-c-devel
+
+ * Wed Jul 12 2000 Stéphane Chatty <chatty@cena.fr>
+- Generation of version 3.2-3
+- The ivyprobe man page is now part of the main package
+- The URL has been fixed
 
 ';

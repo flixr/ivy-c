@@ -4,7 +4,7 @@ $Copyright = "CENA";
 $Vendor = "Centre d'Etudes de la Navigation Aerienne";
 $Distribution = "Toccata";
 $Group = "System Environment/Libraries";
-$Url = "http://www.tls.cena.fr/divisions/PII/";
+$Url = "http://www.tls.cena.fr/products/ivy";
 $BuildArchitectures = "i386";
 $FindFiles = "(find \$RPM_BUILD_ROOT -type f -print ; ".
 	"find \$RPM_BUILD_ROOT -type l -print) | sed \"s\@^\$RPM_BUILD_ROOT\@\@g\"".
