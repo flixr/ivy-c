@@ -226,7 +226,7 @@ terminal window, launch <command>ivyprobe '(.*)'</command>. You are then ready
 to start. Type "Hello Paul", and you should get "Bonjour Paul". Type "Bye", and
 your application should quit:
 <screen>
-$ <userinput>ivyprobe</userinput>
+$ <userinput>ivyprobe '(.*)'</userinput>
 IvyTranslater connected from localhost
 IvyTranslater subscribes to 'Hello (.*)'
 IvyTranslater subscribes to 'Bye'
