@@ -567,6 +567,7 @@ void IvyClasses( int argc, const char **argv)
 
 void IvyStart (const char* bus)
 {
+	struct in_addr baddr;
 	unsigned long mask = 0xffffffff; 
 	unsigned char elem = 0;
 	int numdigit = 0;
@@ -635,7 +636,8 @@ void IvyStart (const char* bus)
 
 			/* addresses are terminated by a comma or end of string */
 			} else {
-				printf ("Broadcasting on network %s, port %d\n", inet_ntoa(htonl(mask)), SupervisionPort);
+				baddr.s_addr = htonl(mask);
+				printf ("Broadcasting on network %s, port %d\n", inet_ntoa(baddr), SupervisionPort);
 				// test mask value agaisnt CLASS D
 				if ( IN_MULTICAST( mask ) )
 					SocketAddMember (broadcast , mask );
