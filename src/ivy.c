@@ -528,6 +528,7 @@ void BusStart()
 	
 	SocketSendBroadcast( broadcast, 143 << 24 | 196 << 16 | 1 << 8 | 255, SupervisionPort, "%d %hu\n", VERSION, ApplicationPort);
 	SocketSendBroadcast( broadcast, 143 << 24 | 196 << 16 | 2 << 8 | 255, SupervisionPort, "%d %hu\n", VERSION, ApplicationPort);
+	SocketSendBroadcast( broadcast, 143 << 24 | 196 << 16 | 53 << 8 | 255, SupervisionPort, "%d %hu\n", VERSION, ApplicationPort);
 
 	fprintf(stderr,"Server Ready  TCP:%hu\n",ApplicationPort);
 }
