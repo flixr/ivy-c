@@ -34,16 +34,19 @@ XTOBJ = ivyxtloop.o ivysocket.o ivy.o
 GTKOBJ = ivygtkloop.o ivysocket.o ivy.o
 GLUTOBJ = ivyglutloop.o ivysocket.o ivy.o
 TCLOBJ = ivytcl.o ivysocket.o givy.o
-TARGETS = ivyprobe ivygtkprobe ivyxtprobe ivyglutprobe
+TARGETS = ivyprobe ivygtkprobe ivyxtprobe 
+# not yiet need Modified Glut ivyglutprobe
 
 .c.o:
 	$(CC) $(CFLAGS) -c $*.c
 
 all: static-libs commands shared-libs
 
-static-libs: libivy.a libgivy.a libxtivy.a libgtkivy.a libtclivy.a libglutivy.a
+static-libs: libivy.a libgivy.a libxtivy.a libgtkivy.a libtclivy.a 
+# not yiet need Modified Glut libglutivy.a
 
-shared-libs: libivy.so.$(MAJOR).$(MINOR) libgivy.so.$(MAJOR).$(MINOR) libxtivy.so.$(MAJOR).$(MINOR) libgtkivy.so.$(MAJOR).$(MINOR) libtclivy.so.$(MAJOR).$(MINOR) libglutivy.so.$(MAJOR).$(MINOR)
+shared-libs: libivy.so.$(MAJOR).$(MINOR) libgivy.so.$(MAJOR).$(MINOR) libxtivy.so.$(MAJOR).$(MINOR) libgtkivy.so.$(MAJOR).$(MINOR) libtclivy.so.$(MAJOR).$(MINOR)
+# not yiet need Modified Glut libglutivy.so.$(MAJOR).$(MINOR)
 
 commands: $(TARGETS)
 
@@ -69,7 +72,7 @@ ivygtkprobe.o : ivyprobe.c
 	$(CC)  $(CFLAGS) -c ivyprobe.c -o ivygtkprobe.o -I$(XTINC) -DGTKMAINLOOP
 
 ivygtkprobe: ivygtkprobe.o libgtkivy.a
-	$(CC) -o ivygtkprobe ivygtkprobe.o -L. -L$(GTKLIB) -lgtkivy -lgtk -lgdk -lX11 -lSM -lICE
+	$(CC) -o ivygtkprobe ivygtkprobe.o -L. -L$(GTKLIB) -lgtkivy -lgtk -lgdk -lglib -lX11 -lSM -lICE -lm
 
 ivyglutprobe.o : ivyprobe.c
 	$(CC)  $(CFLAGS) -c ivyprobe.c -o ivyglutprobe.o -I$(GLUTINC) -DGLUTMAINLOOP
