@@ -36,6 +36,10 @@
 #else
 #include <sys/time.h>
 #include <unistd.h>
+#ifdef __INTERIX
+extern char *optarg;
+extern int optind;
+#endif
 #include <regex.h>
 #endif
 #ifdef XTMAINLOOP
