@@ -21,7 +21,7 @@ ifneq (strip $(MAJOR),)
 MAJOR=1
 endif
 ifneq (strip $(MINOR),)
-MINOR=2
+MINOR=3
 endif
 
 .c.o:
