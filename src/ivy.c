@@ -136,7 +136,7 @@ static void IvyCleanup()
 {
 	IvyClientPtr clnt,next;
 
-	/* destruction des connexion  clients */
+	/* destruction des connexions clients */
 	LIST_EACH_SAFE( clients, clnt, next )
 	{
 		/* on dit au revoir */
@@ -145,13 +145,15 @@ static void IvyCleanup()
 		LIST_EMPTY( clnt->msg_send );
 	}
 	LIST_EMPTY( clients );
-	/* destruction des socket serveur et supervision */
+
+	/* destruction des sockets serveur et supervision */
 	SocketServerClose( server );
 	SocketClose( broadcast );
 }
 
 
-static int MsgCall( const char *message, MsgSndPtr msg,  Client client )
+static int
+MsgCall (const char *message, MsgSndPtr msg,  Client client)
 {
 	regmatch_t match[MAX_MATCHING_ARGS+1];
 #ifdef GNU_REGEXP
@@ -160,60 +162,56 @@ static int MsgCall( const char *message, MsgSndPtr msg,  Client client )
 	unsigned int i;
 #endif
 	memset( match, -1, sizeof(match )); /* work around bug !!!*/
-	if (regexec(&msg->regexp, message, MAX_MATCHING_ARGS, match, 0)==0) {
+	if (regexec (&msg->regexp, message, MAX_MATCHING_ARGS, match, 0) != 0)
+		return 0;
+
 #ifdef DEBUG
-		printf( "Sending message id=%d '%s'\n",msg->id,message);
+	printf( "Sending message id=%d '%s'\n",msg->id,message);
 #endif
 	SocketSend( client, "%d %d" ARG_START ,Msg, msg->id);
 
 #ifdef DEBUG
-		printf( "Send matching args count %d\n",msg->regexp.re_nsub);
+	printf( "Send matching args count %d\n",msg->regexp.re_nsub);
 #endif //DEBUG
 
 #ifdef GNU_REGEXP
 	p = &match[1];
- 	while ( p->rm_so != -1 ) {
+	while ( p->rm_so != -1 ) {
 		SocketSend( client, "%.*s" ARG_END , p->rm_eo - p->rm_so, 
-				message + p->rm_so); 
+			    message + p->rm_so); 
 		++p;
 	}
 #else
-	for ( i = 1; i < msg->regexp.re_nsub+1; i ++ )
-		{
-			if ( match[i].rm_so != -1 )
-			{
+	for ( i = 1; i < msg->regexp.re_nsub+1; i ++ ) {
+		if ( match[i].rm_so != -1 ) {
 #ifdef DEBUG
-			printf( "Send matching arg%d %d %d\n",i,match[i].rm_so , match[i].rm_eo);
-			printf( "Send matching arg%d %.*s\n",i,match[i].rm_eo - match[i].rm_so, 
+			printf ("Send matching arg%d %d %d\n",i,match[i].rm_so , match[i].rm_eo);
+			printf ("Send matching arg%d %.*s\n",i,match[i].rm_eo - match[i].rm_so, 
 				message + match[i].rm_so);
 #endif
-			SocketSend( client, "%.*s" ARG_END ,match[i].rm_eo - match[i].rm_so, 
+			SocketSend (client, "%.*s" ARG_END ,match[i].rm_eo - match[i].rm_so, 
 				message + match[i].rm_so);
-			}
-			else 
-			{
-			SocketSend( client, ARG_END );
+		} else {
+			SocketSend (client, ARG_END);
 #ifdef DEBUG
-				printf( "Send matching arg%d VIDE\n",i);
+			printf( "Send matching arg%d VIDE\n",i);
 #endif //DEBUG
-			}
 		}
+	}
 #endif
 
-	SocketSend( client, "\n");
+	SocketSend (client, "\n");
 	return 1;
-	}
-	return 0;
 }
 	
-static int ClientCall( IvyClientPtr clnt, const char *message )
+static int
+ClientCall (IvyClientPtr clnt, const char *message)
 {
 	MsgSndPtr msg;
 	int match_count = 0;
 	/* recherche dans la liste des requetes recues de ce client */
-	LIST_EACH( clnt->msg_send, msg )
-	{
-	match_count+= MsgCall( message, msg, clnt->client );
+	LIST_EACH (clnt->msg_send, msg) {
+		match_count+= MsgCall (message, msg, clnt->client);
 	}
 	return match_count;
 }
@@ -296,7 +294,7 @@ static void Receive( Client client, void *data, char *line )
 			SocketClose( client );
 			break;
 		case Error:
-			printf("Receive error %d  %s\n",  id, arg);
+			printf ("Received error %d %s\n",  id, arg);
 			break;
 		case AddRegexp:
 
@@ -306,7 +304,7 @@ static void Receive( Client client, void *data, char *line )
 			if ( !CheckRegexp( arg ) )
 				{
 #ifdef DEBUG
-				printf("Warning exp='%s' can't match removing from %s\n",arg,ApplicationName);
+				printf("Warning: regexp '%s' illegal, removing from %s\n",arg,ApplicationName);
 #endif //DEBUG
 				return;
 				}
@@ -325,7 +323,7 @@ static void Receive( Client client, void *data, char *line )
 			{
 			char errbuf[4096];
 			regerror (reg, &regexp, errbuf, 4096);
-			printf("Error compiling '%s', %s\n",arg,errbuf);
+			printf("Error compiling '%s', %s\n", arg, errbuf);
 			MsgSendTo( client, Error, reg, errbuf );
 			}
 			break;
@@ -354,7 +352,7 @@ static void Receive( Client client, void *data, char *line )
 #ifdef DEBUG
 			printf("Quitting  already connected %s\n",  line);
 #endif //DEBUG
-			IvySendError( clnt, 0, "Applicationlication already connected" );
+			IvySendError( clnt, 0, "Application already connected" );
 			SocketClose( client );
 			}
 			break;
@@ -544,7 +542,7 @@ static void BroadcastReceive( Client client, void *data, char *line )
 }
 
 
-void IvyInit(const char *appname, unsigned short port, const char *ready, 
+void IvyInit (const char *appname, unsigned short port, const char *ready, 
 			 IvyApplicationCallback callback, void *data,
 			 IvyDieCallback die_callback, void *die_data
 			 )
@@ -582,8 +580,8 @@ void IvyStart (const char* bus)
 	/*
 	 * Initialize TCP port
 	 */
-	server = SocketServer(ANYPORT, ClientCreate, ClientDelete, Receive );
-	ApplicationPort = SocketServerGetPort(server);
+	server = SocketServer (ANYPORT, ClientCreate, ClientDelete, Receive);
+	ApplicationPort = SocketServerGetPort (server);
 
 	/*
 	 * Find network list as well as broadcast port
@@ -677,60 +675,60 @@ void IvyStart (const char* bus)
 }
 
 /* desabonnements */
-void UnbindMsg( MsgRcvPtr msg )
+void
+UnbindMsg (MsgRcvPtr msg)
 {
-IvyClientPtr clnt;
+	IvyClientPtr clnt;
 	/* Send to already connected clients */
-	LIST_EACH( clients, clnt )
-	{
-	MsgSendTo( clnt->client, DelRegexp,msg->id, "");
+	LIST_EACH (clients, clnt ) {
+		MsgSendTo( clnt->client, DelRegexp,msg->id, "");
 	}
 }
 
 /* demande de reception d'un message */
-static MsgRcvPtr _BindMsg( MsgCallback callback, void *user_data, const char *regexp )
+static MsgRcvPtr
+_BindMsg (MsgCallback callback, void *user_data, const char *regexp )
 {
 	static int recv_id = 0;
 	IvyClientPtr clnt;
 	MsgRcvPtr msg;
 	/* add Msg to the query list */
 	LIST_ADD( msg_recv, msg );
-	if ( msg )
-		{
+	if (msg)	{
 		msg->id = recv_id++;
 		msg->regexp = strdup(regexp);
 		msg->callback = callback;
 		msg->user_data = user_data;
-		}
+	}
 	/* Send to already connected clients */
 	/* recherche dans la liste des requetes recues de mes clients */
-	LIST_EACH( clients, clnt )
-	{
-	MsgSendTo( clnt->client, AddRegexp,msg->id,msg->regexp);
+	LIST_EACH( clients, clnt ) {
+		MsgSendTo( clnt->client, AddRegexp,msg->id,msg->regexp);
 	}
 	return msg;
 }
 
-MsgRcvPtr IvyBindMsg( MsgCallback callback, void *user_data, const char *fmt_regex, ... )
+MsgRcvPtr
+IvyBindMsg (MsgCallback callback, void *user_data, const char *fmt_regex, ... )
 {
 	char buffer[4096];
 	va_list ap;
 	
-	va_start( ap, fmt_regex );
-	vsprintf( buffer, fmt_regex, ap );
-	va_end ( ap );
-	return _BindMsg( callback, user_data, buffer );
+	va_start (ap, fmt_regex );
+	vsprintf (buffer, fmt_regex, ap );
+	va_end  (ap );
+	return _BindMsg (callback, user_data, buffer );
 }
 
-static int _SendMsg( const char *message )
+static int
+_SendMsg (const char *message)
 {
 	IvyClientPtr clnt;
 	int match_count = 0;
 
 	/* recherche dans la liste des requetes recues de mes clients */
-	LIST_EACH( clients, clnt )
-	{
-	match_count+= ClientCall( clnt, message );
+	LIST_EACH (clients, clnt) {
+		match_count += ClientCall (clnt, message);
 	}
 #ifdef DEBUG
 	if ( match_count == 0 ) printf( "Warning no recipient for %s\n",message);
