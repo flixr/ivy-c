@@ -27,8 +27,14 @@ extern "C" {
 
 #ifdef WIN32
 #include <windows.h>
+#ifdef __MINGW32__
+#include <ws2tcpip.h>
+#endif
 #define HANDLE SOCKET
+#define socklen_t int
+#ifndef IN_MULTICAST
 #define IN_MULTICAST(i)            (((long)(i) & 0xf0000000) == 0xe0000000)
+#endif
 #else
 #define HANDLE int
 #include <netinet/in.h>
