@@ -5,7 +5,7 @@ OBJ = ivyloop.o timer.o ivysocket.o ivy.o
 GOBJ = ivyloop.o timer.o ivysocket.o givy.o
 XTOBJ = ivyxtloop.o ivysocket.o ivy.o
 
-all: libivy.a libgivy.a libxtivy.a testivy testxtivy
+all: libivy.a libgivy.a libxtivy.a libivy.so libgivy.so libxtivy.so testivy testxtivy
 
 givy.o: ivy.c
 	$(CC) -DGNU_REGEXP -c $(CFLAGS) -o givy.o ivy.c
@@ -29,4 +29,11 @@ libgivy.a: $(GOBJ)
 libxtivy.a: $(XTOBJ)
 	ar q libxtivy.a $(XTOBJ)
 
+libivy.so: $(OBJ)
+	ld -o libivy.so -shared $(OBJ)
 
+libgivy.so: $(GOBJ)
+	ld -o libgivy.so -shared $(GOBJ)
+
+libxtivy.so: $(XTOBJ)
+	ld -o libxtivy.so -shared $(XTOBJ)
