@@ -25,7 +25,7 @@
 
 #ifdef WIN32
 #define close closesocket
-/*#define perror( a ) printf(a" error=%d\n",WSAGetLastError());*/
+/*#define perror (a ) printf(a" error=%d\n",WSAGetLastError());*/
 #else
 #include <unistd.h>
 #include <sys/time.h>
@@ -53,7 +53,7 @@ struct _server {
 	void *(*create)(Client client);
 	void (*handle_delete)(Client client, void *data);
 	SocketInterpretation interpretation;
-	};
+};
 
 struct _client {
 	Client next;
@@ -66,7 +66,7 @@ struct _client {
 	char buffer[MAX_BUFFER+2];
 	char *ptr;
 	void *data;
-	};
+};
 
 
 static Server servers_list = NULL;
@@ -81,9 +81,9 @@ WSADATA	WsaData;
 
 void SocketInit()
 {
-	if ( ! channel_init )
+	if (! channel_init )
 	{
-		fprintf( stderr, "Channel management functions not set, exiting.\n");
+		fprintf (stderr, "Channel management functions not set, exiting.\n");
 		exit(-1);
 	}
 	(*channel_init)();
@@ -91,15 +91,15 @@ void SocketInit()
 
 static void DeleteSocket(void *data)
 {
-	Client client = ( Client )data;
-	if ( client->handle_delete )
-		(*client->handle_delete)( client, client->data );
-	shutdown( client->fd, 2 );
-	close( client->fd );
-	LIST_REMOVE( clients_list, client );
+	Client client = (Client )data;
+	if (client->handle_delete )
+		(*client->handle_delete) (client, client->data );
+	shutdown (client->fd, 2 );
+	close (client->fd );
+	LIST_REMOVE (clients_list, client );
 }
 
-static void HandleSocket( Channel channel, HANDLE fd, void *data)
+static void HandleSocket (Channel channel, HANDLE fd, void *data)
 {
 	Client client = (Client)data;
 	char *ptr;
@@ -109,39 +109,38 @@ static void HandleSocket( Channel channel, HANDLE fd, void *data)
 	int len;
 
 	/* limitation taille buffer */
-	nb_to_read = MAX_BUFFER - ( client->ptr - client->buffer );
-	if( nb_to_read == 0 ) {
+	nb_to_read = MAX_BUFFER - (client->ptr - client->buffer );
+	if (nb_to_read == 0 ) {
 		fprintf(stderr, "Erreur message trop long sans LF\n");
 		client->ptr  = client->buffer;
 		return;
-		};
-	len = sizeof( client->from );
-	nb = recvfrom( fd, client->ptr, nb_to_read,0,(struct sockaddr *)&client->from,&len);
+	}
+	len = sizeof (client->from );
+	nb = recvfrom (fd, client->ptr, nb_to_read,0,(struct sockaddr *)&client->from,&len);
 	if (nb  < 0) {
 		perror(" Read Socket ");
-		(*channel_close)( client->channel );
+		(*channel_close) (client->channel );
 		return;
-		};
-	if ( nb == 0 )
-		{
-		(*channel_close)( client->channel );
+	}
+	if (nb == 0 ) {
+		(*channel_close) (client->channel );
 		return;
-		}
+	}
 	
 	client->ptr += nb;
 	*(client->ptr) = '\0';
 	ptr = client->buffer;
-	while( (ptr_nl = strchr( ptr, '\n' )))
+	while ((ptr_nl = strchr (ptr, '\n' )))
 		{
 		*ptr_nl = '\0';
-		if ( client->interpretation )
-			(*client->interpretation)( client, client->data, ptr );
-			else fprintf( stderr,"Socket No interpretation function ???!\n");
+		if (client->interpretation )
+			(*client->interpretation) (client, client->data, ptr );
+			else fprintf (stderr,"Socket No interpretation function ???!\n");
 		ptr = ++ptr_nl;
 		}
-	if ( *ptr != '\0' )
+	if (*ptr != '\0' )
 		{ /* recopie ligne incomplete au debut du buffer */
-		strcpy( client->buffer, ptr );
+		strcpy (client->buffer, ptr );
 		client->ptr = client->buffer + strlen(client->buffer);
 		}
 		else
@@ -152,39 +151,39 @@ static void HandleSocket( Channel channel, HANDLE fd, void *data)
 
 static void HandleServer(Channel channel, HANDLE fd, void *data)
 {
-	Server server = ( Server ) data;
+	Server server = (Server ) data;
 	Client client;
 	HANDLE ns;
 	int addrlen;
 	struct sockaddr_in remote2;
 
-	addrlen = sizeof( remote2 );
-	if ((ns = accept( fd, (struct sockaddr *)&remote2, &addrlen)) <0)
+	addrlen = sizeof (remote2 );
+	if ((ns = accept (fd, (struct sockaddr *)&remote2, &addrlen)) <0)
 		{
-		perror ( "*** accept ***");
+		perror ("*** accept ***");
 		return;
 		};
-	LIST_ADD( clients_list, client );
-	if ( !client )
+	LIST_ADD (clients_list, client );
+	if (!client )
 		{
 		fprintf(stderr,"NOK Memory Alloc Error\n");
-		close( fd );
+		close (fd );
 		exit(0);
 		}
 	client->from = remote2;
 	client->fd = ns;
-	client->channel = (*channel_setup)( ns, client,  DeleteSocket, HandleSocket );
+	client->channel = (*channel_setup) (ns, client,  DeleteSocket, HandleSocket );
 	client->interpretation = server->interpretation;
 	client->ptr = client->buffer;
 	client->handle_delete = server->handle_delete;
-	client->data = (*server->create)( client );
+	client->data = (*server->create) (client );
 	
 }
 
 Server SocketServer(unsigned short port, 
 	void*(*create)(Client client),
 	void(*handle_delete)(Client client, void *data),
-	void(*interpretation)( Client client, void *data, char *ligne))
+	void(*interpretation) (Client client, void *data, char *ligne))
 {
 	Server server;
 	HANDLE fd;
@@ -193,8 +192,8 @@ Server SocketServer(unsigned short port,
 	int addrlen;
 		
 
-	if ((fd = socket( AF_INET, SOCK_STREAM, 0)) < 0){
-		perror( "***open socket ***");
+	if ((fd = socket (AF_INET, SOCK_STREAM, 0)) < 0){
+		perror ("***open socket ***");
 		exit(0);
 		};
 
@@ -205,46 +204,46 @@ Server SocketServer(unsigned short port,
 
 	if (setsockopt(fd,SOL_SOCKET,SO_REUSEADDR,(char*)&one,sizeof(one)) < 0)
 		{
-		perror( "*** set socket option SO_REUSEADDR ***");
+		perror ("*** set socket option SO_REUSEADDR ***");
 		exit(0);
 		} 
 
 #ifdef SO_REUSEPORT
 
-	if (setsockopt( fd, SOL_SOCKET, SO_REUSEPORT, (char *)&one, sizeof( one)) < 0)
+	if (setsockopt (fd, SOL_SOCKET, SO_REUSEPORT, (char *)&one, sizeof (one)) < 0)
 		{
-		perror( "*** set socket option REUSEPORT ***");
+		perror ("*** set socket option REUSEPORT ***");
 		exit(0);
 		}
 #endif
 	
 	if (bind(fd, (struct sockaddr *)&local, sizeof(local)) < 0)
 		{
-		perror( "*** bind ***");
+		perror ("*** bind ***");
 		exit(0);
 		}
 
-	addrlen = sizeof( local );
+	addrlen = sizeof (local );
 	if (getsockname(fd,(struct sockaddr *)&local, &addrlen) < 0)
 		{
-		perror( "***get socket name ***");
+		perror ("***get socket name ***");
 		exit(0);
 		} 
 	
-	if (listen( fd, 128) < 0){
-		perror( "*** listen ***");
+	if (listen (fd, 128) < 0){
+		perror ("*** listen ***");
 		exit(0);
 		};
 	
 
-	LIST_ADD( servers_list, server );
-	if ( !server )
+	LIST_ADD (servers_list, server );
+	if (!server )
 		{
 		fprintf(stderr,"NOK Memory Alloc Error\n");
 		exit(0);
 		}
 	server->fd = fd;
-	server->channel =	(*channel_setup)( fd, server, DeleteSocket, HandleServer );
+	server->channel =	(*channel_setup) (fd, server, DeleteSocket, HandleServer );
 	server->create = create;
 	server->handle_delete = handle_delete;
 	server->interpretation = interpretation;
@@ -253,23 +252,23 @@ Server SocketServer(unsigned short port,
 }
 
 
-unsigned short SocketServerGetPort( Server server )
+unsigned short SocketServerGetPort (Server server )
 {
 	return server ? server->port : 0;
 }
 
 
-void SocketServerClose( Server server )
+void SocketServerClose (Server server )
 {
 	if (!server)
 		return;
-	(*channel_close)( server->channel );
-	shutdown( server->fd, 2 );
-	close( server->fd );
-	LIST_REMOVE( servers_list, server );
+	(*channel_close) (server->channel );
+	shutdown (server->fd, 2 );
+	close (server->fd );
+	LIST_REMOVE (servers_list, server );
 }
 
-char *SocketGetPeerHost( Client client )
+char *SocketGetPeerHost (Client client )
 {
 	int err;
 	struct sockaddr_in name;
@@ -279,14 +278,14 @@ char *SocketGetPeerHost( Client client )
 	if (!client)
 		return "undefined";
 
-	err = getpeername( client->fd, (struct sockaddr *)&name, &len );
-	if ( err < 0 ) return "can't get peer";
-	host = gethostbyaddr( (char *)&name.sin_addr.s_addr,sizeof(name.sin_addr.s_addr),name.sin_family);
-	if ( host == NULL ) return "can't translate addr";
+	err = getpeername (client->fd, (struct sockaddr *)&name, &len );
+	if (err < 0 ) return "can't get peer";
+	host = gethostbyaddr ((char *)&name.sin_addr.s_addr,sizeof(name.sin_addr.s_addr),name.sin_family);
+	if (host == NULL ) return "can't translate addr";
 	return host->h_name;
 }
 
-struct in_addr * SocketGetRemoteAddr( Client client )
+struct in_addr * SocketGetRemoteAddr (Client client )
 {
 	return client ? &client->from.sin_addr : 0;
 }
@@ -299,38 +298,38 @@ void SocketGetRemoteHost (Client client, char **host, unsigned short *port )
 		return;
 
 	/* extract hostname and port from last message received */
-	hostp = gethostbyaddr( (char *)&client->from.sin_addr.s_addr,
+	hostp = gethostbyaddr ((char *)&client->from.sin_addr.s_addr,
 			sizeof(client->from.sin_addr.s_addr),client->from.sin_family);
-	if ( hostp == NULL ) *host = "unknown";
+	if (hostp == NULL ) *host = "unknown";
 		else *host = hostp->h_name;
-	*port = ntohs( client->from.sin_port );
+	*port = ntohs (client->from.sin_port );
 }
 
-void SocketClose( Client client )
+void SocketClose (Client client )
 {
 	if (client)
-		(*channel_close)( client->channel );
+		(*channel_close) (client->channel );
 }
 
-void SocketSendRaw( Client client, char *buffer, int len )
+void SocketSendRaw (Client client, char *buffer, int len )
 {
 	int err;
 
 	if (!client)
 		return;
 
-	err = send( client->fd, buffer, len, 0 );
-	if ( err != len )
-		perror( "*** send ***");
+	err = send (client->fd, buffer, len, 0 );
+	if (err != len )
+		perror ("*** send ***");
 }
 
-void SocketSetData( Client client, void *data )
+void SocketSetData (Client client, void *data )
 {
 	if (client)
 		client->data = data;
 }
 
-void SocketSend( Client client, char *fmt, ... )
+void SocketSend (Client client, char *fmt, ... )
 {
 	char buffer[4096];
 	va_list ap;
@@ -338,30 +337,30 @@ void SocketSend( Client client, char *fmt, ... )
 
 	if (!client)
 		return;
-	va_start( ap, fmt );
-	len = vsprintf( buffer, fmt, ap );
-	SocketSendRaw( client, buffer, len );
-	va_end ( ap );
+	va_start (ap, fmt );
+	len = vsprintf (buffer, fmt, ap );
+	SocketSendRaw (client, buffer, len );
+	va_end (ap );
 }
 
-void *SocketGetData( Client client )
+void *SocketGetData (Client client )
 {
 	return client ? client->data : 0;
 }
 
-void SocketBroadcast(  char *fmt, ... )
+void SocketBroadcast ( char *fmt, ... )
 {
 	Client client;
 	char buffer[4096];
 	va_list ap;
 	int len;
 	
-	va_start( ap, fmt );
-	len = vsprintf( buffer, fmt, ap );
-	va_end ( ap );
-	LIST_EACH( clients_list, client )
+	va_start (ap, fmt );
+	len = vsprintf (buffer, fmt, ap );
+	va_end (ap );
+	LIST_EACH (clients_list, client )
 		{
-		SocketSendRaw( client, buffer, len );
+		SocketSendRaw (client, buffer, len );
 		}
 }
 
@@ -369,7 +368,7 @@ void SocketBroadcast(  char *fmt, ... )
 /*
 Ouverture d'un canal TCP/IP en mode client
 */
-Client SocketConnect( char * host, unsigned short port, 
+Client SocketConnect (char * host, unsigned short port, 
 			void *data, 
 			SocketInterpretation interpretation,
 			void (*handle_delete)(Client client, void *data)
@@ -378,15 +377,15 @@ Client SocketConnect( char * host, unsigned short port,
 	struct hostent *rhost;
 
 
-	if ((rhost = gethostbyname( host )) == NULL) {
+	if ((rhost = gethostbyname (host )) == NULL) {
 		fprintf(stderr, "Erreur %s Calculateur inconnu !\n",host);
 		 return NULL;
 	}
-	return SocketConnectAddr( (struct in_addr*)(rhost->h_addr), port, data, interpretation, handle_delete);
+	return SocketConnectAddr ((struct in_addr*)(rhost->h_addr), port, data, interpretation, handle_delete);
 }
 
 
-Client SocketConnectAddr( struct in_addr * addr, unsigned short port, 
+Client SocketConnectAddr (struct in_addr * addr, unsigned short port, 
 			  void *data, 
 			  SocketInterpretation interpretation,
 			  void (*handle_delete)(Client client, void *data)
@@ -400,25 +399,25 @@ Client SocketConnectAddr( struct in_addr * addr, unsigned short port,
 	remote.sin_addr = *addr;
 	remote.sin_port = htons (port);
 
-	if ((handle = socket( AF_INET, SOCK_STREAM, 0)) < 0){
-		perror( "*** client socket ***");
+	if ((handle = socket (AF_INET, SOCK_STREAM, 0)) < 0){
+		perror ("*** client socket ***");
 		return NULL;
 	};
 
-	if ( connect( handle,  (struct sockaddr *)&remote, sizeof(remote) ) < 0){
-		perror( "*** client connect ***");
+	if (connect (handle, (struct sockaddr *)&remote, sizeof(remote) ) < 0){
+		perror ("*** client connect ***");
 		return NULL;
 	};
 
-	LIST_ADD( clients_list, client );
-	if ( !client ) {
+	LIST_ADD (clients_list, client );
+	if (!client ) {
 			fprintf(stderr,"NOK Memory Alloc Error\n");
-			close( handle );
+			close (handle );
 			exit(0);
 	}
 	
 	client->fd = handle;
-	client->channel = (*channel_setup)( handle, client,  DeleteSocket, HandleSocket );
+	client->channel = (*channel_setup) (handle, client,  DeleteSocket, HandleSocket );
 	client->interpretation = interpretation;
 	client->ptr = client->buffer;
 	client->data = data;
@@ -431,7 +430,7 @@ Client SocketConnectAddr( struct in_addr * addr, unsigned short port,
 }
 
 
-int SocketWaitForReply( Client client, char *buffer, int size, int delai)
+int SocketWaitForReply (Client client, char *buffer, int size, int delai)
 {
 	fd_set rdset;
 	struct timeval timeout;
@@ -449,37 +448,37 @@ int SocketWaitForReply( Client client, char *buffer, int size, int delai)
 	timeout.tv_usec = 0;
    	do {
 		/* limitation taille buffer */
-		nb_to_read = size - ( ptr - buffer );
-		if( nb_to_read == 0 )
+		nb_to_read = size - (ptr - buffer );
+		if (nb_to_read == 0 )
 			{
 			fprintf(stderr, "Erreur message trop long sans LF\n");
 			ptr  = buffer;
 			return -1;
 			}
-		FD_ZERO( &rdset );
-		FD_SET( fd, &rdset );
+		FD_ZERO (&rdset );
+		FD_SET (fd, &rdset );
 		ready = select(fd+1, &rdset, 0,  0, timeoutptr);
-		if ( ready < 0 )
+		if (ready < 0 )
 			{
 			perror("select");
 			return -1;
 			}
-		if ( ready == 0 )
+		if (ready == 0 )
 			{
 			return -2;
 			}
-		if ((nb = recv( fd , ptr, nb_to_read, 0 )) < 0)
+		if ((nb = recv (fd , ptr, nb_to_read, 0 )) < 0)
 			{
 			perror(" Read Socket ");
 			return -1;
 			}
-		if ( nb == 0 )
+		if (nb == 0 )
 			return 0;
 
 		ptr += nb;
 		*ptr = '\0';
-		ptr_nl = strchr( buffer, '\n' );
-	} while ( !ptr_nl );
+		ptr_nl = strchr (buffer, '\n' );
+	} while (!ptr_nl );
 	*ptr_nl = '\0';
 	return (ptr_nl - buffer);
 }
@@ -487,7 +486,7 @@ int SocketWaitForReply( Client client, char *buffer, int size, int delai)
 
 /* Socket UDP */
 
-Client SocketBroadcastCreate( unsigned short port, 
+Client SocketBroadcastCreate (unsigned short port, 
 				void *data, 
 				SocketInterpretation interpretation
 			)
@@ -501,48 +500,47 @@ Client SocketBroadcastCreate( unsigned short port,
 	local.sin_addr.s_addr = INADDR_ANY;
 	local.sin_port = htons (port);
 
-	if ((handle = socket( AF_INET, SOCK_DGRAM, 0)) < 0){
-		perror( "*** dgram socket ***");
+	if ((handle = socket (AF_INET, SOCK_DGRAM, 0)) < 0){
+		perror ("*** dgram socket ***");
 		return NULL;
 	};
 
 	/* wee need to used multiple client on the same host */
-	if (setsockopt( handle, SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof( on)) < 0)
+	if (setsockopt (handle, SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof (on)) < 0)
 		{
-			perror( "*** set socket option REUSEADDR ***");
+			perror ("*** set socket option REUSEADDR ***");
 			return NULL;
 		};
 #ifdef SO_REUSEPORT
 
-	if (setsockopt( fd, SOL_SOCKET, SO_REUSEPORT, (char *)&on, sizeof( on)) < 0)
+	if (setsockopt (fd, SOL_SOCKET, SO_REUSEPORT, (char *)&on, sizeof (on)) < 0)
 		{
-			perror( "*** set socket option REUSEPORT ***");
+			perror ("*** set socket option REUSEPORT ***");
 			return NULL;
 		}
 #endif
 	/* wee need to broadcast */
-	if (setsockopt( handle, SOL_SOCKET, SO_BROADCAST, (char *)&on, sizeof( on)) < 0)
+	if (setsockopt (handle, SOL_SOCKET, SO_BROADCAST, (char *)&on, sizeof (on)) < 0)
 		{
-			perror( "*** BROADCAST ***");
+			perror ("*** BROADCAST ***");
 			return NULL;
 		};
 
 	if (bind(handle, (struct sockaddr *)&local, sizeof(local)) < 0)
 		{
-			perror( "*** test BIND ***");
+			perror ("*** test BIND ***");
 			return NULL;
 		};
 
 	LIST_ADD(clients_list, client );
-	if ( !client )
-		{
-			fprintf(stderr,"NOK Memory Alloc Error\n");
-			close( handle );
-			exit(0);
-		}
+	if (!client ) {
+		fprintf(stderr,"NOK Memory Alloc Error\n");
+		close (handle );
+		exit(0);
+	}
 	
 	client->fd = handle;
-	client->channel = (*channel_setup)( handle, client,  DeleteSocket, HandleSocket );
+	client->channel = (*channel_setup) (handle, client,  DeleteSocket, HandleSocket );
 	client->interpretation = interpretation;
 	client->ptr = client->buffer;
 	client->data = data;
@@ -561,15 +559,15 @@ void SocketSendBroadcast (Client client, unsigned long host, unsigned short port
 		return;
 
 	va_start (ap, fmt );
-	len = vsprintf( buffer, fmt, ap );
+	len = vsprintf (buffer, fmt, ap );
 	/* Send UDP packet to the dest */
 	remote.sin_family = AF_INET;
-	remote.sin_addr.s_addr = htonl( host );
+	remote.sin_addr.s_addr = htonl (host );
 	remote.sin_port = htons(port);
 	err = sendto (client->fd, 
 			buffer, len,0,
 			(struct sockaddr *)&remote,sizeof(remote));
 	if (err != len) {
-		perror( "*** send ***");
-	}	va_end ( ap );
+		perror ("*** send ***");
+	}	va_end (ap );
 }
