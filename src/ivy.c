@@ -23,7 +23,12 @@
 #include <stdarg.h>
 #include <ctype.h>
 
+#ifndef USE_PCRE_REGEX
 #include <regex.h>
+#else
+#define OVECSIZE 60 /* must be multiple of 3, for regexp return */
+#include <pcre.h>
+#endif
 
 #include <fcntl.h>
 
@@ -76,7 +81,12 @@ struct _msg_snd {			/* requete de reception d'un client */
 	MsgSndPtr next;
 	int id;
 	char *str_regexp;		/* la regexp sous forme inhumaine */
+#ifndef USE_PCRE_REGEX
 	regex_t regexp;			/* la regexp sous forme machine */
+#else
+	pcre *regexp;
+	pcre_extra *inspect;
+#endif
 };
 
 struct _clnt_lst {
@@ -168,6 +178,40 @@ static void IvyCleanup()
 	SocketClose( broadcast );
 }
 
+#ifdef USE_PCRE_REGEX
+static int
+MsgCall (const char *message, MsgSndPtr msg,  Client client)
+{
+  	int ovector[OVECSIZE];
+	int index;
+  	int rc=pcre_exec(
+	    msg->regexp,
+	    msg->inspect,
+	    message,
+	    strlen(message),
+	    0, /* debut */
+	    0, /* no other regexp option */
+	    ovector,
+	    OVECSIZE);
+	if (rc<1) return 0; /* no match */
+#ifdef DEBUG
+	printf( "Sending message id=%d '%s'\n",msg->id,message);
+#endif
+	SocketSend( client, "%d %d" ARG_START ,Msg, msg->id);
+#ifdef DEBUG
+	printf( "Send matching args count %ld\n",msg->regexp.re_nsub);
+#endif
+	index=1;
+	while ( index<rc ) {
+		SocketSend( client, "%.*s" ARG_END , ovector[2*index+1]- ovector[2*index],
+			    message + ovector[2*index]);
+		++index;
+	}
+	SocketSend (client, "\n");
+	return 1;
+}
+
+#else  /* we don't USE_PCRE_REGEX */
 static int
 MsgCall (const char *message, MsgSndPtr msg,  Client client)
 {
@@ -219,6 +263,7 @@ MsgCall (const char *message, MsgSndPtr msg,  Client client)
 	SocketSend (client, "\n");
 	return 1;
 }
+#endif /* USE_PCRE_REGEX */
 	
 static int
 ClientCall (IvyClientPtr clnt, const char *message)
@@ -284,7 +329,13 @@ static void Receive( Client client, void *data, char *line )
 	char *argv[MAX_MATCHING_ARGS];
 	char *arg;
 	int kind_of_msg = Bye;
+#ifndef USE_PCRE_REGEX
 	regex_t regexp;
+#else
+	pcre *regexp;
+	const char *errbuf;
+	int erroffset;
+#endif
 
 	err = sscanf( line ,"%d %d", &kind_of_msg, &id );
 	arg = strstr( line , ARG_START );
@@ -323,6 +374,7 @@ static void Receive( Client client, void *data, char *line )
 #endif //DEBUG
 				return;
 				}
+#ifndef USE_PCRE_REGEX
 			reg = regcomp(&regexp, arg, REG_ICASE|REG_EXTENDED);
 			if ( reg == 0 )
 				{
@@ -341,9 +393,31 @@ static void Receive( Client client, void *data, char *line )
 			printf("Error compiling '%s', %s\n", arg, errbuf);
 			MsgSendTo( client, Error, reg, errbuf );
 			}
+#else
+			regexp = pcre_compile(arg, 0,&errbuf,&erroffset,NULL);
+			if ( regexp != NULL )
+				{
+				IVY_LIST_ADD( clnt->msg_send, snd )
+				if ( snd )
+					{
+					snd->id = id;
+					snd->str_regexp = strdup( arg );
+					snd->regexp = regexp;
+					snd->inspect = pcre_study(regexp,0,&errbuf);
+					if (errbuf!=NULL)
+						{
+						  printf("Error studying %s, message: %s\n",arg,errbuf);
+						}
+					}
+				}
+			else
+			{
+			printf("Error compiling '%s', %s\n", arg, errbuf);
+			MsgSendTo( client, Error, erroffset, errbuf );
+			}
+#endif
 			break;
 		case DelRegexp:
-
 #ifdef DEBUG
 			printf("Regexp Delete id=%d\n",  id);
 #endif //DEBUG
@@ -351,12 +425,17 @@ static void Receive( Client client, void *data, char *line )
 			IVY_LIST_ITER( clnt->msg_send, snd, ( id != snd->id ));
 			if ( snd )
 				{
+#ifndef USE_PCRE_REGEX
 				free( snd->str_regexp );
+#else
+				free( snd->str_regexp );
+				if (snd->inspect!=NULL) pcre_free(snd->inspect);
+				pcre_free(snd->regexp);
+#endif
 				IVY_LIST_REMOVE( clnt->msg_send, snd  );
 				}
 			break;
 		case StartRegexp:
-			
 #ifdef DEBUG
 			printf("Regexp Start id=%d Application='%s'\n",  id, arg);
 #endif //DEBUG
@@ -701,6 +780,7 @@ IvyUnbindMsg (MsgRcvPtr msg)
 	IVY_LIST_EACH (clients, clnt ) {
 		MsgSendTo( clnt->client, DelRegexp,msg->id, "");
 	}
+	IVY_LIST_REMOVE( msg_recv, msg  );
 }
 
 /* demande de reception d'un message */

@@ -8,38 +8,58 @@
 #
 #	Authors: François-Régis Colin <fcolin@cena.fr>
 # 		Stéphane Chatty <chatty@cena.fr>
+# 		Yannick Jestin <jestin@cena.fr>
 #
-#	$Id$
-# 
 #	Please refer to file version.h for the
 #	copyright notice regarding this software
 #
 
 
+# change this in version.h too !!!!
 MAJOR=3
-MINOR=5
+MINOR=6
 
 XTINC = -I/usr/X11R6/include
-XTLIB = -L/usr/X11R6/lib 
+XTLIB = -L/usr/X11R6/lib -lXt -lX11 -lSM -lICE
 GTKINC = `gtk-config --cflags`
-#GTKINC = -I/usr/include/gtk-1.2 -I/usr/include/glib-1.2 -I/usr/lib/glib/include -I/usr/X11R6/include
 GTKLIB = `gtk-config --libs`
-#GTKLIB = -L/usr/lib -L/usr/X11R6/lib
 GLUTINC = -I/usr/include -I.
-GLUTLIB = -L.
+GLUTLIB = -L. -lglut -lGLU -lGL -lX11 -lXmu 
+# use these if you want standard Tcl
 TCLINCL	= -I/usr/include/tcl8.4
 TCLLIB = -ltcl8.4
+# use these if you want to use Aqua Tcl on macOSX
+#TCLINC	= -I/Library/Frameworks/Tcl.framework/Headers
+#TCLLIB = -framework Tcl
+PCREINC = `pcre-config --cflags`
+PCRELIB = `pcre-config --libs`
+#PCREOBJ = `pcre-config --prefix`/lib/libpcre.a
+PCREOBJ = 
+
+EXTRALIB=
+#EXTRALIB=-lsocket -lnsl # for solaris
 
 CC=gcc
-CFLAGS = -g
+LIBTOOL=ar q # linux and solaris
+#LIBTOOL=libtool -static -o
+
+#REGEXP = -DGNU_REGEXP  # deprecated !
+REGEXP = -DUSE_PCRE_REGEX 
+# on activeTCL , set #define CHANNEL to null, and add ivyloop.o in the ivytcl target,
+# see below
+CHANNEL = -DTCL_CHANNEL_INTEGRATION 
+CFLAGS = -g 
+
 OBJ = ivyloop.o timer.o ivysocket.o ivy.o 
 GOBJ = ivyloop.o timer.o ivysocket.o givy.o
 XTOBJ = ivyxtloop.o ivysocket.o ivy.o
 GTKOBJ = ivygtkloop.o ivysocket.o ivy.o
 GLUTOBJ = ivyglutloop.o ivysocket.o ivy.o
-TCLOBJ = ivytcl.o  ivyloop.o timer.o ivysocket.o givy.o
+TCLOBJ = ivytcl.o  timer.o ivysocket.o givy.o
+# WINDOWS add ivyloop.o if TCL_CHANNEL_INTEGRATION is not set
 TARGETS = ivyprobe ivygtkprobe ivyxtprobe 
-# not yiet need Modified Glut ivyglutprobe
+TARGETLIBS=libivy.so.$(MAJOR).$(MINOR) libgivy.so.$(MAJOR).$(MINOR) libxtivy.so.$(MAJOR).$(MINOR) libgtkivy.so.$(MAJOR).$(MINOR) libtclivy.so.$(MAJOR).$(MINOR)
+# not yet need Modified Glut ivyglutprobe
 
 .c.o:
 	$(CC) $(CFLAGS) -c $*.c
@@ -47,96 +67,106 @@ TARGETS = ivyprobe ivygtkprobe ivyxtprobe
 all: static-libs commands shared-libs
 
 static-libs: libivy.a libgivy.a libxtivy.a libgtkivy.a libtclivy.a 
-# not yiet need Modified Glut libglutivy.a
+# not yet need Modified Glut libglutivy.a
 
-shared-libs: libivy.so.$(MAJOR).$(MINOR) libgivy.so.$(MAJOR).$(MINOR) libxtivy.so.$(MAJOR).$(MINOR) libgtkivy.so.$(MAJOR).$(MINOR) libtclivy.so.$(MAJOR).$(MINOR)
-# not yiet need Modified Glut libglutivy.so.$(MAJOR).$(MINOR)
+shared-libs: $(TARGETLIBS)
+# not yet need Modified Glut libglutivy.so.$(MAJOR).$(MINOR)
 
 commands: $(TARGETS)
 
 ivytcl.o: ivytcl.c
-	$(CC) -DGNU_REGEXP -c $(CFLAGS) $(TCLINCL) -o ivytcl.o ivytcl.c
+	$(CC) -c $(CFLAGS) $(TCLINCL) $(CHANNEL) ivytcl.c
+
+ivy.o: ivy.c
+	$(CC) -c $(CFLAGS) $(REGEXP) $(PCREINC) ivy.c
 
 givy.o: ivy.c
-	$(CC) -DGNU_REGEXP -c $(CFLAGS) -o givy.o ivy.c
+	$(CC) -c $(CFLAGS) -o givy.o ivy.c
 
 ivyglutloop.o: ivyglutloop.c ivyglutloop.h
-	$(CC) -c $(CFLAGS) $(GLUTINC) -o ivyglutloop.o ivyglutloop.c
+	$(CC) -c $(CFLAGS) $(GLUTINC) ivyglutloop.c
 
 ivygtkloop.o: ivygtkloop.c ivygtkloop.h
-	$(CC) -c $(CFLAGS) $(GTKINC) -o ivygtkloop.o ivygtkloop.c
+	$(CC) -c $(CFLAGS) $(GTKINC) ivygtkloop.c
 
-ivyprobe: ivyprobe.o libivy.a
-	$(CC)  $(CFLAGS) -o ivyprobe ivyprobe.o -L. -livy
-	# SOLARIS: use this line
-	# $(CC)  $(CFLAGS) -o ivyprobe ivyprobe.o -L. -livy -lsocket -lnsl
+ivyprobe: ivyprobe.o
+	$(CC)  $(CFLAGS) -o $@ ivyprobe.o -L. -livy $(PCRELIB) $(EXTRALIB)
 
 ivyxtprobe.o : ivyprobe.c
-	$(CC)  $(CFLAGS) -c ivyprobe.c -o ivyxtprobe.o $(XTINC) -DXTMAINLOOP
+	$(CC)  $(CFLAGS) -DXTMAINLOOP -c ivyprobe.c -o $@ $(XTINC)
 
 ivyxtprobe: ivyxtprobe.o libxtivy.a
-	$(CC) -o ivyxtprobe ivyxtprobe.o -L. $(XTLIB) -lxtivy -lXt -lX11 -lSM -lICE
+	$(CC) -o $@ ivyxtprobe.o -L. $(XTLIB) -lxtivy  $(PCRELIB) $(EXTRALIB)
 
 ivygtkprobe.o : ivyprobe.c
-	$(CC)  $(CFLAGS) -c ivyprobe.c -o ivygtkprobe.o $(XTINC) -DGTKMAINLOOP
+	$(CC)  $(CFLAGS) -DGTKMAINLOOP -c ivyprobe.c -o ivygtkprobe.o $(XTINC)
 
 ivygtkprobe: ivygtkprobe.o libgtkivy.a
-	$(CC) -o ivygtkprobe ivygtkprobe.o -L. $(GTKLIB) -lgtkivy -lgtk -lgdk -lglib -lX11 -lSM -lICE -lm
+	$(CC) -o ivygtkprobe ivygtkprobe.o -L. $(GTKLIB) -lgtkivy $(PCRELIB) $(EXTRALIB)
 
 ivyglutprobe.o : ivyprobe.c
-	$(CC)  $(CFLAGS) -c ivyprobe.c -o ivyglutprobe.o $(GLUTINC) -DGLUTMAINLOOP
+	$(CC)  $(CFLAGS) -DGLUTMAINLOOP -c ivyprobe.c -o ivyglutprobe.o $(GLUTINC)
 
 ivyglutprobe: ivyglutprobe.o libglutivy.a
-	$(CC) -o ivyglutprobe ivyglutprobe.o -L. $(GLUTLIB) -lglutivy -lglut -lGLU -lGL -lX11 -lXmu
+	$(CC) -o ivyglutprobe ivyglutprobe.o -L. $(GLUTLIB) -lglutivy $(PCRELIB) $(EXTRALIB)
 
 libivy.a: $(OBJ)
 	rm -f $@
-	ar q $@ $(OBJ)
+	$(LIBTOOL) $@ $(OBJ)
 
 libgivy.a: $(GOBJ)
 	rm -f $@
-	ar q $@ $(GOBJ)
+	$(LIBTOOL) $@ $(GOBJ)
 
 libxtivy.a: $(XTOBJ)
 	rm -f $@
-	ar cq $@ $(XTOBJ)
+	$(LIBTOOL) $@ $(XTOBJ)
 
 libgtkivy.a: $(GTKOBJ)
 	rm -f $@
-	ar cq $@ $(GTKOBJ)
+	$(LIBTOOL) $@ $(GTKOBJ)
 
 libglutivy.a: $(GLUTOBJ)
 	rm -f $@
-	ar cq $@ $(GLUTOBJ)
+	$(LIBTOOL) $@ $(GLUTOBJ)
 
 libtclivy.a: $(TCLOBJ)
 	rm -f $@
-	ar cq $@ $(TCLOBJ)
+	$(LIBTOOL) $@ $(TCLOBJ) $(PCREOBJ)
+# TODO this PCREOBJ is a dirty hack
 
 libivy.so.$(MAJOR).$(MINOR): $(OBJ)
-	$(CC) -shared -Wl,-soname,libivy.so.$(MAJOR) -o $@ $(OBJ) -lc
+	$(CC) -shared -Wl,-soname,libivy.so.$(MAJOR) -o $@ $(OBJ)
+#	$(CC) -G -Wl,-h,libivy.so.$(MAJOR) -o $@ $(OBJ)		#solaris
+#	libtool -dynamic -o $@ $(OBJ) $(PCRELIB) -lc
 
 libgivy.so.$(MAJOR).$(MINOR): $(GOBJ)
-	$(CC) -shared -Wl,-soname,libgivy.so.$(MAJOR) -o $@ $(GOBJ) -lc
+	$(CC) -shared -Wl,-soname,libgivy.so.$(MAJOR) -o $@ $(GOBJ)
+#	$(CC) -G -Wl,-h,libgivy.so.$(MAJOR) -o $@ $(GOBJ) #solaris
+#	libtool -dynamic -o $@ $(GOBJ) $(PCRELIB) -lc
 
 libxtivy.so.$(MAJOR).$(MINOR): $(XTOBJ)
-	$(CC) -shared -Wl,-soname,libxtivy.so.$(MAJOR) -o $@ \
-	$(XTOBJ) $(XTLIB) -lXt -lX11 -lc
+	$(CC) -shared -Wl,-soname,libxtivy.so.$(MAJOR) -o $@ $(XTOBJ) $(XTLIB)
+#	$(CC) -G -Wl,-h,libxtivy.so.$(MAJOR) -o $@ $(XTOBJ) $(XTLIB) #solaris
+#	libtool -dynamic -o $@ $(XTOBJ) $(XTLIB) $(PCRELIB) -lc
 
 libgtkivy.so.$(MAJOR).$(MINOR): $(GTKOBJ)
-	$(CC) -shared -Wl,-soname,libgtkivy.so.$(MAJOR) -o $@ \
-	$(GTKOBJ) $(GTKLIB) -lX11 -lc
+	$(CC) -shared -Wl,-soname,libgtkivy.so.$(MAJOR) -o $@ $(GTKOBJ) $(GTKLIB)
+#	$(CC) -G -Wl,-h,libgtkivy.so.$(MAJOR) -o $@ $(GTKOBJ) $(GTKLIB)	#solaris
+#	libtool -dynamic -o $@ $(GTKOBJ) $(GTKLIB) $(PCRELIB) -lc
 
 libglutivy.so.$(MAJOR).$(MINOR): $(GTKOBJ)
-	$(CC) -shared -Wl,-soname,libglutivy.so.$(MAJOR) -o $@ \
-	$(GLUTOBJ) $(GLUTLIB) -lX11 -lc
+	$(CC) -shared -Wl,-soname,libglutivy.so.$(MAJOR) -o $@ $(GLUTOBJ) $(GLUTLIB)
+#	$(CC) -G -Wl,-h,libglutivy.so.$(MAJOR) -o $@ $(GLUTOBJ) $(GLUTLIB) #	solaris
+#	libtool -dynamic -o $@ $(GLUTOBJ) $(GLUTLIB) $(PCRELIB) -lc
 
 libtclivy.so.$(MAJOR).$(MINOR): $(TCLOBJ)
-	$(CC) -shared -Wl,-soname,libtclivy.so.$(MAJOR) -o $@ \
-	$(TCLOBJ) $(TCLLIB)  -lc
+	$(CC) -shared -Wl,-soname,libtclivy.so.$(MAJOR) -o $@ $(TCLOBJ) $(TCLLIB) $(PCREOBJ)
+#	$(CC) -G -Wl,-h,libtclivy.so.$(MAJOR) -o $@ $(TCLOBJ) $(TCLLIB) $(PCREOBJ) # solaris
+#	libtool -dynamic -o $@ $(TCLOBJ) $(TCLLIB) $(PCREOBJ) $(PCRELIB) -lc
 
 clean:
-	-rm -f $(TARGETS) *.o *.a *.so *.so.* *~
+	-rm -f $(TARGETS) $(TARGETLIBS) *.o *.a *.so *.so.* *~
 
 installlibs: static-libs shared-libs
 	test -d $(PREFIX)/usr/lib || mkdirhier $(PREFIX)/usr/lib

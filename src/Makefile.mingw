@@ -17,15 +17,13 @@
 
 
 MAJOR=3
-MINOR=5
+MINOR=6
 RM=del
 #RM=rm -f
 XTINC = 
 XTLIB =  
 GTKINC = `gtk-config --cflags`
-#GTKINC = -I/usr/include/gtk-1.2 -I/usr/include/glib-1.2 -I/usr/lib/glib/include -I/usr/X11R6/include
 GTKLIB = `gtk-config --libs`
-#GTKLIB = -L/usr/lib -L/usr/X11R6/lib
 GLUTINC = -I/usr/include -I.
 GLUTLIB = -L.
 TCLINCL	= -I/usr/include/tcl8.4
@@ -71,8 +69,6 @@ ivygtkloop.o: ivygtkloop.c ivygtkloop.h
 
 ivyprobe: ivyprobe.o libivy.a
 	$(CC)  $(CFLAGS) -o ivyprobe ivyprobe.o -L. -livy -lwsock32 -lregex 
-#	 SOLARIS: use this line
-#	$(CC)  $(CFLAGS) -o ivyprobe ivyprobe.o -L. -livy -lsocket -lnsl
 
 ivyxtprobe.o : ivyprobe.c
 	$(CC)  $(CFLAGS) -c ivyprobe.c -o ivyxtprobe.o $(XTINC) -DXTMAINLOOP

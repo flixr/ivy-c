@@ -1,19 +1,20 @@
 /*
  *	Ivy probe
  *
- *	Copyright (C) 1997-2000
+ *	Copyright (C) 1997-2004
  *	Centre d'Études de la Navigation Aérienne
  *
  * 	Main and only file
  *
  *	Authors: François-Régis Colin <fcolin@cena.fr>
+ * 	         Yannick Jestin <jestin@cena.fr>
  *
- *	$Id$
- * 
  *	Please refer to file version.h for the
  *	copyright notice regarding this software
  */
-
+#define DEFAULT_IVYPROBE_NAME "IVYPROBE"
+#define DEFAULT_READY " Ready"
+#include "version.h"
 
 #define IVYMAINLOOP
 
@@ -271,7 +272,12 @@ int main(int argc, char *argv[])
 	int timer_test = 0;
 	char busbuf [1024] = "";
 	const char* bus = 0;
-	while ((c = getopt(argc, argv, "d:b:w:t")) != EOF)
+	char agentnamebuf [1024] = "";
+	const char* agentname = DEFAULT_IVYPROBE_NAME;
+	char agentready [1024] = "";
+	const char* helpmsg =
+	  "[options] [regexps]\n\t-b bus\tdefines the Ivy bus to which to connect to, defaults to 127:2010\n\t-t\ttriggers the timer test\n\t-n name\tchanges the name of the agent, defaults to IVYPROBE\n\t-v\tprints the ivy relase number\n\nregexp is a Perl5 compatible regular expression (see ivyprobe(1) and pcrepattern(3) for more info\nuse .help within ivyprobe\n";
+	while ((c = getopt(argc, argv, "vn:d:b:w:t")) != EOF)
 			switch (c) {
 			case 'b':
 				strcpy (busbuf, optarg);
@@ -280,10 +286,20 @@ int main(int argc, char *argv[])
 			case 'w':
 				wait_count = atoi(optarg) ;
 				break;
+			case 'n':
+				strcpy(agentnamebuf, optarg);
+				agentname=agentnamebuf;
+			case 'v':
+				printf("ivy c library version %d.%d\n",IVYMAJOR_VERSION,IVYMINOR_VERSION);
+				break;
 			case 't':
 				timer_test = 1;
 				break;
+			default:
+				printf("usage: %s %s",argv[0],helpmsg);
+				exit(1);
 			}
+	sprintf(agentready,"%s Ready",agentname);
 
 	/* Mainloop management */
 #ifdef XTMAINLOOP
@@ -297,7 +313,7 @@ int main(int argc, char *argv[])
 	glClearColor(0.49, 0.62, 0.75, 0.0);
 	glutDisplayFunc(display);
 #endif
-	IvyInit ("IVYPROBE", "IVYPROBE READY", ApplicationCallback,NULL,NULL,NULL);
+	IvyInit (agentname, agentready, ApplicationCallback,NULL,NULL,NULL);
 	IvyBindDirectMsg( DirectCallback,NULL);
 	for  (; optind < argc; optind++)
 		IvyBindMsg (Callback, NULL, argv[optind]);

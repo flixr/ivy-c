@@ -16,7 +16,11 @@
 
 #include <sys/time.h>
 #include <unistd.h>
+#ifdef __APPLE__
+#include <malloc/malloc.h>
+#else
 #include <malloc.h>
+#endif
 #include <string.h>
 #include <stdlib.h>
 #include <signal.h>
@@ -28,7 +32,7 @@
 #include "ivy.h"
 #include "timer.h"
 
-//#define TCL_CHANNEL_INTEGRATION
+// defined or not in the Makefile only
 #ifdef TCL_CHANNEL_INTEGRATION
 // On utilisa la boucle Standard TCL 
 // mais il y a des problemes sur les socket server 
@@ -262,15 +266,19 @@ IvyMsgCB(IvyClientPtr	app,
     size += strlen(argv[i]) + 3;
   }
   size ++;
+  size += strlen(IvyGetApplicationName(app))+4;
   script_to_call = ckalloc(size);
   strcpy(script_to_call, filter->script);
-  strcat(script_to_call, " {");
+  strcat(script_to_call, " \"");
+  strcat(script_to_call, IvyGetApplicationName(app));
+  strcat(script_to_call, "\"");
+  /* strcat(script_to_call, " {"); */
   for (i = 0; i < argc; i++) {
-    strcat(script_to_call, "\"");
+    strcat(script_to_call, " \"");
 	strcat(script_to_call, argv[i]);
-    strcat(script_to_call, "\" ");
+    strcat(script_to_call, "\"");
   }
-  strcat(script_to_call, "}");
+  /* strcat(script_to_call, " }"); */
   
   Tcl_Preserve(filter->interp);
   result = Tcl_GlobalEval(filter->interp, script_to_call);
@@ -394,11 +402,11 @@ IvyBindCmd(ClientData	clientData,
   }
 
   filter = (filter_struct *) ckalloc(sizeof(filter_struct));
-  filter->filter = ckalloc(strlen(argv[1])+1);
+  filter->filter = ckalloc(strlen(argv[1])+1);  // regexp
   strcpy(filter->filter, argv[1]);
-  filter->script = ckalloc(strlen(argv[2])+1);
+  filter->script = ckalloc(strlen(argv[2])+1);  // callback proc name
   strcpy(filter->script, argv[2]);
-  filter->id = IvyBindMsg(IvyMsgCB, (void *) filter, filter->filter, NULL);
+  filter->id = IvyBindMsg(IvyMsgCB, (void *) filter, filter->filter, NULL); // MsgPtr id
   filter->interp = interp;
   entry = Tcl_CreateHashEntry(&filter_table, (char *) filter_id, &dummy);
   Tcl_SetHashValue(entry, (ClientData) filter);
@@ -419,7 +427,6 @@ IvyUnbindCmd(ClientData	clientData,
   char		*end;
   filter_struct	*filter;
   Tcl_HashEntry	*entry;
-
   if (argc != 2) {
     Tcl_AppendResult(interp, "wrong # of args: \"",
 		     argv[0], " filterId\"", (char *) NULL);
@@ -439,13 +446,12 @@ IvyUnbindCmd(ClientData	clientData,
   }
 
   filter = (filter_struct *) Tcl_GetHashValue(entry);
+  Tcl_DeleteHashEntry(entry);
   IvyUnbindMsg(filter->id);
   ckfree(filter->script);
   ckfree(filter->filter);
   ckfree((char *) filter);
-  
-  Tcl_DeleteHashEntry(entry);
-  
+
   return TCL_OK;
 }
 
