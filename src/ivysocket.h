@@ -39,6 +39,9 @@ extern "C" {
 #define HANDLE int
 #include <netinet/in.h>
 #endif
+#ifdef __INTERIX
+#define socklen_t int
+#endif
 
 /* General Init */
 extern void SocketInit();
