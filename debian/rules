@@ -34,7 +34,7 @@ binary-arch:	checkroot build
 	install -d debian/tmp
 	cd debian/tmp && install -d `cat ../dirs`
 
-	cd src && make install DESTDIR=`pwd`/../debian/tmp MAJOR=$(MAJOR) MINOR=$(MINOR)
+	cd src && make install PREFIX=`pwd`/../debian/tmp MAJOR=$(MAJOR) MINOR=$(MINOR)
 
 	debstd
 	-rmdir debian/tmp/usr/include
