@@ -1,12 +1,15 @@
+#ifdef WIN32
+#include <windows.h>
+#endif
 #include <stdlib.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
+
 #ifdef WIN32
-#include <windows.h>
 #define close closesocket
-#define perror( a ) printf(a" error=%d\n",WSAGetLastError());
+/*#define perror( a ) printf(a" error=%d\n",WSAGetLastError());*/
 #else
 #include <unistd.h>
 #include <sys/time.h>
@@ -17,26 +20,17 @@
 #include <netdb.h>
 #include <signal.h>
 #endif
-#ifdef XTMAINLOOP
-#include <X11/Intrinsic.h>
-#endif
+
 #include "list.h"
+#include "buschannel.h"
 #include "bussocket.h"
-#include "timer.h"
+
+static  ChannelInit channel_init = NULL;
+static  ChannelSetUp channel_setup = NULL;
+static  ChannelClose channel_close = NULL;
 
 #define MAX_BUFFER 2048
 
-struct _channel {
-	Channel next;
-	HANDLE fd;
-#ifdef XTMAINLOOP
-	XtInputId id;
-#endif
-	void *data;
-	int tobedeleted;
-	void (*handle_delete)( void *data );
-	void (*handle_read)( Channel channel, HANDLE fd, void *data);
-	};
 
 typedef struct _server *Server;
 
@@ -50,6 +44,7 @@ struct _server {
 
 struct _client {
 	Client next;
+	HANDLE fd;
 	Channel channel;
 	unsigned short port;
 	struct sockaddr_in from;
@@ -60,17 +55,10 @@ struct _client {
 	void *data;
 	};
 
-static Channel channels_list = NULL;
+
 static Server servers_list = NULL;
 static Client clients_list = NULL;
-static int channel_initialized = 0;
 
-#ifdef XTMAINLOOP
-static XtAppContext    app;
-#else
-static fd_set open_fds;
-static int MainLoop = 1;
-#endif
 
 
 
@@ -78,106 +66,31 @@ static int MainLoop = 1;
 WSADATA					WsaData;
 #endif
 
-void ChannelClose( Channel channel )
+void BusSetChannelManagement( ChannelInit init_chan, ChannelSetUp setup_chan, ChannelClose close_chan )
 {
-#ifdef XTMAINLOOP
-	if ( channel->handle_delete )
-		(*channel->handle_delete)( channel->data );
-	close(channel->fd);
-	XtRemoveInput( channel->id );
-	LIST_REMOVE( channels_list, channel );
-#else
-	channel->tobedeleted = 1;
-#endif
+	channel_init = init_chan;
+	channel_setup = setup_chan;
+	channel_close = close_chan;
 }
-#ifdef XTMAINLOOP
-static void HandleChannel( XtPointer closure, int* source, XtInputId* id )
-{
-	Channel channel = (Channel)closure;
-#ifdef DEBUG
-	printf("Handle Channel read %d\n",*source );
-#endif
-	(*channel->handle_read)(channel,channel->fd,channel->data);
-}
-#else
-static void ChannelDelete( Channel channel )
-{
-	if ( channel->handle_delete )
-		(*channel->handle_delete)( channel->data );
-	close(channel->fd);
 
-	FD_CLR(channel->fd, &open_fds);
-	LIST_REMOVE( channels_list, channel );
-}
-static void ChannelDefferedDelete()
-{
-	Channel channel,next;
-	LIST_EACH_SAFE( channels_list, channel,next)
-		{
-		if ( channel->tobedeleted  )
-			{
-			ChannelDelete( channel );
-			}
-		}
-}
-#endif
-Channel ChannelSetUp(HANDLE fd, void *data,
-				void (*handle_delete)( void *data ),
-				void (*handle_read)( Channel channel, HANDLE fd, void *data)
-				)						
-{
-	Channel channel;
 
-	LIST_ADD( channels_list, channel );
-	if ( !channel )
-		{
-		fprintf(stderr,"NOK Memory Alloc Error\n");
-		close( fd );
-		exit(0);
-		}
-	channel->fd = fd;
-	channel->tobedeleted = 0;
-	channel->handle_delete = handle_delete;
-	channel->handle_read = handle_read;
-	channel->data = data;
-#ifdef XTMAINLOOP
-	channel->id = XtAppAddInput( app, fd, (XtPointer)XtInputReadMask, HandleChannel, channel);
-#else
-	FD_SET( channel->fd, &open_fds );
-#endif
-	return channel;
-}
-#ifndef XTMAINLOOP
-static void ChannelHandleRead(fd_set *current)
+void SocketInit()
 {
-	Channel channel,next;
-	
-	LIST_EACH_SAFE( channels_list, channel, next )
-		{
-		if ( FD_ISSET( channel->fd, current ) )
-			{
-			(*channel->handle_read)(channel,channel->fd,channel->data);
-			}
-		}
+	if ( ! channel_init )
+	{
+		fprintf( stderr, "You Must call BusSetChannelManagement before all !!!\n");
+		exit(-1);
+	}
+	 (*channel_init)();
 }
-static void ChannelHandleExcpt(fd_set *current)
-{
-	Channel channel,next;
-	LIST_EACH_SAFE( channels_list, channel, next )
-		{
-		if (FD_ISSET( channel->fd, current ) )
-			{
-			ChannelClose( channel );
-			}
-		}
-}
-#endif
+
 static void DeleteSocket(void *data)
 {
 	Client client = ( Client )data;
 	if ( client->handle_delete )
 		(*client->handle_delete)( client, client->data );
-	shutdown( client->channel->fd, 2 );
+	shutdown( client->fd, 2 );
+	close( client->fd );
 	LIST_REMOVE( clients_list, client );
 }
 static void HandleSocket( Channel channel, HANDLE fd, void *data)
@@ -200,12 +113,12 @@ static void HandleSocket( Channel channel, HANDLE fd, void *data)
 	nb = recvfrom( fd, client->ptr, nb_to_read,0,(struct sockaddr *)&client->from,&len);
 	if (nb  < 0) {
 		perror(" Read Socket ");
-		ChannelClose( client->channel );
+		(*channel_close)( client->channel );
 		return;
 		};
 	if ( nb == 0 )
 		{
-		ChannelClose( client->channel );
+		(*channel_close)( client->channel );
 		return;
 		}
 	
@@ -252,7 +165,8 @@ static void HandleServer(Channel channel, HANDLE fd, void *data)
 		exit(0);
 		}
 	client->from = remote2;
-	client->channel = ChannelSetUp( ns, client,  DeleteSocket, HandleSocket );
+	client->fd = ns;
+	client->channel = (*channel_setup)( ns, client,  DeleteSocket, HandleSocket );
 	client->interpretation = server->interpretation;
 	client->ptr = client->buffer;
 	client->handle_delete = server->handle_delete;
@@ -321,7 +235,7 @@ int SocketServer(unsigned short port,
 		fprintf(stderr,"NOK Memory Alloc Error\n");
 		exit(0);
 		}
-	server->channel =	ChannelSetUp( fd, server, DeleteSocket, HandleServer );
+	server->channel =	(*channel_setup)( fd, server, DeleteSocket, HandleServer );
 	server->create = create;
 	server->handle_delete = handle_delete;
 	server->interpretation = interpretation;
@@ -333,7 +247,7 @@ char *SocketGetPeerHost( Client client )
 	struct sockaddr_in name;
 	struct hostent *host;
 	int len = sizeof(name);
-	err = getpeername( client->channel->fd, (struct sockaddr *)&name, &len );
+	err = getpeername( client->fd, (struct sockaddr *)&name, &len );
 	if ( err < 0 ) return "can't get peer";
 	host = gethostbyaddr( (char *)&name.sin_addr.s_addr,sizeof(name.sin_addr.s_addr),name.sin_family);
 	if ( host == NULL ) return "can't translate addr";
@@ -355,13 +269,13 @@ void SocketGetRemote( Client client, char **host, unsigned short *port )
 }
 void SocketClose( Client client )
 {
-	ChannelClose( client->channel );
+	(*channel_close)( client->channel );
 }
 
 void SocketSendRaw( Client client, char *buffer, int len )
 {
 	int err;
-	err = send( client->channel->fd, buffer, len, 0 );
+	err = send( client->fd, buffer, len, 0 );
 	if ( err != len )
 		perror( "*** send ***");
 }
@@ -448,8 +362,8 @@ if ( !client )
 	exit(0);
 	}
 	
-
-client->channel = ChannelSetUp( handle, client,  DeleteSocket, HandleSocket );
+client->fd = handle;
+client->channel = (*channel_setup)( handle, client,  DeleteSocket, HandleSocket );
 client->interpretation = interpretation;
 client->ptr = client->buffer;
 client->data = data;
@@ -472,7 +386,7 @@ int SocketWaitForReply( Client client, char *buffer, int size, int delai)
 	long nb;
 	HANDLE fd;
 
-	fd = client->channel->fd;
+	fd = client->fd;
 	ptr = buffer;
 	timeout.tv_sec = delai;
 	timeout.tv_usec = 0;
@@ -512,73 +426,8 @@ int SocketWaitForReply( Client client, char *buffer, int size, int delai)
 	*ptr_nl = '\0';
 	return (ptr_nl - buffer);
 }
-void ChannelInit(void)
-{
-#ifdef WIN32
-	int error;
-#else 
-	signal( SIGPIPE, SIG_IGN);
-#endif
-	if ( channel_initialized ) return;
-#ifndef XTMAINLOOP
-	FD_ZERO( &open_fds );
-#endif
-#ifdef WIN32
-	error = WSAStartup( 0x0101, &WsaData );
-        if ( error == SOCKET_ERROR ) {
-            printf( "WSAStartup failed.\n" );
-        }
-#endif
-	channel_initialized = 1;
-}
-
-#ifdef XTMAINLOOP
-
-void SetSocketAppContext( XtAppContext cntx )
-{
-	app = cntx;
-}
-	
-void ChannelMainLoop(void(*hook)(void))
-{
-	printf("Compiled for Use of XtMainLoop not ChannelMainLoop\n");
-	exit(-1);
-}
-#else
-void ChannelStop(void)
-{
-	MainLoop = 0;
-}
-void ChannelMainLoop(void(*hook)(void))
-{
-
-fd_set rdset;
-fd_set exset;
-int ready;
 
 
-
-   while (MainLoop) {
-	ChannelDefferedDelete();
-   	if ( hook ) (*hook)();
-    rdset = open_fds;
-    exset = open_fds;
-	ready = select(64, &rdset, 0,  &exset, TimerGetSmallestTimeout());
-	if ( ready < 0 && ( errno != EINTR ))
-		{
-		perror("select");
-		return;
-		}
-	TimerScan();
-    if ( ready > 0 )
-		{
-		ChannelHandleExcpt(&exset);
-		ChannelHandleRead(&rdset);
-		continue;
-		}
-	}
-}
-#endif
 /* Socket UDP */
 
 Client SocketBroadcastCreate( unsigned short port, 
@@ -635,8 +484,8 @@ if ( !client )
 	exit(0);
 	}
 	
-
-client->channel = ChannelSetUp( handle, client,  DeleteSocket, HandleSocket );
+client->fd = handle;
+client->channel = (*channel_setup)( handle, client,  DeleteSocket, HandleSocket );
 client->interpretation = interpretation;
 client->ptr = client->buffer;
 client->data = data;
@@ -657,7 +506,7 @@ void SocketSendBroadcast( Client client, unsigned long host, unsigned short port
 	remote.sin_family = AF_INET;
 	remote.sin_addr.s_addr = htonl( host );
 	remote.sin_port = htons(port);
-	err = sendto( client->channel->fd, 
+	err = sendto( client->fd, 
 			buffer, len,0,
 			(struct sockaddr *)&remote,sizeof(remote));
 	if ( err != len )

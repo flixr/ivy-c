@@ -12,7 +12,7 @@
 
 #include <fcntl.h>
 
-
+#include "buschannel.h"
 #include "bussocket.h"
 #include "list.h"
 #include "bus.h"
@@ -79,7 +79,7 @@ static const char *ApplicationName = NULL;
 
 /* classes de messages emis par l'application utilise pour le filtrage */
 static int	messages_classes_count = 0;
-static char **messages_classes = NULL;
+static const char **messages_classes = NULL;
 
 /* callback appele sur reception d'un message direct */
 static MsgDirectCallback direct_callback = NULL;
@@ -503,7 +503,7 @@ void BusInit(const char *AppName, unsigned short busnumber, const char *ready,
 			 BusDieCallback die_callback, void *die_data
 			 )
 {
-	ChannelInit();
+	SocketInit();
 
 	ApplicationName = AppName;
 	SupervisionPort = busnumber;
@@ -517,7 +517,7 @@ void BusInit(const char *AppName, unsigned short busnumber, const char *ready,
 
 }
 
-void BusClasses( int argc, char **argv)
+void BusClasses( int argc, const char **argv)
 {
 	messages_classes_count = argc;
 	messages_classes = argv;
@@ -531,10 +531,7 @@ void BusStart()
 
 	fprintf(stderr,"Server Ready  TCP:%hu\n",ApplicationPort);
 }
-void BusLoop()
-{
-	ChannelMainLoop(NULL);
-}
+
 /* desabonnements */
 void UnbindMsg( MsgRcvPtr msg )
 {

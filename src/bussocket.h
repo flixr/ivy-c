@@ -1,5 +1,5 @@
-#ifndef _SOCKET_H
-#define _SOCKET_H
+#ifndef _BUSSOCKET_H
+#define _BUSSOCKET_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -17,23 +17,12 @@ extern "C" {
 #include <netinet/in.h>
 #endif
 
-typedef struct _channel *Channel;
-
-extern void ChannelInit(void);
-extern void ChannelStop(void);
-extern void ChannelMainLoop(void(*hook)(void) );
-extern Channel ChannelSetUp(
-						HANDLE fd,
-						void *data,
-						void (*handle_delete)( void *data ),
-						void (*handle_read)( Channel channel, HANDLE fd, void *data)
-						);
-
-extern void ChannelClose( Channel channel );
 
 /* Server Part */
 typedef struct _client *Client;
 typedef void (*SocketInterpretation)( Client client, void *data, char *ligne);
+
+extern void SocketInit();
 
 extern void SocketClose( Client client );
 extern void SocketSend( Client client, char *fmt, ... );
@@ -75,11 +64,6 @@ extern struct in_addr * SocketGetRemoteAddr( Client client );
 extern void SocketGetRemote( Client client, char **host, unsigned short *port );
 /* emmission d'un broadcast UDP */
 extern void SocketSendBroadcast( Client client, unsigned long host, unsigned short port, char *fmt, ... );
-
-#ifdef XTMAINLOOP
-#include <X11/Intrinsic.h>
-extern void SetSocketAppContext( XtAppContext cntx );
-#endif
 
 #ifdef __cplusplus
 }

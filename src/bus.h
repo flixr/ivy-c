@@ -28,7 +28,7 @@ typedef void (*MsgDirectCallback)( BusClientPtr app, void *user_data, int id, ch
 typedef struct _msg_rcv *MsgRcvPtr;
 
 /* filtrage des regexps */
-void BusClasses( int argc, char **argv);
+void BusClasses( int argc, const char **argv);
 
 void BusInit(
 			 const char *AppName,				/* nom de l'application */
@@ -40,7 +40,6 @@ void BusInit(
 			 void *die_data	);					/* user data */
 
 void BusStart();								/* emission du bonjour */
-void BusLoop();									/* boucle principale */
 
 /* query sur les applications connectees */
 char *GetApplicationName( BusClientPtr app );

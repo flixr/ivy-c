@@ -1,19 +1,24 @@
-XTINC =-I/usr/local/X11R6.3/include 
-CC=gcc
-OBJ = timer.o bussocket.o bus.o 
-GOBJ = timer.o bussocket.o gbus.o
-XTOBJ = timer.o xtsocket.o bus.o
+XTINC =-I/usr/X11R6/include
+XTLIB =-L/usr/X11R6/lib 
+CC=gcc -g -DDEBUG
+OBJ = busloop.o timer.o bussocket.o bus.o 
+GOBJ = busloop.o timer.o bussocket.o gbus.o
+XTOBJ = busxtloop.o bussocket.o bus.o
 
-all: libbus.a libgbus.a libxtbus.a testbus
+all: libbus.a libgbus.a libxtbus.a testbus testxtbus
 
 gbus.o: bus.c
 	$(CC) -DGNU_REGEXP -c $(CFLAGS) -o gbus.o bus.c
 
-xtsocket.o: bussocket.c
-	$(CC) -DXTMAINLOOP $(XTINC) -c $(CFLAGS) -o xtsocket.o bussocket.c
 
 testbus: testbus.o $(OBJ)
-	$(CC) -o testbus testbus.o $(OBJ) -lsocket -lnsl
+	$(CC) -o testbus testbus.o $(OBJ)
+ 
+testxtbus.o : testbus.c
+	$(CC) -c testbus.c -o testxtbus.o $(XTINC) -DXTMAINLOOP
+
+testxtbus: testxtbus.o $(XTOBJ)
+	$(CC) -o testxtbus testxtbus.o $(XTOBJ) $(XTLIB) -lXt -lX11
 
 libbus.a: $(OBJ)
 	ar q libbus.a $(OBJ)

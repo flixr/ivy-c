@@ -1,11 +1,22 @@
 #include <stdio.h>
+#include <stdlib.h>
+#ifdef WIN32
+#include <windows.h>
+#else
 #include <sys/time.h>
 #include <unistd.h>
+#endif
+#ifdef XTMAINLOOP
+#include "busxtloop.h"
+#else
+#include "busloop.h"
+#endif
 #include "bussocket.h"
 #include "bus.h"
 #include "timer.h"
 #ifdef XTMAINLOOP
 #include <X11/Intrinsic.h>
+XtAppContext cntx;
 #endif
 
 int app_count = 0;
@@ -19,7 +30,7 @@ void Callback( BusClientPtr app, void *user_data, int argc, char *argv[])
 			printf(" '%s'",argv[i]);
 	printf("\n");
 }
-void HandleStdin( Channel channel, int fd, void *data)
+void HandleStdin( Channel channel, HANDLE fd, void *data)
 {
 	char buf[4096];
 	char *line;
@@ -31,8 +42,12 @@ void HandleStdin( Channel channel, int fd, void *data)
 	line = gets( buf);
 	if ( !line )
 		{
-		ChannelClose( channel );
-		ChannelStop();
+#ifdef XTMAINLOOP
+		BusXtChannelClose( channel );
+#else
+		BusLoopChannelClose( channel );
+		BusLoopChannelStop();
+#endif
 		return;
 		}
 	if ( *line == '.' )
@@ -144,7 +159,11 @@ void ApplicationCallback( BusClientPtr app, void *user_data, BusApplicationEvent
 			printf("Application(%s): Receive '%s'\n",appname,*msgList++);
 		printf("Application(%s): End Messages\n",appname);
 		if ( app_count == wait_count )
-			ChannelSetUp( 0, NULL, NULL, HandleStdin);
+#ifdef XTMAINLOOP
+		BusXtChannelSetUp( 0, NULL, NULL, HandleStdin);
+#else
+		BusLoopChannelSetUp( 0, NULL, NULL, HandleStdin);
+#endif
 		break;
 	case BusApplicationDisconnected:
 		app_count--;
@@ -156,12 +175,14 @@ void ApplicationCallback( BusClientPtr app, void *user_data, BusApplicationEvent
 	}
 
 }
+#ifndef XTMAINLOOP
 void TimerCall(TimerId id, void *user_data, unsigned long delta)
 {
 	printf("Timer callback: %d delta %lu ms\n", (int)user_data, delta );
 	SendMsg( "TEST TIMER %d", (int)user_data);
 	/*if ( (int)user_data == 5 ) TimerModify( id, 2000 );*/
 }
+#endif
 int main(int argc, char *argv[])
 {
 	
@@ -181,25 +202,36 @@ int main(int argc, char *argv[])
 							timer_test = 1;
 							break;
 					}
+	/* Mainloop management */
 #ifdef XTMAINLOOP
-	XtToolkitInitialize();
-
+	/*XtToolkitInitialize();*/
+	cntx = XtCreateApplicationContext();
+	BusXtChannelAppContext( cntx );
+	BusSetChannelManagement( BusXtChannelInit, BusXtChannelSetUp, BusXtChannelClose );
+#else
+	BusSetChannelManagement( BusLoopChannelInit, BusLoopChannelSetUp, BusLoopChannelClose );
 #endif
 	BusInit("TEST",bport,"TEST READY",ApplicationCallback,NULL,NULL,NULL);
 	for ( ; optind < argc; optind++ )
 			BindMsg( Callback, NULL, argv[optind] );
 	if ( wait_count == 0 )
-		ChannelSetUp( 0, NULL, NULL, HandleStdin);
+#ifdef XTMAINLOOP
+		BusXtChannelSetUp( 0, NULL, NULL, HandleStdin);
+#else
+		BusLoopChannelSetUp( 0, NULL, NULL, HandleStdin);
+#endif
 	BusStart( );
 	if ( timer_test )
 		{
+#ifndef XTMAINLOOP
 		TimerRepeatAfter( TIMER_LOOP, 1000, TimerCall, (void*)1 );
 		TimerRepeatAfter( 5, 5000, TimerCall, (void*)5 );
+#endif
 		}
 #ifdef XTMAINLOOP
-	XtMainLoop();
+	XtAppMainLoop(cntx);
 #else
-	BusLoop();
+	BusLoopChannelMainLoop(NULL);
 #endif
 	return 0;
 }
