@@ -1,5 +1,20 @@
+/*
+ *
+ * Ivy probe
+ *
+ * Copyright 1997-1998 
+ * Centre d'Etudes de la Navigation Aerienne
+ *
+ *
+ * Main and only file
+ *
+ * $Id$
+ *
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #ifdef WIN32
 #include <windows.h>
 #else
@@ -25,11 +40,12 @@ int wait_count = 0;
 void Callback( BusClientPtr app, void *user_data, int argc, char *argv[])
 {
 	int i;
-	printf(" %s Called function %d args:",GetApplicationName(app),argc);
+	printf ("%s sent ",GetApplicationName(app));
 	for ( i = 0; i < argc; i++ )
 			printf(" '%s'",argv[i]);
 	printf("\n");
 }
+
 void HandleStdin( Channel channel, HANDLE fd, void *data)
 {
 	char buf[4096];
@@ -39,7 +55,7 @@ void HandleStdin( Channel channel, HANDLE fd, void *data)
 	int id;
 	BusClientPtr app;
 	int err;
-	line = gets( buf);
+	line = fgets(buf, 4096, stdin);
 	if ( !line )
 		{
 #ifdef XTMAINLOOP
@@ -52,8 +68,8 @@ void HandleStdin( Channel channel, HANDLE fd, void *data)
 		}
 	if ( *line == '.' )
 	{
-		cmd = strtok( line, ".: ");
-		if ( strcmp(cmd, "die" ) == 0 )
+		cmd = strtok( line, ".: \n");
+		if ( strcmp(cmd, "die") == 0 )
 			{
 			arg = strtok( NULL, " " );
 			if ( arg )
@@ -121,14 +137,14 @@ void HandleStdin( Channel channel, HANDLE fd, void *data)
 			}
 		if ( strcmp(cmd, "help") == 0 )
 			{
-			printf("Commands list:\n");
-			printf("	.help					 - this help\n");
-			printf("	.quit					 - terminate this application\n");
-			printf("	.die appname			 - send die msg to appname\n");
-			printf("	.direct appname	id 'arg' - send direct msg to appname\n");
-			printf("	.where appname			 - on which host is appname\n");
-			printf("	.bind 'regexp'			 - add a msg to receive\n");
-			printf("	.who					 - who is on the bus\n");
+			fprintf(stderr,"Commands list:\n");
+			printf("	.help				- this help\n");
+			printf("	.quit				- terminate this application\n");
+			printf("	.die appname			- send die msg to appname\n");
+			printf("	.direct appname	id 'arg'	- send direct msg to appname\n");
+			printf("	.where appname			- on which host is appname\n");
+			printf("	.bind 'regexp'			- add a msg to receive\n");
+			printf("	.who				- who is on the bus\n");
 			}
 		if ( strcmp(cmd, "quit") == 0 )
 			{
@@ -137,8 +153,9 @@ void HandleStdin( Channel channel, HANDLE fd, void *data)
 	}
 	else 
 	{
+	cmd = strtok(buf, "\n");
 	err = SendMsg( buf );
-	printf("Sent:%d\n",err);
+	printf("-> Sent to %d peer%s\n", err, err == 1 ? "" : "s");
 	}
 }
 
@@ -152,12 +169,12 @@ void ApplicationCallback( BusClientPtr app, void *user_data, BusApplicationEvent
 	switch ( event )  {
 	case BusApplicationConnected:
 		app_count++;
-		printf("Application(%s): ready on %s\n", appname,  host);
-		printf("Application(%s): Begin Messages\n", appname);
+		printf("%s connected from %s\n", appname,  host);
+/*		printf("Application(%s): Begin Messages\n", appname);*/
 		msgList = GetApplicationMessages( app );
 		while( *msgList  )
-			printf("Application(%s): Receive '%s'\n",appname,*msgList++);
-		printf("Application(%s): End Messages\n",appname);
+			printf("%s subscribes to '%s'\n",appname,*msgList++);
+/*		printf("Application(%s): End Messages\n",appname);*/
 		if ( app_count == wait_count )
 #ifdef XTMAINLOOP
 		BusXtChannelSetUp( 0, NULL, NULL, HandleStdin);
@@ -167,10 +184,10 @@ void ApplicationCallback( BusClientPtr app, void *user_data, BusApplicationEvent
 		break;
 	case BusApplicationDisconnected:
 		app_count--;
-		printf("Application(%s): bye on %s\n", appname,  host);
+		printf("%s disconnected from %s\n", appname,  host);
 		break;
 	default:
-		printf("Application(%s): unkown event %d\n", appname, event);
+		printf("%s: unkown event %d\n", appname, event);
 		break;
 	}
 
@@ -211,7 +228,7 @@ int main(int argc, char *argv[])
 #else
 	BusSetChannelManagement( BusLoopChannelInit, BusLoopChannelSetUp, BusLoopChannelClose );
 #endif
-	BusInit("TEST",bport,"TEST READY",ApplicationCallback,NULL,NULL,NULL);
+	BusInit ("IVYTEST", bport, "IVYTEST READY",ApplicationCallback,NULL,NULL,NULL);
 	for ( ; optind < argc; optind++ )
 			BindMsg( Callback, NULL, argv[optind] );
 	if ( wait_count == 0 )
