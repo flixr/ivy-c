@@ -635,7 +635,7 @@ void IvyStart (const char* bus)
 
 			/* addresses are terminated by a comma or end of string */
 			} else {
-				printf ("Broadcasting on network %lx, port %d\n", mask, SupervisionPort);
+				printf ("Broadcasting on network %s, port %d\n", inet_ntoa(htonl(mask)), SupervisionPort);
 				// test mask value agaisnt CLASS D
 				if ( IN_MULTICAST( mask ) )
 					SocketAddMember (broadcast , mask );
