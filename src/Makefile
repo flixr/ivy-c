@@ -1,14 +1,20 @@
 #
-# Ivy, C interface
+#	Ivy, C interface
 #
-# Copyright 1997-1999
-# Centre d'Etudes de la Navigation Aerienne
+#      	Copyright (C) 1997-1999
+#      	Centre d'Études de la Navigation Aérienne
 #
-# Makefile
+# 	Makefile
 #
-# $Id$
+#      	Authors: François-Régis Colin <colin@cenatoulouse.dgac.fr>
+#		 Stéphane Chatty <chatty@cenatoulouse.dgac.fr>
 #
-
+#	$Id$
+# 
+#      	Please refer to file version.h for the
+#      	copyright notice regarding this software
+#
+#
 XTINC = /usr/X11R6/include
 XTLIB = /usr/X11R6/lib 
 CC=gcc

@@ -1,13 +1,18 @@
 /*
+ *	Ivy, C interface
  *
- * Ivy, C interface
+ *      Copyright (C) 1997-1999
+ *      Centre d'Études de la Navigation Aérienne
  *
- * Copyright 1997-1999 
- * Centre d'Etudes de la Navigation Aerienne
+ * 	Main functions
  *
- * Main functions
+ *      Authors: François-Régis Colin <colin@cenatoulouse.dgac.fr>
+ *		 Stéphane Chatty <chatty@cenatoulouse.dgac.fr>
  *
- * $Id$
+ *	$Id$
+ * 
+ *      Please refer to file version.h for the
+ *      copyright notice regarding this software
  *
  */
 

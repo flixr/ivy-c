@@ -1,17 +1,20 @@
 /*
+ *	Ivy probe
  *
- * Ivy probe
+ *      Copyright (C) 1997-1999
+ *      Centre d'Études de la Navigation Aérienne
  *
- * Copyright 1997-1999
- * Centre d'Etudes de la Navigation Aerienne
+ * 	Main and only file
  *
+ *      Authors: François-Régis Colin <colin@cenatoulouse.dgac.fr>
+ *		 Stéphane Chatty <chatty@cenatoulouse.dgac.fr>
  *
- * Main and only file
- *
- * $Id$
+ *	$Id$
+ * 
+ *      Please refer to file version.h for the
+ *      copyright notice regarding this software
  *
  */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
