@@ -1,7 +1,7 @@
 #
 # Ivy, C interface
 #
-# Copyright 1997-1998
+# Copyright 1997-1999
 # Centre d'Etudes de la Navigation Aerienne
 #
 # Makefile
@@ -33,19 +33,19 @@ static-libs: libivy.a libgivy.a libxtivy.a
 
 shared-libs: libivy.so.$(MAJOR).$(MINOR) libgivy.so.$(MAJOR).$(MINOR) libxtivy.so.$(MAJOR).$(MINOR)
 
-commands: testivy testxtivy
+commands: ivyprobe ivyxtprobe
 
 givy.o: ivy.c
 	$(CC) -DGNU_REGEXP -fPIC -c $(CFLAGS) -o givy.o ivy.c
 
-testivy: testivy.o libivy.a
-	$(CC)  $(CFLAGS) -o testivy testivy.o -L. -livy
+ivyprobe: ivyprobe.o libivy.a
+	$(CC)  $(CFLAGS) -o ivyprobe ivyprobe.o -L. -livy
 
-testxtivy.o : testivy.c
-	$(CC)  $(CFLAGS) -c testivy.c -o testxtivy.o -I$(XTINC) -DXTMAINLOOP
+ivyxtprobe.o : ivyprobe.c
+	$(CC)  $(CFLAGS) -c ivyprobe.c -o ivyxtprobe.o -I$(XTINC) -DXTMAINLOOP
 
-testxtivy: testxtivy.o libxtivy.a
-	$(CC) -o testxtivy testxtivy.o -L. -L$(XTLIB) -lxtivy -lXt -lX11
+ivyxtprobe: ivyxtprobe.o libxtivy.a
+	$(CC) -o ivyxtprobe ivyxtprobe.o -L. -L$(XTLIB) -lxtivy -lXt -lX11
 
 libivy.a: $(OBJ)
 	rm -f $@
@@ -73,8 +73,8 @@ clean:
 	-rm -f *.o *.a *.so *~
 
 install: all
-	install -m755 testivy $(DESTDIR)/usr/bin
-	install -m755 testxtivy $(DESTDIR)/usr/X11R6/bin
+	install -m755 ivyprobe $(DESTDIR)/usr/bin
+	install -m755 ivyxtprobe $(DESTDIR)/usr/X11R6/bin
 
 	install -m644 libivy.a $(DESTDIR)/usr/lib
 	install -m644 libgivy.a $(DESTDIR)/usr/lib

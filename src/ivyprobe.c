@@ -2,7 +2,7 @@
  *
  * Ivy probe
  *
- * Copyright 1997-1998 
+ * Copyright 1997-1999
  * Centre d'Etudes de la Navigation Aerienne
  *
  *
@@ -37,10 +37,10 @@ XtAppContext cntx;
 int app_count = 0;
 int wait_count = 0;
 
-void Callback( BusClientPtr app, void *user_data, int argc, char *argv[])
+void Callback( IvyClientPtr app, void *user_data, int argc, char *argv[])
 {
 	int i;
-	printf ("%s sent ",GetApplicationName(app));
+	printf ("%s sent ",IvyGetApplicationName(app));
 	for ( i = 0; i < argc; i++ )
 			printf(" '%s'",argv[i]);
 	printf("\n");
@@ -53,16 +53,16 @@ void HandleStdin( Channel channel, HANDLE fd, void *data)
 	char *cmd;
 	char *arg;
 	int id;
-	BusClientPtr app;
+	IvyClientPtr app;
 	int err;
 	line = fgets(buf, 4096, stdin);
 	if ( !line )
 		{
 #ifdef XTMAINLOOP
-		BusXtChannelClose( channel );
+		IvyXtChannelClose( channel );
 #else
-		BusLoopChannelClose( channel );
-		BusLoopChannelStop();
+		IvyChannelClose( channel );
+		IvyChannelStop();
 #endif
 		return;
 		}
@@ -71,24 +71,24 @@ void HandleStdin( Channel channel, HANDLE fd, void *data)
 		cmd = strtok( line, ".: \n");
 		if ( strcmp(cmd, "die") == 0 )
 			{
-			arg = strtok( NULL, " " );
+			arg = strtok( NULL, " \n" );
 			if ( arg )
 				{
-				app = GetApplication( arg );
+				app = IvyGetApplication( arg );
 				if ( app )
-					SendDieMsg( app );
+					IvySendDieMsg( app );
 					else printf( "No Application %s!!!\n",arg);
 				}
 			}
 		if ( strcmp(cmd, "dieall-yes-i-am-sure") == 0 )
                         {
-			arg = GetApplicationList();
-			arg = strtok( arg, " " );
+			arg = IvyGetApplicationList();
+			arg = strtok( arg, " \n" );
 			while ( arg )
 				{
-				app = GetApplication( arg );
+				app = IvyGetApplication( arg );
                                 if ( app )
-                                        SendDieMsg( app );
+                                        IvySendDieMsg( app );
                                         else printf( "No Application %s!!!\n",arg);
                                 arg = strtok( NULL, " ");
 				}
@@ -100,32 +100,32 @@ void HandleStdin( Channel channel, HANDLE fd, void *data)
 			arg = strtok( NULL, "'" );
 			if ( arg )
 				{
-				BindMsg( Callback, NULL, arg );
+				IvyBindMsg( Callback, NULL, arg );
 				}
 			}
 		if ( strcmp(cmd,  "where" ) == 0 )
 			{
-			arg = strtok( NULL, " " );
+			arg = strtok( NULL, " \n" );
 			if ( arg )
 				{
-				app = GetApplication( arg );
+				app = IvyGetApplication( arg );
 				if ( app )
-					printf( "Application %s on %s\n",arg, GetApplicationHost( app ));
+					printf( "Application %s on %s\n",arg, IvyGetApplicationHost( app ));
 					else printf( "No Application %s!!!\n",arg);
 				}
 			}
 		if ( strcmp(cmd, "direct" ) == 0 )
 			{
-			arg = strtok( NULL, " " );
+			arg = strtok( NULL, " \n" );
 			if ( arg )
 				{
-				app = GetApplication( arg );
+				app = IvyGetApplication( arg );
 				if ( app )
 					{
 					arg = strtok( NULL, " " );
 					id = atoi( arg ) ;
 					arg = strtok( NULL, "'" );
-					SendDirectMsg( app, id, arg );
+					IvySendDirectMsg( app, id, arg );
 					}
 				else printf( "No Application %s!!!\n",arg);
 				}
@@ -133,7 +133,7 @@ void HandleStdin( Channel channel, HANDLE fd, void *data)
 			}
 		if ( strcmp(cmd, "who") == 0 )
 			{
-			printf("Apps: %s\n", GetApplicationList());
+			printf("Apps: %s\n", IvyGetApplicationList());
 			}
 		if ( strcmp(cmd, "help") == 0 )
 			{
@@ -153,36 +153,36 @@ void HandleStdin( Channel channel, HANDLE fd, void *data)
 	}
 	else 
 	{
-	cmd = strtok(buf, "\n");
-	err = SendMsg( buf );
+        cmd = strtok (buf, "\n");
+	err = IvySendMsg( cmd );
 	printf("-> Sent to %d peer%s\n", err, err == 1 ? "" : "s");
 	}
 }
 
-void ApplicationCallback( BusClientPtr app, void *user_data, BusApplicationEvent event)
+void ApplicationCallback( IvyClientPtr app, void *user_data, IvyApplicationEvent event)
 {
 	char *appname;
 	char *host;
 	char **msgList;
-	appname = GetApplicationName( app );
-	host = GetApplicationHost( app );
+	appname = IvyGetApplicationName( app );
+	host = IvyGetApplicationHost( app );
 	switch ( event )  {
-	case BusApplicationConnected:
+	case IvyApplicationConnected:
 		app_count++;
 		printf("%s connected from %s\n", appname,  host);
 /*		printf("Application(%s): Begin Messages\n", appname);*/
-		msgList = GetApplicationMessages( app );
+		msgList = IvyGetApplicationMessages( app );
 		while( *msgList  )
 			printf("%s subscribes to '%s'\n",appname,*msgList++);
 /*		printf("Application(%s): End Messages\n",appname);*/
 		if ( app_count == wait_count )
 #ifdef XTMAINLOOP
-		BusXtChannelSetUp( 0, NULL, NULL, HandleStdin);
+		IvyXtChannelSetUp( 0, NULL, NULL, HandleStdin);
 #else
-		BusLoopChannelSetUp( 0, NULL, NULL, HandleStdin);
+		IvyChannelSetUp( 0, NULL, NULL, HandleStdin);
 #endif
 		break;
-	case BusApplicationDisconnected:
+	case IvyApplicationDisconnected:
 		app_count--;
 		printf("%s disconnected from %s\n", appname,  host);
 		break;
@@ -196,7 +196,7 @@ void ApplicationCallback( BusClientPtr app, void *user_data, BusApplicationEvent
 void TimerCall(TimerId id, void *user_data, unsigned long delta)
 {
 	printf("Timer callback: %d delta %lu ms\n", (int)user_data, delta );
-	SendMsg( "TEST TIMER %d", (int)user_data);
+	IvySendMsg( "TEST TIMER %d", (int)user_data);
 	/*if ( (int)user_data == 5 ) TimerModify( id, 2000 );*/
 }
 #endif
@@ -206,11 +206,20 @@ int main(int argc, char *argv[])
 	unsigned short bport = DEFAULT_BUS;
 	int c;
 	int timer_test = 0;
-	while ((c = getopt(argc, argv, "b:w:t")) != EOF)
+	char dbuf [1024] = "";
+	const char* domains = 0;
+	while ((c = getopt(argc, argv, "d:b:w:t")) != EOF)
 			switch (c)
 					{
 					case 'b':
 							bport = atoi(optarg) ;
+							break;
+					case 'd':
+							if (domains)
+								strcat (dbuf, ",");
+							else
+								domains = dbuf;
+							strcat (dbuf, optarg);
 							break;
 					case 'w':
 							wait_count = atoi(optarg) ;
@@ -223,21 +232,18 @@ int main(int argc, char *argv[])
 #ifdef XTMAINLOOP
 	/*XtToolkitInitialize();*/
 	cntx = XtCreateApplicationContext();
-	BusXtChannelAppContext( cntx );
-	BusSetChannelManagement( BusXtChannelInit, BusXtChannelSetUp, BusXtChannelClose );
-#else
-	BusSetChannelManagement( BusLoopChannelInit, BusLoopChannelSetUp, BusLoopChannelClose );
+	IvyXtChannelAppContext( cntx );
 #endif
-	BusInit ("IVYTEST", bport, "IVYTEST READY",ApplicationCallback,NULL,NULL,NULL);
+	IvyInit ("IVYPROBE", bport, "IVYPROBE READY", ApplicationCallback,NULL,NULL,NULL);
 	for ( ; optind < argc; optind++ )
-			BindMsg( Callback, NULL, argv[optind] );
+			IvyBindMsg( Callback, NULL, argv[optind] );
 	if ( wait_count == 0 )
 #ifdef XTMAINLOOP
-		BusXtChannelSetUp( 0, NULL, NULL, HandleStdin);
+		IvyXtChannelSetUp( 0, NULL, NULL, HandleStdin);
 #else
-		BusLoopChannelSetUp( 0, NULL, NULL, HandleStdin);
+		IvyChannelSetUp( 0, NULL, NULL, HandleStdin);
 #endif
-	BusStart( );
+	IvyStart (domains);
 	if ( timer_test )
 		{
 #ifndef XTMAINLOOP
@@ -248,7 +254,7 @@ int main(int argc, char *argv[])
 #ifdef XTMAINLOOP
 	XtAppMainLoop(cntx);
 #else
-	BusLoopChannelMainLoop(NULL);
+	IvyMainLoop(0);
 #endif
 	return 0;
 }
