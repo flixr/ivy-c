@@ -12,7 +12,7 @@ Description: Bus logiciel PII.
 
 Package: ivy-c-dev
 Architecture: any
-Depends: ivy-c, libc6-dev, xlib6g-dev
+Depends: ivy-c (= 3.1-1), libc6-dev, xlib6g-dev
 Provides: ivy-c-dev
 Conflicts: ivy-c-dev
 Description: Bus logiciel PII.

@@ -40,7 +40,7 @@ binary-arch:	checkroot build
 
 	cd src && make install PREFIX=`pwd`/../debian/tmp MAJOR=$(MAJOR) MINOR=$(MINOR)
 
-	debstd -p
+	debstd -p doc/*.html doc/ChangeLog doc/NEWS doc/TODO doc/BUGS doc/README
 	-rmdir debian/tmp/usr/include
 
 	dpkg-gencontrol -p$(package)
