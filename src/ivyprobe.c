@@ -21,7 +21,7 @@
 #ifdef XTMAINLOOP
 #undef IVYMAINLOOP
 #endif
-#ifdef GLIBMAINLOOP
+#ifdef GTKMAINLOOP
 #undef IVYMAINLOOP
 #endif
 
@@ -77,10 +77,23 @@ XtAppContext cntx;
 
 int app_count = 0;
 int wait_count = 0;
+int fbindcallback = 0;
 
 void DirectCallback(IvyClientPtr app, void *user_data, int id, char *msg ) {
 	printf("%s sent a direct message, id=%d, message=%s\n",
 	    IvyGetApplicationName(app),id,msg);
+}
+
+void BindCallback(IvyClientPtr app, void *user_data, int id, char *regexp, IvyBindEvent event ) {
+  char *sevent;
+  if (event==IvyAddBind){
+    sevent="added";
+  }
+  else{
+    sevent="removed";
+  }
+	printf("%s has modified his binding, id=%d, regexp=%s is %s\n",
+	    IvyGetApplicationName(app),id,regexp,sevent);
 }
 
 void Callback (IvyClientPtr app, void *user_data, int argc, char *argv[])
@@ -210,6 +223,14 @@ void HandleStdin (Channel channel, HANDLE fd, void *data)
 			printf("	.where appname			- on which host is appname\n");
 			printf("	.bind 'regexp'			- add a msg to receive\n");
 			printf("	.who				- who is on the bus\n");
+		} else if  (strcmp(cmd, "bindcall") == 0) {
+		  if (!fbindcallback) {
+		    IvySetBindCallback(BindCallback, NULL);
+		    fbindcallback=1;
+		  } else {
+		    IvyDelBindCallback();
+		    fbindcallback=0;
+		  }
 		} else if  (strcmp(cmd, "quit") == 0) {
 			exit(0);
 		}
@@ -291,8 +312,8 @@ int main(int argc, char *argv[])
 	const char* agentname = DEFAULT_IVYPROBE_NAME;
 	char agentready [1024] = "";
 	const char* helpmsg =
-	  "[options] [regexps]\n\t-b bus\tdefines the Ivy bus to which to connect to, defaults to 127:2010\n\t-t\ttriggers the timer test\n\t-n name\tchanges the name of the agent, defaults to IVYPROBE\n\t-v\tprints the ivy relase number\n\nregexp is a Perl5 compatible regular expression (see ivyprobe(1) and pcrepattern(3) for more info\nuse .help within ivyprobe\n";
-	while ((c = getopt(argc, argv, "vn:d:b:w:t")) != EOF)
+	  "[options] [regexps]\n\t-b bus\tdefines the Ivy bus to which to connect to, defaults to 127:2010\n\t-t\ttriggers the timer test\n\t-n name\tchanges the name of the agent, defaults to IVYPROBE\n\t-v\tprints the ivy relase number\n\nregexp is a Perl5 compatible regular expression (see ivyprobe(1) and pcrepattern(3) for more info\nuse .help within ivyprobe\n\t-s bindcall\tactive the interception of regexp's subscribing or unscribing\n";
+	while ((c = getopt(argc, argv, "vn:d:b:w:t:s")) != EOF)
 			switch (c) {
 			case 'b':
 				strcpy (busbuf, optarg);
@@ -308,7 +329,11 @@ int main(int argc, char *argv[])
 				printf("ivy c library version %d.%d\n",IVYMAJOR_VERSION,IVYMINOR_VERSION);
 				break;
 			case 't':
-				timer_test = 1;
+			        timer_test = 1;
+			        break;
+			case 's':
+			        IvySetBindCallback(BindCallback, NULL);
+			        fbindcallback=1;
 				break;
 			default:
 				printf("usage: %s %s",argv[0],helpmsg);
