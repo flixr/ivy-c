@@ -26,8 +26,15 @@ GLIBLIB = `pkg-config --libs glib-2.0`
 GLUTINC = -I/usr/include -I.
 GLUTLIB = -L. -lglut -lGLU -lGL -lX11 -lXmu 
 # use these if you want standard Tcl ( 8.3 on debian woody ... )
-TCLINCL	= -I/usr/include/tcl8.3
-TCLLIB = -ltcl8.3
+
+#TCLVERS = `perl -e '@_=sort map (m|/usr/lib/libtcl(\d\.\d)\.so|, glob ("/usr/lib/libtcl*")); print pop @_'`
+TCLVERS:= $(shell perl -e '@_=sort map (m|/usr/lib/libtcl(\d\.\d)\.so|, glob ("/usr/lib/libtcl*")); print pop @_')
+ifndef TCLVERS
+TCLVERS=8.3
+endif
+
+TCLINCL	= -I/usr/include/tcl$(TCLVERS)
+TCLLIB = -ltcl$(TCLVERS)
 #TCLINCL	= -I/usr/include/tcl8.4
 #TCLLIB = -ltcl8.4
 # use these if you want to use Aqua Tcl on macOSX
@@ -192,17 +199,16 @@ installlibs: static-libs shared-libs
 	install -m644 *.h $(PREFIX)/usr/include
 
 installliblinks: installlibs
-	ln -s /usr/lib/libtclivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/lib/libtclivy.so
-	ln -s /usr/lib/libivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/lib/libivy.so
-	ln -s /usr/lib/libivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/lib/libivy.so.$(MAJOR)
-	ln -s /usr/lib/libgivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/lib/libgivy.so
-	ln -s /usr/lib/libgivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/lib/libgivy.so.$(MAJOR)
-	ln -s /usr/X11R6/lib/libxtivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/X11R6/lib/libxtivy.so
-	ln -s /usr/X11R6/lib/libxtivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/X11R6/lib/libxtivy.so.$(MAJOR)
-	ln -s /usr/X11R6/lib/libglibivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/X11R6/lib/libglibivy.so
-	ln -s /usr/X11R6/lib/libglibivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/X11R6/lib/libglibivy.so.$(MAJOR)
-	ln -s /usr/X11R6/lib/libtclivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/X11R6/lib/libtclivy.so
-	ln -s /usr/X11R6/lib/libtclivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/X11R6/lib/libtclivy.so.$(MAJOR)
+	ln -fs /usr/lib/libivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/lib/libivy.so
+	ln -fs /usr/lib/libivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/lib/libivy.so.$(MAJOR)
+	ln -fs /usr/lib/libgivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/lib/libgivy.so
+	ln -fs /usr/lib/libgivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/lib/libgivy.so.$(MAJOR)
+	ln -fs /usr/X11R6/lib/libxtivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/X11R6/lib/libxtivy.so
+	ln -fs /usr/X11R6/lib/libxtivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/X11R6/lib/libxtivy.so.$(MAJOR)
+	ln -fs /usr/X11R6/lib/libgtkivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/X11R6/lib/libgtkivy.so
+	ln -fs /usr/X11R6/lib/libgtkivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/X11R6/lib/libgtkivy.so.$(MAJOR)
+	ln -fs /usr/lib/libtclivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/lib/libtclivy.so
+	ln -fs /usr/lib/libtclivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/lib/libtclivy.so.$(MAJOR)
 
 installbins: commands
 	test -d $(PREFIX)/usr/bin || mkdirhier $(PREFIX)/usr/bin
