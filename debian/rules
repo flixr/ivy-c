@@ -18,7 +18,6 @@ build:
 clean:
 	$(checkdir)
 	-rm -f build
-
 	-rm -rf debian/tmp `find debian/* -type d ! -name CVS` debian/files* core
 	-rm -f debian/*substvars
 
@@ -30,7 +29,7 @@ binary-indep:	checkroot build
 
 binary-arch:	checkroot build
 	$(checkdir)
-	-rm -rf debian/tmp `find debian/* -type d`
+	-rm -rf debian/tmp `find debian/* -type d ! -name CVS`
 	install -d debian/tmp
 	cd debian/tmp && install -d `cat ../dirs`
 

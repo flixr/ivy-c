@@ -25,13 +25,6 @@ GOBJ = ivyloop.o timer.o ivysocket.o givy.o
 XTOBJ = ivyxtloop.o ivysocket.o ivy.o
 TARGETS = ivyprobe ivyxtprobe
 
-ifneq (strip $(MAJOR),)
-MAJOR=1
-endif
-ifneq (strip $(MINOR),)
-MINOR=3
-endif
-
 .c.o:
 	$(CC) -fPIC $(CFLAGS) -c $*.c
 

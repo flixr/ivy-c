@@ -193,17 +193,17 @@ int main(int argc, char *argv[])
 	int c;
 	int timer_test = 0;
 	char dbuf [1024] = "";
-	const char* domains = 0;
+	const char* bus = 0;
 	while ((c = getopt(argc, argv, "d:b:w:t")) != EOF)
 			switch (c) {
 			case 'b':
 				bport = atoi(optarg) ;
 				break;
 			case 'd':
-				if (domains)
+				if (bus)
 					strcat (dbuf, ",");
 				else
-					domains = dbuf;
+					bus = dbuf;
 				strcat (dbuf, optarg);
 			break;
 			case 'w':
@@ -220,7 +220,7 @@ int main(int argc, char *argv[])
 	cntx = XtCreateApplicationContext();
 	IvyXtChannelAppContext (cntx);
 #endif
-	IvyInit ("IVYPROBE", bport, "IVYPROBE READY", ApplicationCallback,NULL,NULL,NULL);
+	IvyInit ("IVYPROBE", "IVYPROBE READY", ApplicationCallback,NULL,NULL,NULL);
 	for  (; optind < argc; optind++)
 		IvyBindMsg (Callback, NULL, argv[optind]);
 
@@ -231,7 +231,7 @@ int main(int argc, char *argv[])
 		IvyChannelSetUp (0, NULL, NULL, HandleStdin);
 #endif
 
-	IvyStart (domains);
+	IvyStart (bus);
 
 	if  (timer_test) {
 #ifndef XTMAINLOOP

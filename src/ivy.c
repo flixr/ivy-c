@@ -39,8 +39,14 @@
 #define ARG_START "\002"
 #define ARG_END "\003"
 
+#define DEFAULT_DOMAIN 127.255.255.255
 
-static char* DefaultIvyBus = "127.255.255.255";
+/* stringification et concatenation du domaine et du port en 2 temps :
+ * Obligatoire puisque la substitution de domain, et de bus n'est pas
+ * effectuée si on stringifie directement dans la macro GenerateIvyBus */
+#define str(bus) #bus
+#define GenerateIvyBus(domain,bus) str(domain)##":"str(bus)
+static char* DefaultIvyBus = GenerateIvyBus(DEFAULT_DOMAIN,DEFAULT_BUS);
 
 typedef enum {
 

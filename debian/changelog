@@ -1,3 +1,16 @@
+ivy-c (3.0-1) unstable; urgency=low
+
+  * new api : see documentation
+  * src/Makefile : updates
+  * src/ivy.c
+  * - bug correction when broadcast socket can't be opened
+  * src/ivychannel.c :
+  * - bug correction when handling expceptions on channels
+  * Clean headers
+  * testivy -> ivyprobe
+
+ -- Hervé Damiano <damiano@cenatoulouse.dgac.fr>  Thu, 18 Feb 1999 11:50:50 +0100
+
 ivy-c (1.2-1) unstable; urgency=low
 
   * Mise au propre
