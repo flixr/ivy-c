@@ -1,7 +1,16 @@
 /*
  *
+ * Ivy, C interface
+ *
+ * Copyright 1997-1998 
+ * Centre d'Etudes de la Navigation Aerienne
+ *
+ * Main functions
+ *
  * $Id$
+ *
  */
+
 #include <stdlib.h>
 
 #include <stdio.h>
@@ -24,6 +33,13 @@
 #define ARG_START "\002"
 #define ARG_END "\003"
 
+
+#if 1
+/* temporary hack for compatibility */
+char* DefaultBusDomains = "143.196.1.255, 143.196.2.255, 143.196.53.255";
+#else
+char* DefaultBusDomains = "127.0.0.255";
+#endif
 
 typedef enum {
 
@@ -107,6 +123,7 @@ static void MsgSendTo( Client client,MsgType msgtype, int id, const char *messag
 {
 SocketSend( client, "%d %d" ARG_START "%s\n",msgtype,id,message);
 }
+
 static void BusCleanup()
 {
 BusClientPtr clnt,next;
@@ -203,9 +220,10 @@ static int CheckRegexp(char *exp)
 			if (strncmp( messages_classes[i], exp+1, strlen( messages_classes[i] )) == 0)
 				return 1;
 		}
-	}
+ 	}
 	return regexp_ok;
 }
+
 static int CheckConnected( BusClientPtr clnt )
 {
 BusClientPtr client;
@@ -229,6 +247,7 @@ struct in_addr *addr2;
 	}
 	return 0;
 }
+
 static void Receive( Client client, void *data, char *line )
 {
 	BusClientPtr clnt;
@@ -527,14 +546,106 @@ void BusClasses( int argc, const char **argv)
 	messages_classes = argv;
 }
 
+
 void BusStart()
 {
-	
-	SocketSendBroadcast( broadcast, 143 << 24 | 196 << 16 | 1 << 8 | 255, SupervisionPort, "%d %hu\n", VERSION, ApplicationPort);
-	SocketSendBroadcast( broadcast, 143 << 24 | 196 << 16 | 2 << 8 | 255, SupervisionPort, "%d %hu\n", VERSION, ApplicationPort);
-	SocketSendBroadcast( broadcast, 143 << 24 | 196 << 16 | 53 << 8 | 255, SupervisionPort, "%d %hu\n", VERSION, ApplicationPort);
 
-	fprintf(stderr,"Server Ready  TCP:%hu\n",ApplicationPort);
+#if 1
+	unsigned long mask = 0xffffffff; 
+	unsigned char elem = 0;
+	int numdigit = 0;
+	int numelem = 0;
+	int error = 0;
+#else
+	char* nextcomma;
+	int end = 0;
+	struct in_addr in;
+	unsigned long addr;
+#endif
+	/* find broadcast address list */
+
+	char* p = getenv ("IVYDOMAINS");
+	if (!p) 
+		p = DefaultBusDomains;
+
+#if 1
+	/* parse broadcast address list
+	   This is painful but inet_aton is sloppy.
+	   If someone knows other builtin routines that do that... */
+
+	for (;;) {
+		/* address elements are up to 3 digits... */
+		if (!error && isdigit (*p)) {
+			if (numdigit < 3 && numelem < 4) {
+				elem = 10*elem +  *p -'0';
+			} else {
+				error = 1;
+			}
+
+		/* ... terminated by a point or a comma or the end of string */
+		} else if (!error && (*p == '.' || *p == ',' || *p == '\0')) {
+			mask = (mask ^ (0xff<< (8*(3 -numelem)))) | (elem << (8*(3 - numelem)));
+
+			/* after a point, expect next address element */
+			if (*p == '.') {
+				numelem++;
+
+			/* addresses are terminated by a comma or end of string */
+			} else {
+				printf ("Brodadcasting on network %x, port %d\n", mask, SupervisionPort);
+				SocketSendBroadcast (broadcast, mask, SupervisionPort, "%d %hu\n", VERSION, ApplicationPort); 
+				numelem = 0;
+				mask = 0xffffffff;
+			}
+			numdigit = 0;
+			elem = 0;
+
+		/* recover from bad addresses at next comma or at end of string */
+		} else if (*p == ',' || *p == '\0') {
+			fprintf (stderr, "bad broadcast address\n");
+			elem = 0;
+			numelem = 0;
+			numdigit = 0;
+			mask = 0xffffffff;
+			error = 0;
+
+		/* ignore spaces */
+		} else if (*p == ' ') {
+
+		  /* everything else is illegal */
+		} else {
+			error = 1;
+		}
+
+		/* end of string */
+		if (!*p)
+			break;
+		++p;
+	}
+#else
+	while (*p) {
+		while (*p == ' ')
+			p++;
+		nextcomma = index (p, ',');
+		if (nextcomma)
+			*nextcomma = '\0';
+		else
+			end = 1;
+		if (inet_aton (p, &in)) {
+			printf ("%x\n", ntohl (in.s_addr));
+			SocketSendBroadcast (broadcast, ntohl (in.s_addr), SupervisionPort, "%d %hu\n", VERSION, ApplicationPort);
+			printf ("%x\n", 143 << 24 | 196 << 16 | 1 << 8 | 255);
+		} else {
+			printf ("bad broadcast address %s\n", p);
+		}
+		if (end)
+			break;
+		else
+			p = nextcomma+1;
+	}
+#endif
+
+	fprintf (stderr,"Listening on TCP:%hu\n",ApplicationPort);
 }
 
 /* desabonnements */
@@ -596,6 +707,7 @@ int match_count = 0;
 #endif
 	return match_count;
 }
+
 int SendMsg(const char *fmt, ...)
 {
 	char buffer[4096];
@@ -606,6 +718,7 @@ int SendMsg(const char *fmt, ...)
 	va_end ( ap );
 	return _SendMsg( buffer );
 }
+
 void SendError( BusClientPtr app, int id, const char *fmt, ... )
 {
 	char buffer[4096];
@@ -616,11 +729,13 @@ void SendError( BusClientPtr app, int id, const char *fmt, ... )
 	va_end ( ap );
 	MsgSendTo( app->client, Error, id, buffer);
 }
+
 void BindDirectMsg( MsgDirectCallback callback, void *user_data)
 {
 direct_callback = callback;
 direct_user_data = user_data;
 }
+
 void SendDirectMsg( BusClientPtr app, int id, char *msg )
 {
 	MsgSendTo( app->client, DirectMsg, id, msg);
