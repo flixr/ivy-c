@@ -1,7 +1,7 @@
-ivy-c (3.3.1) unstable; urgency=low
+ivy-c (3.3) unstable; urgency=low
 
-  * support of multicast, with IP adresses only between 224.0.0.0 and 239.255.255.255
-    (i.e. no support for group names), by frc
+  * support of multicast, with IP adresses between 224.0.0.0 and 239.255.255.255
+    (i.e. no support for named group), by frc
   * correction of message parsing in some strange but correct messages, by frc
     e.g. with a regexp like "foo(.*) (.*)" and a message like "foo1 2", the receiver
     will receive two values '1' and '2'
@@ -9,7 +9,7 @@ ivy-c (3.3.1) unstable; urgency=low
   * miminal support of glut toolkit, by frc. However, there is currently no
     libglutivy in the bin package due to some glut loop limitation.
 
- -- Christophe MERTZ <mertz@tls.cena.fr>  Tue,  8 Jan 2002 16:53:00 +0100
+ -- Christophe MERTZ <mertz@tls.cena.fr>  Thu, 20 Jun 2002 14:06:34 +0200
 
 ivy-c (3.2-3) unstable; urgency=low
 
