@@ -36,6 +36,7 @@
 #else
 #include <sys/time.h>
 #include <unistd.h>
+#include <regex.h>
 #endif
 #ifdef XTMAINLOOP
 #include "ivyxtloop.h"
@@ -60,6 +61,11 @@ XtAppContext cntx;
 int app_count = 0;
 int wait_count = 0;
 
+void DirectCallback(IvyClientPtr app, void *user_data, int id, char *msg ) {
+	printf("%s sent a direct message, id=%d, message=%s\n",
+	    IvyGetApplicationName(app),id,msg);
+}
+
 void Callback (IvyClientPtr app, void *user_data, int argc, char *argv[])
 {
 	int i;
@@ -67,6 +73,15 @@ void Callback (IvyClientPtr app, void *user_data, int argc, char *argv[])
 	for  (i = 0; i < argc; i++)
 			printf(" '%s'",argv[i]);
 	printf("\n");
+}
+
+char * Chop(char *arg)
+{
+  	int len;
+	if (arg==NULL) return arg;
+	len=strlen(arg)-1;
+	if ((*(arg+len))=='\n') *(arg+len)=0;
+	return arg;
 }
 
 void HandleStdin (Channel channel, HANDLE fd, void *data)
@@ -122,7 +137,19 @@ void HandleStdin (Channel channel, HANDLE fd, void *data)
 		} else if (strcmp(cmd,  "bind") == 0) {
 			arg = strtok (NULL, "'");
 			if  (arg) {
-				IvyBindMsg (Callback, NULL, arg);
+			  	regex_t reg;
+				int err;
+			  	Chop(arg);
+				if (err=regcomp(&reg,arg,REG_ICASE|REG_EXTENDED)!=0)	
+				{
+				  char errbuf[4096];
+				  regerror (err, &reg, errbuf, 4096);
+				  printf("Error compiling '%s', %s, not bound\n", arg, errbuf);
+				}
+				else
+				{
+					IvyBindMsg (Callback, NULL, Chop(arg));
+				}
 			}
 
 		} else if  (strcmp(cmd,  "where") == 0) {
@@ -141,7 +168,7 @@ void HandleStdin (Channel channel, HANDLE fd, void *data)
 					arg = strtok (NULL, " ");
 					id = atoi (arg) ;
 					arg = strtok (NULL, "'");
-					IvySendDirectMsg (app, id, arg);
+					IvySendDirectMsg (app, id, Chop(arg));
 				} else
 					printf ("No Application %s!!!\n",arg);
 			}
@@ -263,6 +290,7 @@ int main(int argc, char *argv[])
 	glutDisplayFunc(display);
 #endif
 	IvyInit ("IVYPROBE", "IVYPROBE READY", ApplicationCallback,NULL,NULL,NULL);
+	IvyBindDirectMsg( DirectCallback,NULL);
 	for  (; optind < argc; optind++)
 		IvyBindMsg (Callback, NULL, argv[optind]);
 

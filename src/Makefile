@@ -17,7 +17,7 @@
 
 
 MAJOR=3
-MINOR=4
+MINOR=5
 
 XTINC = -I/usr/X11R6/include
 XTLIB = -L/usr/X11R6/lib 
@@ -27,8 +27,8 @@ GTKLIB = `gtk-config --libs`
 #GTKLIB = -L/usr/lib -L/usr/X11R6/lib
 GLUTINC = -I/usr/include -I.
 GLUTLIB = -L.
-TCLINC = -I/usr/include/
-TCLLIB = -ltcl
+TCLINCL	= -I/usr/include/tcl8.2
+TCLLIB = -ltcl8.2
 
 CC=gcc
 CFLAGS = -g
@@ -55,7 +55,7 @@ shared-libs: libivy.so.$(MAJOR).$(MINOR) libgivy.so.$(MAJOR).$(MINOR) libxtivy.s
 commands: $(TARGETS)
 
 ivytcl.o: ivytcl.c
-	$(CC) -DGNU_REGEXP -c $(CFLAGS) $(TCLINC) -o ivytcl.o ivytcl.c
+	$(CC) -DGNU_REGEXP -c $(CFLAGS) $(TCLINCL) -o ivytcl.o ivytcl.c
 
 givy.o: ivy.c
 	$(CC) -DGNU_REGEXP -c $(CFLAGS) -o givy.o ivy.c
@@ -68,6 +68,8 @@ ivygtkloop.o: ivygtkloop.c ivygtkloop.h
 
 ivyprobe: ivyprobe.o libivy.a
 	$(CC)  $(CFLAGS) -o ivyprobe ivyprobe.o -L. -livy
+	# SOLARIS: use this line
+	# $(CC)  $(CFLAGS) -o ivyprobe ivyprobe.o -L. -livy -lsocket -lnsl
 
 ivyxtprobe.o : ivyprobe.c
 	$(CC)  $(CFLAGS) -c ivyprobe.c -o ivyxtprobe.o $(XTINC) -DXTMAINLOOP
