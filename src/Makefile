@@ -99,6 +99,14 @@ install: all
 	ln -s /usr/X11R6/lib/libxtivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/X11R6/lib/libxtivy.so.$(MAJOR)
 
 	install -m644 *.h $(PREFIX)/usr/include
+	test -d $(PREFIX)/usr/doc/ivy-c || mkdirhier $(PREFIX)/usr/doc/ivy-c
+	for f in `find  ../doc/*.html -type f -maxdepth 1`; do \
+                install -m 644 $$f $(PREFIX)/usr/doc/ivy-c; \
+        done
+	test -d $(PREFIX)/usr/man/man1 || mkdirhier $(PREFIX)/usr/man/man1
+	for f in `find  ../doc/*.1 -type f -maxdepth 1`; do \
+                install -m 644 $$f $(PREFIX)/usr/man/man1; \
+        done
 rpm::
 	/usr/bin/rpmize
 
