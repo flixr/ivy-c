@@ -1,6 +1,10 @@
 /*
  *
+<<<<<<< ivy.c
  * $Id$
+=======
+ * $Id$
+>>>>>>> 1.2
  */
 #include <stdlib.h>
 
@@ -65,7 +69,8 @@ struct _clnt_lst {
 	char *app_name;				/* nom de l'application */
 	unsigned short app_port;	/* port de l'application */
 	};
-
+/* server  pour la socket application */
+static Server server;
 /* numero de port TCP en mode serveur */
 static unsigned short ApplicationPort;
 
@@ -108,10 +113,10 @@ SocketSend( client, "%d %d" ARG_START "%s\n",msgtype,id,message);
 }
 static void BusCleanup()
 {
-BusClientPtr clnt;
+BusClientPtr clnt,next;
 
 	/* destruction des connexion  clients */
-	LIST_EACH( clients, clnt )
+	LIST_EACH_SAFE( clients, clnt, next )
 	{
 		/* on dit au revoir */
 	MsgSendTo( clnt->client, Bye, 0, "" );
@@ -119,7 +124,9 @@ BusClientPtr clnt;
 	LIST_EMPTY( clnt->msg_send );
 	}
 	LIST_EMPTY( clients );
-
+	/* destruction des socket serveur et supervision */
+	SocketServerClose( server );
+	SocketClose( broadcast );
 }
 static int MsgCall( const char *message, MsgSndPtr msg,  Client client )
 {
@@ -512,7 +519,8 @@ void BusInit(const char *AppName, unsigned short busnumber, const char *ready,
 	application_die_callback = die_callback;
 	application_die_user_data = die_data;
 	ready_message = ready;
-	ApplicationPort = SocketServer( ANYPORT, ClientCreate, ClientDelete, Receive );
+	server = SocketServer( ANYPORT, ClientCreate, ClientDelete, Receive );
+	ApplicationPort = SocketServerGetPort(server);
 	broadcast =  SocketBroadcastCreate( SupervisionPort, NULL, BroadcastReceive );
 
 }
