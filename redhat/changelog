@@ -1,4 +1,4 @@
-$Version = "3.3";
+$Version = "3.4";
 $Release = 1;
 
 $ChangeLog = ' * Sat Feb 20 1999 Stéphane Chatty <chatty@cenatoulouse.dgac.fr>
@@ -46,5 +46,16 @@ $ChangeLog = ' * Sat Feb 20 1999 Stéphane Chatty <chatty@cenatoulouse.dgac.fr>
  * Fri Dec 22 2000 Stéphane Chatty <chatty@cena.fr>
 - Generation of version 3.3-1
 - Additions by F.R.Colin
+
+ * Tue Jun 25 2002 Stéphane Chatty <chatty@cena.fr>
+- Generation of version 3.4-1
+-   * support of multicast, with IP adresses between 224.0.0.0 and 239.255.255.255
+-     (i.e. no support for named group), by frc
+-   * correction of message parsing in some strange but correct messages, by frc
+-     e.g. with a regexp like "foo(.*) (.*)" and a message like "foo1 2", the receiver
+-     will receive two values \'1\' and \'2\'
+-   * upgrade of the documentation and fixes in the copyright headers, by sc
+-   * miminal support of glut toolkit, by frc. However, there is currently no
+-     libglutivy in the bin package due to some glut loop limitation.
 
 ';
