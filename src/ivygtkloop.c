@@ -75,8 +75,8 @@ void IvyGtkChannelClose( Channel channel )
 
 	if ( channel->handle_delete )
 		(*channel->handle_delete)( channel->data );
-	gtk_input_remove( channel->id_read );
-	gtk_input_remove( channel->id_delete );
+	gdk_input_remove( channel->id_read );
+	gdk_input_remove( channel->id_delete );
 }
  
 

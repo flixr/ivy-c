@@ -112,7 +112,7 @@ static void HandleSocket (Channel channel, HANDLE fd, void *data)
 	char *ptr_nl;
 	long nb_to_read = 0;
 	long nb;
-	int len;
+	socklen_t len;
 
 	/* limitation taille buffer */
 	nb_to_read = MAX_BUFFER - (client->ptr - client->buffer );
@@ -122,7 +122,8 @@ static void HandleSocket (Channel channel, HANDLE fd, void *data)
 		return;
 	}
 	len = sizeof (client->from );
-	nb = recvfrom (fd, client->ptr, nb_to_read,0,(struct sockaddr *)&client->from,&len);
+	nb = recvfrom (fd, client->ptr, nb_to_read,0,(struct sockaddr *)&client->from,
+		       &len);
 	if (nb  < 0) {
 		perror(" Read Socket ");
 		(*channel_close) (client->channel );
@@ -160,7 +161,7 @@ static void HandleServer(Channel channel, HANDLE fd, void *data)
 	Server server = (Server ) data;
 	Client client;
 	HANDLE ns;
-	int addrlen;
+	socklen_t addrlen;
 	struct sockaddr_in remote2;
 
 	addrlen = sizeof (remote2 );
@@ -195,7 +196,7 @@ Server SocketServer(unsigned short port,
 	HANDLE fd;
 	int one=1;
 	struct sockaddr_in local;
-	int addrlen;
+	socklen_t addrlen;
 		
 
 	if ((fd = socket (AF_INET, SOCK_STREAM, 0)) < 0){
@@ -274,7 +275,7 @@ char *SocketGetPeerHost (Client client )
 	int err;
 	struct sockaddr_in name;
 	struct hostent *host;
-	int len = sizeof(name);
+	socklen_t len = sizeof(name);
 
 	if (!client)
 		return "undefined";

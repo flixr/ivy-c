@@ -13,14 +13,21 @@
  *	Please refer to file version.h for the
  *	copyright notice regarding this software
  */
+#if (__GNUC__ >= 3)
+#define TYPEOF(p) typeof (p)
+#else
+#define  TYPEOF(p) void *
+#endif
 
 #define IVY_LIST_ITER( list, p, cond ) \
 	p = list; \
 	while ( p && (cond) ) p = p->next 
 
+
+
 #define IVY_LIST_REMOVE( list, p ) \
 	{ \
-	void  *toRemove; \
+	TYPEOF(p)  toRemove; \
 	if ( list == p ) \
 		{ \
 		list = p->next; \
@@ -33,8 +40,8 @@
 		if ( p )\
 			{\
 			/* somme tricky swapping to use a untyped variable */\
-			void *suiv; \
-			void *prec = p;\
+			TYPEOF(p) suiv; \
+			TYPEOF(p) prec = p;\
 			p = toRemove;\
 			suiv = p->next;\
 			p = prec;\
@@ -45,7 +52,7 @@
 	}
 
 #define IVY_LIST_ADD(list, p ) \
-	if ((p = malloc( sizeof( *p ))))\
+	if ( p = (TYPEOF(p)) (malloc( sizeof( *p ))))\
 		{ \
 		memset( p, 0 , sizeof( *p ));\
 		p->next = list; \
@@ -60,7 +67,7 @@ for ( p = list ; (next = p ? p->next: p ),p ; p = next )
 
 #define IVY_LIST_EMPTY( list ) \
 	{ \
-	void *p; \
+	TYPEOF(list) p; \
 	while( list ) \
 		{ \
 		p = list;\

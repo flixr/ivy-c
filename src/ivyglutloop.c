@@ -37,7 +37,7 @@
 #endif
 
 
-#include <GL/Glut.h>
+#include <GL/glut.h>
 
 #include "ivychannel.h"
 #include "ivyglutloop.h"
