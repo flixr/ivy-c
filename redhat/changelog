@@ -1,5 +1,5 @@
 $Version = "3.2";
-$Release = 4;
+$Release = 5;
 
 $ChangeLog = ' * Sat Feb 20 1999 Stéphane Chatty <chatty@cenatoulouse.dgac.fr>
 - Generation of ivy-c-3.0-2
@@ -38,5 +38,9 @@ $ChangeLog = ' * Sat Feb 20 1999 Stéphane Chatty <chatty@cenatoulouse.dgac.fr>
  * Mon Aug 7 2000 Stéphane Chatty <chatty@cena.fr>
 - Generation of version 3.2-4
 - Just an upgrade of the documentation and fixes in the copyright headers
+
+ * Tue Dec 12 2000 Stéphane Chatty <chatty@cena.fr>
+- Generation of version 3.2-5
+- Small fix in doc
 
 ';
