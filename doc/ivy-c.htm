@@ -1,5 +1,6 @@
 <HTML>
 <HEAD>
+<TITLE>c - a software bus library</TITLE>
 </HEAD>
 <BODY>
 <!-- Ivy, C interface \- library managing connexions to a software bus-->
@@ -15,227 +16,27 @@
 <!--	# ^y = starting y location-->
 <!--	# ^b = 1-->
 <H2><A NAME=NAME>NAME</A></H2>
-IvyInit, IvyStart, IvyStop, IvyBindMsg, IvyUnbindMsg, IvyBindDirectMsg,
-IvySendMsg, IvySendDirectMsg, IvySendDieMsg, IvySendError, IvyGetApplicationName,
-IvyGetApplicationHost, IvyGetApplication, IvyGetApplicationList,
-IvyGetApplicationMessages, IvyDefaultApplicationCallback, IvyClasses,
-IvyChannelInit, IvyChannelSetUp, IvyMainLoop, IvyChannelClose,
-IvyChannelDelete, IvyChannelHandleRead,
-IvyChannelHandleExcpt,  IvyXtChannelInit, IvyXtChannelSetUp
-IvyXtChannelClose, IvyXtHandleChannelRead, IvyXtHandleChannelDelete,
-IvyXtChannelAppContext, 
+ivy-c - a software bus library
 <H2><A NAME=SYNOPSIS>SYNOPSIS</A></H2>
-useful set of library functions for communicating between different
+Ivy-c provides a useful set of C library functions for communicating between different
 processes through a software bus
-<BR>
-<P>
-<B>IvyInit(</B><I>AppName, ready, callback, data, die_callback, die_data</I><B>)</B>
-<P>
-void
-<B>IvyStart(</B><I>bus</I><B>)</B>
-<P>
-void
-<B>IvyStop()</B>
-<P>
-MsgRcvPtr
-<B>IvyBindMsg(</B><I>callback, user_data, regexp, ...</I><B>)</B>
-<P>
-void
-<B>IvyUnbindMsg(</B><I>id</I><B>)</B>
-<P>
-void
-<B>IvyBindDirectMsg(</B><I>callback, user_data</I><B>)</B>
-<P>
-int
-<B>IvySendMsg(</B><I>fmt_message, ...</I><B>)</B>
-<P>
-void
-<B>IvySendDirectMsg(</B><I>app, id, msg</I><B>)</B>
-<P>
-void
-<B>IvySendDieMsg(</B><I>app</I><B>)</B>
-<P>
-void
-<B>IvySendError(</B><I>app, id, fmt, ...</I><B>)</B>
-<P>
-char*
-<B>IvyGetApplicationName(</B><I>app</I><B>)</B>
-<P>
-char*
-<B>IvyGetApplicationHost(</B><I>app</I><B>)</B>
-<P>
-char*
-<B>IvyGetApplication(</B><I>name</I><B>)</B>
-<P>
-char*
-<B>IvyGetApplicationList()</B>
-<P>
-char**
-<B>IvyGetApplicationMessages(</B>\fapp<B>)</B>
-<P>
-char*
-<B>IvyDefaultApplicationCallback(</B><I>app, user_data, Event</I><B>)</B>
-char*
-<B>IvyClasses(</B><I>argc, argv</I><B>)</B>
-<P>
-void
-<B>IvyChannelInit(</B><I>void</I><B>)</B>
-<P>
-Channel
-<B>IvyChannelSetUp(</B><I>fd, data, handle_delete, handle_read</I><B>)</B>
-<P>
-void
-<B>IvyMainLoop(</B><I>hook</I><B>)</B>
-<P>
-void
-<B>IvyChannelClose(</B><I>channel</I><B>)</B>
-<P>
-static void
-<B>IvyChannelDelete(</B><I>channel</I><B>)</B>
-<P>
-static void
-<B>IvyChannelHandleRead(</B><I>current</I><B>)</B>
-<P>
-static void
-<B>IvyChannelHandleExcpt(</B><I>current</I><B>)</B>
-<P>
-static void
-<B>IvyXtChannelInit(</B><I>void</I><B>)</B>
-<P>
-static void
-<B>IvyXtChannelSetUp(</B><I>fd, data, handle_delete, handle_read</I><B>)</B>
-<P>
-void
-<B>IvyXtChannelClose(</B><I>channel</I><B>)</B>
-<P>
-static void
-<B>IvyXtHandleChannelRead(</B><I>closure, source, id</I><B>)</B>
-<P>
-static void
-<B>IvyXtHandleChannelDelete(</B><I>closure, source, id</I><B>)</B>
-<P>
-void
-<B>IvyChannelAppContext(</B><I>cntx</I><B>)</B>
-<H2><A NAME=ARGUMENTS>ARGUMENTS</A></H2>
-Only main functions are detailed in this section
-<H2><A NAME=Section0></A></H2>
-<B>IvyInit</B>:
-Initialisation of a connection
-<P>
-<DL>
-<DT><CODE>const_char *AppName</CODE>
-(in) <DD>Application Name
-<DT><CODE>const_char *ready</CODE>
-(in) <DD>Ready Message (can be NULL)
-<DT><CODE>IvyApplicationCallback callback</CODE>
-(in) <DD>Callback to be called on a connexion/deconnexion of an application
-<DT><CODE>void *data</CODE>
-(in) <DD>user data 
-<DT><CODE>IvyDieCallback die_callback</CODE>
-(in) <DD>last change callback before die
-<DT><CODE>void *die_data</CODE>
-(in) <DD>user data
-</DL>
-<H2><A NAME=Section1>Example:</A></H2>
-<B>IvyInit ("PLN-SERVER", "PLN-READY", NULL, NULL, NULL);</B>
-<H2><A NAME=Section0></A></H2>
-<B>IvyStart</B>:
-Initialisation of TCP/UPD port and sending of a broadcast handshake on every network
-<DL>
-<DT><CODE>const_char *bus</CODE>
-(in) <DD>Bus to be used (format : network list followed by broadcast port).
-</DL>
-<H2><A NAME=Section1>Example:</A></H2>
-the given bus can be a string like 123.231,123.123:2000 or 123.231 or
-:2000. If no argument is specified, then the environment variable
-<B>IVYBUS</B> is checked, else the default value : 127.255.255.255:2010 
-is used (broadcast on the local machine).
-<BR>
-<B>IvyStart ("143.196.53.255:2001");</B>
-<H2><A NAME=Section0></A></H2>
-<B>IvyBindMsg</B>:
-Message binding
-<DL>
-<DT><CODE>MsgCallback callback</CODE>
-(in) <DD><DT><CODE>void *user_data</CODE>
-(in) <DD><DT><CODE>const_char *regexp</CODE>
-(in) <DD><DT><CODE>MsgRcvPtr id</CODE>
-(out) <DD></DL>
-<H2><A NAME=Section1>Example:</A></H2>
-<B>IvyBindMsg (StartTimeCallback, 0,  "^CLOCK Start time=(.*)");</B>
-<BR>
-In this example the function <B>StartTimeCallback</B> will be called
-each time the string <B>CLOCK Start time=(.*)</B> will be emitted on
-the bus.
-<H2><A NAME=Section0></A></H2>
-<B>IvyUnbindMsg</B>:
-Message unbinding
-<DL>
-<DT><CODE>MsgRcvPtr id</CODE>
-(in) <DD>ident of the message to unbind
-</DL>
-<H2><A NAME=Section0></A></H2>
-<B>IvySendMsg</B>:
-Sending a message
-<DL>
-<DT><CODE>const_char* fmt</CODE>
-(in) <DD>String to be sent on the bus
-</DL>
-<H2><A NAME=Section1>Example:</A></H2>
-<B>IvySendMsg ("SECTOR:%s.AIRCRAFT:%s Entered", sectorname, pln-&gt;indicatif);</B>
-<H2><A NAME=Section0></A></H2>
-<B>IvyChannelSetUp</B>:
-<DL>
-<DT><CODE>HANDLE fd</CODE>
-(in) <DD><DT><CODE>void *data</CODE>
-(in) <DD><DT><CODE>ChannelHandleDelete handle_delete</CODE>
-(in) <DD><DT><CODE>ChannelHandleRead handle_read</CODE>
-(in) <DD><DT><CODE>Channel out</CODE>
-(out) <DD></DL>
-<H2><A NAME=Section1>Example:</A></H2>
-<B>IvyChannelSetUp (0, NULL, NULL, HandleStdin);</B>:
-<HR>
-<BR>
 <H2><A NAME=DESCRIPTION>DESCRIPTION</A></H2>
-<P>
-These functions provide facilities for connecting applications on a
-software bus and managing messages exchanges among them.
+Ivy is a software bus, ie a system that allows any software component to freely exchange data.
+The basic principle of a software bus is to ease the rapid implementation of new agents, and to manage a dynamic collection of agents on the bus: agents connect, send and receive messages, and disconnect without perturbing the overall functionment of the bus.
 Each time an application initializes a connection on the bus, a
 "ready" message is sent to all other applications already connected, and the
 list of the messages subscribed by this application is dispatched.
 The format for the messages is free.
-
-<H2><A NAME=EXAMPLE>EXAMPLE</A></H2>
-Connection of the application <B>IVYPROBE</B> on a given bus
 <BR>
-
+The essential functions of Ivy are:
 <BR>
-<PRE>
-
-#include "ivyloop.h"
-#include "ivysocket.h"
-#include "ivy.h"
-
- int main (int argc, char* argv[]){
-/* bus domain and port number to be used */
-	const char* bus="127.255.255.255:2010";
-/* initialisation of the connection */
-	IvyInit ("IVYPROBE",
-		 bport,
-		 "IVYPROBE READY",
-		 ApplicationCallback,
-		 NULL,
-		 NULL,
-		 NULL);
-/* keyboard's inputs management */
-	IvyChannelSetUp(0, NULL, NULL, HandleStdin);
-/* starting the connection */
-	IvyStart (bus);
-/* Main loop */
-	IvyMainLoop(0);
-};
+<I>Connexion</I>
 <BR>
-</PRE>
+<I>Message</I>
+<BR>
+<I>Message</I>
+<BR>
+<I>Main</I>
 
 <H2><A NAME=FILES>FILES</A></H2>
 <I>/usr/include/ivy.h</I>
@@ -252,10 +53,13 @@ error messages displayed
 <H2><A NAME=BUGS>BUGS</A></H2>
 none reported yet!
 <H2><A NAME=AUTHORS>AUTHORS</A></H2>
+<BR>
 Francois-Regis Colin &lt;fcolin@cenatoulouse.dgac.fr&gt;
+<BR>
 Stephane Chatty &lt;chatty@cenatoulouse.dgac.fr&gt;
-<H2><A NAME=Section2>SEE ALSO</A></H2>
+<H2><A NAME=Section0>SEE ALSO</A></H2>
 ivyprobe (1)
+ivy-c-functions (1)
 <P>
 For further details, please refer to the Ivy html page at http://www.cenatls.cena.dgac.fr/pii/produits/Ivy.html
 <H2><A NAME=NOTES>NOTES</A></H2>
