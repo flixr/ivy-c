@@ -19,7 +19,7 @@ MAJOR=3
 MINOR=1
 
 CC=cc
-CFLAGS =  -g 
+CFLAGS =  -g #-DDEBUG for debug 
 OBJ = ivyloop.o timer.o ivysocket.o ivy.o 
 GOBJ = ivyloop.o timer.o ivysocket.o givy.o
 TCLOBJ = ivytcl.o ivysocket.o givy.o
@@ -75,8 +75,10 @@ install: all
 
 	install -m644 libivy.$(MAJOR).$(MINOR).dylib $(PREFIX)/usr/lib
 #	ln -s /usr/lib/ivytcl.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/lib/ivytcl.so
-#	ln -s /usr/lib/libivy.$(MAJOR).$(MINOR).dylib $(PREFIX)/usr/lib/libivy.dylib
-#	ln -s /usr/lib/libivy.$(MAJOR).$(MINOR).dylib $(PREFIX)/usr/lib/libivy.$(MAJOR).dylib
+	ln -sfh /usr/lib/libivy.$(MAJOR).$(MINOR).dylib $(PREFIX)/usr/lib/libivy.dylib
+	ln -sfh /usr/lib/libivy.$(MAJOR).$(MINOR).dylib $(PREFIX)/usr/lib/libivy.$(MAJOR).dylib
+
+# we put -fh option to ln to unlink previous links the link to occur
 
 	install -m644 -c *.h $(PREFIX)/usr/include
 #	test -d $(PREFIX)/usr/local/doc/ivy-c || mkdir $(PREFIX)/usr/local/doc/ivy-c
