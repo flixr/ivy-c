@@ -542,7 +542,7 @@ static void BroadcastReceive( Client client, void *data, char *line )
 }
 
 
-void IvyInit (const char *appname, unsigned short port, const char *ready, 
+void IvyInit (const char *appname, const char *ready, 
 			 IvyApplicationCallback callback, void *data,
 			 IvyDieCallback die_callback, void *die_data
 			 )
@@ -550,7 +550,6 @@ void IvyInit (const char *appname, unsigned short port, const char *ready,
 	SocketInit();
 
 	ApplicationName = appname;
-	SupervisionPort = port;
 	application_callback = callback;
 	application_user_data = data;
 	application_die_callback = die_callback;
@@ -600,10 +599,8 @@ void IvyStart (const char* bus)
 	q = strchr (p, ':');
 	if (q && (port = atoi (q+1)))
 		SupervisionPort = port;
-#if 0
 	else
-		SupervisionPort = ;
-#endif
+		SupervisionPort = DEFAULT_BUS;
 
 	/*
 	 * Now we have a port number it's time to initialize the UDP port

@@ -52,7 +52,6 @@ void IvyClasses( int argc, const char **argv);
 
 void IvyInit(
 	 const char *AppName,		/* nom de l'application */
-	 unsigned short busnumber,	/* numero de bus ( port UDP ) */
 	 const char *ready,		/* ready Message peut etre NULL */
 	 IvyApplicationCallback callback, /* callback appele sur connection deconnection d'une appli */
 	 void *data,			/* user data passe au callback */
