@@ -1,11 +1,12 @@
 /*
  *	Ivy, C interface
  * 
- *	Copyright (C) 1997-2000
+ *	Copyright (C) 1997-2004
  *	Centre d'Études de la Navigation Aérienne
  *
  *	Authors: François-Régis Colin <colin@cena.dgac.fr>
  *		Stéphane Chatty <chatty@cena.dgac.fr>
+ *		Yannick Jestin <jestin@cena.fr>
  *
  *	$Id$
  *

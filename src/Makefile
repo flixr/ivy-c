@@ -141,32 +141,32 @@ libtclivy.a: $(TCLOBJ)
 # TODO this PCREOBJ is a dirty hack
 
 libivy.so.$(MAJOR).$(MINOR): $(OBJ)
-	$(CC) -shared -Wl,-soname,libivy.so.$(MAJOR) -o $@ $(OBJ)
+	$(CC) -shared -Wl,-soname,libivy.so.$(MAJOR) -o $@ $(OBJ) $(PCRELIB)
 #	$(CC) -G -Wl,-h,libivy.so.$(MAJOR) -o $@ $(OBJ)		#solaris
 #	libtool -dynamic -o $@ $(OBJ) $(PCRELIB) -lc
 
 libgivy.so.$(MAJOR).$(MINOR): $(GOBJ)
-	$(CC) -shared -Wl,-soname,libgivy.so.$(MAJOR) -o $@ $(GOBJ)
+	$(CC) -shared -Wl,-soname,libgivy.so.$(MAJOR) -o $@ $(GOBJ) $(PCRELIB)
 #	$(CC) -G -Wl,-h,libgivy.so.$(MAJOR) -o $@ $(GOBJ) #solaris
 #	libtool -dynamic -o $@ $(GOBJ) $(PCRELIB) -lc
 
 libxtivy.so.$(MAJOR).$(MINOR): $(XTOBJ)
-	$(CC) -shared -Wl,-soname,libxtivy.so.$(MAJOR) -o $@ $(XTOBJ) $(XTLIB)
+	$(CC) -shared -Wl,-soname,libxtivy.so.$(MAJOR) -o $@ $(XTOBJ) $(XTLIB) $(PCRELIB)
 #	$(CC) -G -Wl,-h,libxtivy.so.$(MAJOR) -o $@ $(XTOBJ) $(XTLIB) #solaris
 #	libtool -dynamic -o $@ $(XTOBJ) $(XTLIB) $(PCRELIB) -lc
 
 libgtkivy.so.$(MAJOR).$(MINOR): $(GTKOBJ)
-	$(CC) -shared -Wl,-soname,libgtkivy.so.$(MAJOR) -o $@ $(GTKOBJ) $(GTKLIB)
+	$(CC) -shared -Wl,-soname,libgtkivy.so.$(MAJOR) -o $@ $(GTKOBJ) $(GTKLIB) $(PCRELIB)
 #	$(CC) -G -Wl,-h,libgtkivy.so.$(MAJOR) -o $@ $(GTKOBJ) $(GTKLIB)	#solaris
 #	libtool -dynamic -o $@ $(GTKOBJ) $(GTKLIB) $(PCRELIB) -lc
 
 libglutivy.so.$(MAJOR).$(MINOR): $(GTKOBJ)
-	$(CC) -shared -Wl,-soname,libglutivy.so.$(MAJOR) -o $@ $(GLUTOBJ) $(GLUTLIB)
+	$(CC) -shared -Wl,-soname,libglutivy.so.$(MAJOR) -o $@ $(GLUTOBJ) $(GLUTLIB) $(PCRELIB)
 #	$(CC) -G -Wl,-h,libglutivy.so.$(MAJOR) -o $@ $(GLUTOBJ) $(GLUTLIB) #	solaris
 #	libtool -dynamic -o $@ $(GLUTOBJ) $(GLUTLIB) $(PCRELIB) -lc
 
 libtclivy.so.$(MAJOR).$(MINOR): $(TCLOBJ)
-	$(CC) -shared -Wl,-soname,libtclivy.so.$(MAJOR) -o $@ $(TCLOBJ) $(TCLLIB) $(PCREOBJ)
+	$(CC) -shared -Wl,-soname,libtclivy.so.$(MAJOR) -o $@ $(TCLOBJ) $(TCLLIB) $(PCREOBJ) $(PCRELIB)
 #	$(CC) -G -Wl,-h,libtclivy.so.$(MAJOR) -o $@ $(TCLOBJ) $(TCLLIB) $(PCREOBJ) # solaris
 #	libtool -dynamic -o $@ $(TCLOBJ) $(TCLLIB) $(PCREOBJ) $(PCRELIB) -lc
 
@@ -208,19 +208,27 @@ installbins: commands
 	test -d $(PREFIX)/usr/bin || mkdirhier $(PREFIX)/usr/bin
 	test -d $(PREFIX)/usr/X11R6/bin || mkdirhier $(PREFIX)/usr/X11R6/bin
 	install -m755 ivyprobe $(PREFIX)/usr/bin
-	install -m755 ivyxtprobe $(PREFIX)/usr/X11R6/bin
-	install -m755 ivygtkprobe $(PREFIX)/usr/X11R6/bin
-#	install -m755 ivyglutprobe $(PREFIX)/usr/X11R6/bin
+	#install -m755 ivyxtprobe $(PREFIX)/usr/X11R6/bin
+	#install -m755 ivygtkprobe $(PREFIX)/usr/X11R6/bin
+	#install -m755 ivyglutprobe $(PREFIX)/usr/X11R6/bin
 
 installdocs:
-	test -d $(PREFIX)/usr/doc/ivy-c || mkdirhier $(PREFIX)/usr/doc/ivy-c
+	test -d $(PREFIX)/usr/share/doc/ivy-c || mkdirhier $(PREFIX)/usr/share/doc/ivy-c
 	for f in `find  ../doc/*.html -type f -maxdepth 1`; do \
-                install -m 644 $$f $(PREFIX)/usr/doc/ivy-c; \
+                install -m 644 $$f $(PREFIX)/usr/share/doc/ivy-c; \
         done
 	test -d $(PREFIX)/usr/man/man1 || mkdirhier $(PREFIX)/usr/man/man1
 	for f in `find  ../doc/*.1 -type f -maxdepth 1`; do \
                 install -m 644 $$f $(PREFIX)/usr/man/man1; \
         done
+	test -d $(PREFIX)/usr/share/doc/ivy-c/examples || mkdirhier $(PREFIX)/usr/share/doc/ivy-c/examples
+	install -m 644 version.h $(PREFIX)/usr/share/doc/ivy-c/copyright
+	install -m 644 ../examples/gtkIvyButton.c $(PREFIX)/usr/share/doc/ivy-c/examples
+	install -m 644 ../examples/motifButtonIvy.c $(PREFIX)/usr/share/doc/ivy-c/examples
+	install -m 644 ../examples/testUnbind.c $(PREFIX)/usr/share/doc/ivy-c/examples
+	install -m 766 ../examples/Test.tcl $(PREFIX)/usr/share/doc/ivy-c/examples
+	install -m 766 ../examples/button.tk $(PREFIX)/usr/share/doc/ivy-c/examples
+	install -m 766 ../examples/unBind.tcl $(PREFIX)/usr/share/doc/ivy-c/examples
 
 install: installlibs installbins installliblinks installdocs
 
