@@ -591,9 +591,9 @@ void IvyStart (const char* bus)
 	 */
 
 	/* first, let's find something to parse */
-	if (!p)
+	if (!p || !*p)
 		p = getenv ("IVYBUS");
-	if (!p) 
+	if (!p || !*p) 
 		p = DefaultIvyBus;
 
 	/* then, let's get a port number */
