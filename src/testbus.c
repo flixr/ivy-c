@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <sys/time.h>
 #include <unistd.h>
-#include "socket.h"
+#include "bussocket.h"
 #include "bus.h"
 #include "timer.h"
 #ifdef XTMAINLOOP

@@ -1,7 +1,7 @@
 XTINC = 
 CC=gcc
-OBJ = timer.o socket.o bus.o 
-GOBJ = timer.o socket.o gbus.o
+OBJ = timer.o bussocket.o bus.o 
+GOBJ = timer.o bussocket.o gbus.o
 XTOBJ = timer.o xtsocket.o bus.o
 
 all: libbus.a libgbus.a libxtbus.a testbus
@@ -9,8 +9,8 @@ all: libbus.a libgbus.a libxtbus.a testbus
 gbus.o: bus.c
 	$(CC) -DGNU_REGEXP -c $(CFLAGS) -o gbus.o bus.c
 
-xtsocket.o: socket.c
-	$(CC) -DXTMAINLOOP $(XTINC) -c $(CFLAGS) -o xtsocket.o socket.c
+xtsocket.o: bussocket.c
+	$(CC) -DXTMAINLOOP $(XTINC) -c $(CFLAGS) -o xtsocket.o bussocket.c
 
 testbus: testbus.o $(OBJ)
 	$(CC) -o testbus testbus.o $(OBJ)

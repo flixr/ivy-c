@@ -21,7 +21,7 @@
 #include <X11/Intrinsic.h>
 #endif
 #include "list.h"
-#include "socket.h"
+#include "bussocket.h"
 #include "timer.h"
 
 #define MAX_BUFFER 2048
