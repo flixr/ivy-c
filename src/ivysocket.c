@@ -166,13 +166,18 @@ static void HandleServer(Channel channel, HANDLE fd, void *data)
 	HANDLE ns;
 	socklen_t addrlen;
 	struct sockaddr_in remote2;
-
+#ifdef DEBUG
+	printf( "Accepting Connection...\n");
+#endif //DEBUG
 	addrlen = sizeof (remote2 );
 	if ((ns = accept (fd, (struct sockaddr *)&remote2, &addrlen)) <0)
 		{
 		perror ("*** accept ***");
 		return;
 		};
+#ifdef DEBUG
+	printf( "Accepting Connection ret\n");
+#endif //DEBUG
 	IVY_LIST_ADD (clients_list, client );
 	if (!client )
 		{
@@ -214,9 +219,7 @@ Server SocketServer(unsigned short port,
 
 	if (setsockopt(fd,SOL_SOCKET,SO_REUSEADDR,(char*)&one,sizeof(one)) < 0)
 		{
-#ifdef WIN32
 		fprintf(stderr," setsockopt %d\n",WSAGetLastError());
-#endif
 		perror ("*** set socket option SO_REUSEADDR ***");
 		exit(0);
 		} 

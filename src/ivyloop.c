@@ -192,3 +192,28 @@ void IvyMainLoop(void(*hook)(void))
 	}
 }
 
+void IvyIdle()
+{
+
+	fd_set rdset;
+	fd_set exset;
+	int ready;
+	struct timeval timeout = {0,0}; 
+
+	
+	ChannelDefferedDelete();
+	rdset = open_fds;
+	exset = open_fds;
+	ready = select(64, &rdset, 0,  &exset, &timeout);
+	if (ready < 0 && (errno != EINTR)) {
+         	fprintf (stderr, "select error %d\n",errno);
+		perror("select");
+		return;
+	}
+	if (ready > 0) {
+		IvyChannelHandleExcpt(&exset);
+		IvyChannelHandleRead(&rdset);
+	}
+	
+}
+

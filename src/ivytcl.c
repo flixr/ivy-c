@@ -28,6 +28,16 @@
 #include "ivy.h"
 #include "timer.h"
 
+//#define TCL_CHANNEL_INTEGRATION
+#ifdef TCL_CHANNEL_INTEGRATION
+// On utilisa la boucle Standard TCL 
+// mais il y a des problemes sur les socket server 
+// Il n'y a pas de Tcl_MakeTCPserver
+
+ChannelInit channel_init = IvyTclChannelInit;
+ChannelSetUp channel_setup = IvyTclChannelSetUp;
+ChannelClose channel_close = IvyTclChannelClose;
+
 struct _channel {
 	HANDLE fd;
 	void *data;
@@ -40,14 +50,10 @@ struct _channel {
 static int channel_initialized = 0;
 
 
-ChannelInit channel_init = IvyTclChannelInit;
-ChannelSetUp channel_setup = IvyTclChannelSetUp;
-ChannelClose channel_close = IvyTclChannelClose;
 
 #ifdef WIN32
 WSADATA WsaData;
 #endif
-
 
 void IvyTclChannelInit(void)
 {
@@ -98,6 +104,7 @@ Channel IvyTclChannelSetUp(HANDLE fd, void *data,
 				ChannelHandleRead handle_read
 				)						
 {
+	char channelName[16 + TCL_INTEGER_SPACE];
 	Channel channel;
 
 	channel = (Channel)ckalloc( sizeof (struct _channel) );
@@ -114,15 +121,26 @@ Channel IvyTclChannelSetUp(HANDLE fd, void *data,
 
 	/*printf("Create handle fd %d\n", fd);*/
 	channel->tcl_channel = Tcl_MakeTcpClientChannel((void*)fd);
-  	Tcl_CreateChannelHandler(channel->tcl_channel, TCL_READABLE|TCL_EXCEPTION,	IvyHandleFd, (ClientData) channel);
+  	Tcl_CreateChannelHandler(channel->tcl_channel,  TCL_READABLE|TCL_EXCEPTION,	IvyHandleFd, (ClientData) channel);
 	return channel;
 }
 
+#else
+// On utilisa la procedure Idle et la boucle Standard Ivy
+void IvyIdleProc(ClientData clientData)
+{
+	IvyIdle();
+	Tcl_DoWhenIdle(IvyIdleProc,0);
+}
+#endif
 
 void
-IvyStop ()
+TclIvyStop ()
 {
   /* To be implemented */
+#ifndef TCL_CHANNEL_INTEGRATION
+	Tcl_CancelIdleCall(IvyIdleProc,0);
+#endif
 }
 /* Code from PLC */
 
@@ -607,6 +625,9 @@ Tclivy_Init(Tcl_Interp *interp)
   Tcl_CreateCommand(interp, "Ivy::applist", IvyApplicationListCmd, NULL, NULL);
   Tcl_CreateCommand(interp, "Ivy::apphost", IvyApplicationHostCmd, NULL, NULL);
   Tcl_CreateCommand(interp, "Ivy::appmsgs", IvyApplicationMsgsCmd, NULL, NULL);
+#ifndef TCL_CHANNEL_INTEGRATION
+	Tcl_DoWhenIdle(IvyIdleProc,0);
+#endif
   return TCL_OK;
 }
 

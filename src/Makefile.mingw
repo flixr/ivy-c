@@ -18,9 +18,10 @@
 
 MAJOR=3
 MINOR=5
-
-XTINC = -I/usr/X11R6/include
-XTLIB = -L/usr/X11R6/lib 
+RM=del
+#RM=rm -f
+XTINC = 
+XTLIB =  
 GTKINC = `gtk-config --cflags`
 #GTKINC = -I/usr/include/gtk-1.2 -I/usr/include/glib-1.2 -I/usr/lib/glib/include -I/usr/X11R6/include
 GTKLIB = `gtk-config --libs`
@@ -31,26 +32,28 @@ TCLINCL	= -I/usr/include/tcl8.4
 TCLLIB = -ltcl84
 
 CC=gcc
-CFLAGS = -g
+CFLAGS = -g 
+# IVY full debug
+#CFLAGS = -g  -DDEBUG
 OBJ = ivyloop.o timer.o ivysocket.o ivy.o 
 GOBJ = ivyloop.o timer.o ivysocket.o givy.o
 XTOBJ = ivyxtloop.o ivysocket.o ivy.o
 GTKOBJ = ivygtkloop.o ivysocket.o ivy.o
 GLUTOBJ = ivyglutloop.o ivysocket.o ivy.o
-TCLOBJ = ivytcl.o ivysocket.o givy.o
-TARGETS = ivyprobe ivygtkprobe ivyxtprobe 
-# not yiet need Modified Glut ivyglutprobe
+TCLOBJ = ivytcl.o ivyloop.o timer.o ivysocket.o givy.o
+TARGETS = ivyprobe 
+# not yiet ivygtkprobe ivyxtprobe  need Modified Glut ivyglutprobe
 
 .c.o:
 	$(CC) $(CFLAGS) -c $*.c
 
 all: static-libs commands shared-libs
 
-static-libs: libivy.a libgivy.a libtclivy.a libxtivy.a libgtkivy.a  
-# not yiet need Modified Glut libglutivy.a
+static-libs: libivy.a libgivy.a libtclivy.a  
+# not yiet libxtivy.a libgtkivy.a  need Modified Glut libglutivy.a
 
-shared-libs: libivy.so.$(MAJOR).$(MINOR) libgivy.so.$(MAJOR).$(MINOR) libxtivy.so.$(MAJOR).$(MINOR) libgtkivy.so.$(MAJOR).$(MINOR) libtclivy.so.$(MAJOR).$(MINOR)
-# not yiet need Modified Glut libglutivy.so.$(MAJOR).$(MINOR)
+shared-libs: libivy.so.$(MAJOR).$(MINOR) libgivy.so.$(MAJOR).$(MINOR)  libtclivy.so.$(MAJOR).$(MINOR)
+# not yiet libxtivy.so.$(MAJOR).$(MINOR) libgtkivy.so.$(MAJOR).$(MINOR) need Modified Glut libglutivy.so.$(MAJOR).$(MINOR)
 
 commands: $(TARGETS)
 
@@ -68,8 +71,8 @@ ivygtkloop.o: ivygtkloop.c ivygtkloop.h
 
 ivyprobe: ivyprobe.o libivy.a
 	$(CC)  $(CFLAGS) -o ivyprobe ivyprobe.o -L. -livy -lwsock32 -lregex 
-	# SOLARIS: use this line
-	# $(CC)  $(CFLAGS) -o ivyprobe ivyprobe.o -L. -livy -lsocket -lnsl
+#	 SOLARIS: use this line
+#	$(CC)  $(CFLAGS) -o ivyprobe ivyprobe.o -L. -livy -lsocket -lnsl
 
 ivyxtprobe.o : ivyprobe.c
 	$(CC)  $(CFLAGS) -c ivyprobe.c -o ivyxtprobe.o $(XTINC) -DXTMAINLOOP
@@ -90,34 +93,34 @@ ivyglutprobe: ivyglutprobe.o libglutivy.a
 	$(CC) -o ivyglutprobe ivyglutprobe.o -L. $(GLUTLIB) -lglutivy -lglut -lGLU -lGL -lX11 -lXmu
 
 libivy.a: $(OBJ)
-	rm -f $@
+	$(RM) $@
 	ar q $@ $(OBJ)
 
 libgivy.a: $(GOBJ)
-	rm -f $@
+	$(RM) $@
 	ar q $@ $(GOBJ)
 
 libxtivy.a: $(XTOBJ)
-	rm -f $@
+	$(RM) $@
 	ar cq $@ $(XTOBJ)
 
 libgtkivy.a: $(GTKOBJ)
-	rm -f $@
+	$(RM) $@
 	ar cq $@ $(GTKOBJ)
 
 libglutivy.a: $(GLUTOBJ)
-	rm -f $@
+	$(RM) $@
 	ar cq $@ $(GLUTOBJ)
 
 libtclivy.a: $(TCLOBJ)
-	rm -f $@
+	$(RM) $@
 	ar cq $@ $(TCLOBJ)
 
 libivy.so.$(MAJOR).$(MINOR): $(OBJ)
 	$(CC) -shared -Wl,-soname,libivy.so.$(MAJOR) -o $@ $(OBJ)  -lwsock32 -lregex 
 
 libgivy.so.$(MAJOR).$(MINOR): $(GOBJ)
-	$(CC) -shared -Wl,-soname,libgivy.so.$(MAJOR) -o $@ $(GOBJ) 
+	$(CC) -shared -Wl,-soname,libgivy.so.$(MAJOR) -o $@ $(GOBJ) -lwsock32 -lregex 
 
 libxtivy.so.$(MAJOR).$(MINOR): $(XTOBJ)
 	$(CC) -shared -Wl,-soname,libxtivy.so.$(MAJOR) -o $@ \
@@ -136,7 +139,7 @@ libtclivy.so.$(MAJOR).$(MINOR): $(TCLOBJ)
 	$(TCLOBJ) $(TCLLIB) -lwsock32 -lregex 
 
 clean:
-	-rm -f $(TARGETS) *.o *.a *.so *.so.* *~
+	-$(RM) $(TARGETS) *.o *.a *.so *.so.* *~
 
 installlibs: static-libs shared-libs
 	test -d $(PREFIX)/usr/lib || mkdirhier $(PREFIX)/usr/lib
