@@ -1,3 +1,11 @@
+ivy-c (3.7) unstable; urgency=low
+
+  *  no more libgtkivy, replaced by libgivy (thx Alexandre Bustico <bustico@cena.fr>)
+  * Add new callback to treat binding events on ivy bus (Guillaume Vidon <vidon@cena.fr>)
+  * Add Option to ivyprobe to test new callback on binding events
+
+ --
+
 ivy-c (3.6) unstable; urgency=low
 
   * now uses PCRE ( Perl Compatible Regular Expressions ). Please use -livy -lpcre
