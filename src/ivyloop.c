@@ -162,7 +162,7 @@ void IvyChannelInit(void)
 }
 
 
-void IvyChannelStop(void)
+void IvyStop (void)
 {
 	MainLoop = 0;
 }

@@ -31,18 +31,19 @@ extern "C" {
 #define HANDLE int
 #endif
 
-extern void IvyChannelInit(void);
-extern void IvyChannelStop(void);
+
+
 extern void IvyMainLoop(void(*hook)(void) );
 
+
+extern void IvyChannelInit(void);
+extern void IvyChannelClose( Channel channel );
 extern Channel IvyChannelSetUp(
 			HANDLE fd,
 			void *data,
 			ChannelHandleDelete handle_delete,
-			ChannelHandleRead handle_read
-);
+			ChannelHandleRead handle_read);
 
-extern void IvyChannelClose( Channel channel );
 
 
 #ifdef __cplusplus
