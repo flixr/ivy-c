@@ -101,3 +101,6 @@ install: all
 	ln -s $(PREFIX)/usr/X11R6/lib/libxtivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/X11R6/lib/libxtivy.so
 
 	install -m644 *.h $(PREFIX)/usr/include
+rpm::
+	/usr/bin/rpmize
+
