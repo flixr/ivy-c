@@ -1,0 +1,15 @@
+$Summary = "Ivy, development files for the C interface";
+$Name = "ivy-c-devel";
+$Copyright = "CENA";
+$Vendor = "Centre d'Etudes de la Navigation Aerienne";
+$Distribution = "Toccata";
+$Group = "Development/Libraries";
+$Url = "http://www.tls.cena.fr/divisions/PII/";
+$BuildArchitectures = "i386";
+$Requires = "ivy-c = \%{version}-\%{release}";
+$FindFiles = "(find \$RPM_BUILD_ROOT -type f -print ; ".
+	"find \$RPM_BUILD_ROOT -type l -print) | sed \"s\@^\$RPM_BUILD_ROOT\@\@g\"".
+	"| sort | join -v 2 redhat/files - ";
+$Description = "This contains the headers and static libraries necessary for
+developping and debugging applications that use the Ivy C library.";
+

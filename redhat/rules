@@ -3,8 +3,12 @@ $Name = "ivy-c";
 $Copyright = "CENA";
 $Vendor = "Centre d'Etudes de la Navigation Aerienne";
 $Distribution = "Toccata";
-$Group = "Libraries";
+$Group = "System Environment/Libraries";
 $Url = "http://www.tls.cena.fr/divisions/PII/";
 $BuildArchitectures = "i386";
-$Description = "Ivy, C interface";
+$FindFiles = "(find \$RPM_BUILD_ROOT -type f -print ; ".
+	"find \$RPM_BUILD_ROOT -type l -print) | sed \"s\@^\$RPM_BUILD_ROOT\@\@g\"".
+	"| sort | join redhat/files - ";
+$Description = "This is the C library that implements the
+connection to the Ivy software bus developed at CENA";
 

@@ -1,5 +1,5 @@
 $Version = "3.2";
-$Release = 1;
+$Release = 2;
 
 $ChangeLog = ' * Sat Feb 20 1999 Stéphane Chatty <chatty@cenatoulouse.dgac.fr>
 - Generation of ivy-c-3.0-2
@@ -24,5 +24,10 @@ $ChangeLog = ' * Sat Feb 20 1999 Stéphane Chatty <chatty@cenatoulouse.dgac.fr>
  * Mon Mar 13 2000 Stéphane Chatty <chatty@cena.fr>
 - Generation of ivy-c-3.2-1
 - First package with new version of rpmize. This is ivy-c 3.2
+
+ * Tue Jul 4 2000 Stéphane Chatty <chatty@cena.fr>
+- Generation of version 3.2-2
+- First packages made with rpmize 3.1
+- Separation between ivy-c and ivy-c-devel
 
 ';
