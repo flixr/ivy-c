@@ -62,7 +62,7 @@ void HandleStdin( Channel channel, HANDLE fd, void *data)
 		IvyXtChannelClose( channel );
 #else
 		IvyChannelClose( channel );
-		IvyChannelStop();
+		IvyStop();
 #endif
 		return;
 		}
