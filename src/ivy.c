@@ -40,12 +40,7 @@
 #define ARG_END "\003"
 
 
-#if 1
-/* temporary hack for compatibility */
-static char* DefaultIvyBus = "143.196.1.255, 143.196.2.255, 143.196.53.255";
-#else
 static char* DefaultIvyBus = "127.255.255.255";
-#endif
 
 typedef enum {
 
