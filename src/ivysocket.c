@@ -99,6 +99,17 @@ static void DeleteSocket(void *data)
 	LIST_REMOVE (clients_list, client );
 }
 
+static void DeleteServerSocket(void *data)
+{
+        Server server = (Server )data;
+#ifdef BUGGY_END
+        if (server->handle_delete )
+                (*server->handle_delete) (server, NULL );
+#endif
+        shutdown (server->fd, 2 );
+        close (server->fd );
+        LIST_REMOVE (servers_list, server);
+}
 static void HandleSocket (Channel channel, HANDLE fd, void *data)
 {
 	Client client = (Client)data;
@@ -243,7 +254,7 @@ Server SocketServer(unsigned short port,
 		exit(0);
 		}
 	server->fd = fd;
-	server->channel =	(*channel_setup) (fd, server, DeleteSocket, HandleServer );
+	server->channel =	(*channel_setup) (fd, server, DeleteServerSocket, HandleServer );
 	server->create = create;
 	server->handle_delete = handle_delete;
 	server->interpretation = interpretation;
@@ -263,9 +274,6 @@ void SocketServerClose (Server server )
 	if (!server)
 		return;
 	(*channel_close) (server->channel );
-	shutdown (server->fd, 2 );
-	close (server->fd );
-	LIST_REMOVE (servers_list, server );
 }
 
 char *SocketGetPeerHost (Client client )
@@ -513,7 +521,7 @@ Client SocketBroadcastCreate (unsigned short port,
 		};
 #ifdef SO_REUSEPORT
 
-	if (setsockopt (fd, SOL_SOCKET, SO_REUSEPORT, (char *)&on, sizeof (on)) < 0)
+	if (setsockopt (handle, SOL_SOCKET, SO_REUSEPORT, (char *)&on, sizeof (on)) < 0)
 		{
 			perror ("*** set socket option REUSEPORT ***");
 			return NULL;
