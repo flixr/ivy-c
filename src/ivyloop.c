@@ -1,3 +1,16 @@
+/*
+ *
+ * Ivy, C interface
+ *
+ * Copyright 1997-1998 
+ * Centre d'Etudes de la Navigation Aerienne
+ *
+ * Main loop handling around select
+ *
+ * $Id$
+ *
+ */
+
 #ifdef WIN32
 #include <windows.h>
 #endif
@@ -108,6 +121,7 @@ static void BusLoopChannelHandleRead(fd_set *current)
 			}
 		}
 }
+
 static void BusLoopChannelHandleExcpt(fd_set *current)
 {
 	Channel channel,next;
@@ -147,6 +161,7 @@ void BusLoopChannelStop(void)
 {
 	MainLoop = 0;
 }
+
 void BusLoopChannelMainLoop(void(*hook)(void))
 {
 

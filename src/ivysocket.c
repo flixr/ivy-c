@@ -1,3 +1,16 @@
+/*
+ *
+ * Ivy, C interface
+ *
+ * Copyright 1997-1998 
+ * Centre d'Etudes de la Navigation Aerienne
+ *
+ * Sockets
+ *
+ * $Id$
+ *
+ */
+
 #ifdef WIN32
 #include <windows.h>
 #endif
@@ -142,6 +155,7 @@ static void HandleSocket( Channel channel, HANDLE fd, void *data)
 		client->ptr = client->buffer;
 		}
 }
+
 static void HandleServer(Channel channel, HANDLE fd, void *data)
 {
 	Server server = ( Server ) data;
@@ -172,6 +186,7 @@ static void HandleServer(Channel channel, HANDLE fd, void *data)
 	client->data = (*server->create)( client );
 	
 }
+
 Server SocketServer(unsigned short port, 
 	void*(*create)(Client client),
 	void(*handle_delete)(Client client, void *data),
@@ -527,3 +542,4 @@ void SocketSendBroadcast( Client client, unsigned long host, unsigned short port
 		perror( "*** send ***");
 		}	va_end ( ap );
 }
+

@@ -1,3 +1,17 @@
+/*
+ *
+ * Ivy, C interface
+ *
+ * Copyright 1997-1998 
+ * Centre d'Etudes de la Navigation Aerienne
+ *
+ * Timers used in select based main loop
+ *
+ * $Id$
+ *
+ */
+
+
 /* Module de gestion des timers autour d'un select */
 #include <stdio.h>
 #include <sys/types.h>

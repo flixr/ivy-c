@@ -1,3 +1,16 @@
+/*
+ *
+ * Ivy, C interface
+ *
+ * Copyright 1997-1998 
+ * Centre d'Etudes de la Navigation Aerienne
+ *
+ * Main loop based on X Toolkit
+ *
+ * $Id$
+ *
+ */
+
 #ifndef _IVYXTLOOP_H
 #define _IVYXTLOOP_H
 
@@ -38,3 +51,4 @@ extern void BusXtChannelAppContext( XtAppContext cntx );
 #endif
 
 #endif
+

@@ -1,3 +1,17 @@
+/*
+ *
+ * Ivy, C interface
+ *
+ * Copyright 1997-1998 
+ * Centre d'Etudes de la Navigation Aerienne
+ *
+ * Main loop based on X Toolkit
+ *
+ * $Id$
+ *
+ */
+
+
 #ifdef WIN32
 #include <windows.h>
 #endif

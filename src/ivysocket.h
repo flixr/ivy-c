@@ -1,3 +1,16 @@
+/*
+ *
+ * Ivy, C interface
+ *
+ * Copyright 1997-1998 
+ * Centre d'Etudes de la Navigation Aerienne
+ *
+ * Sockets
+ *
+ * $Id$
+ *
+ */
+
 #ifndef _IVYSOCKET_H
 #define _IVYSOCKET_H
 
@@ -73,3 +86,4 @@ extern void SocketSendBroadcast( Client client, unsigned long host, unsigned sho
 #endif
 
 #endif
+

@@ -1,3 +1,16 @@
+/*
+ *
+ * Ivy, C interface
+ *
+ * Copyright 1997-1998 
+ * Centre d'Etudes de la Navigation Aerienne
+ *
+ * Main loop based on select
+ *
+ * $Id$
+ *
+ */
+
 #ifndef _IVYLOOP_H
 #define _IVYLOOP_H
 
@@ -37,3 +50,4 @@ extern void BusLoopChannelClose( Channel channel );
 #endif
 
 #endif
+

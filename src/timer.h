@@ -1,9 +1,22 @@
+/*
+ *
+ * Ivy, C interface
+ *
+ * Copyright 1997-1998 
+ * Centre d'Etudes de la Navigation Aerienne
+ *
+ * Timers for select-based main loop
+ *
+ * $Id$
+ *
+ */
+
 /* Module de gestion des timers autour d'un select */
 
 typedef struct _timer *TimerId;
 typedef void (*TimerCb)( TimerId id , void *user_data, unsigned long delta );
 
-/* API  le temp est en milli secondes */
+/* API  le temps est en millisecondes */
 #define TIMER_LOOP -1			/* timer en boucle infinie */
 TimerId TimerRepeatAfter( int count, long time, TimerCb cb, void *user_data );
 

@@ -1,3 +1,16 @@
+/*
+ *
+ * Ivy, C interface
+ *
+ * Copyright 1997-1998 
+ * Centre d'Etudes de la Navigation Aerienne
+ *
+ * Main functions
+ *
+ * $Id$
+ *
+ */
+
 #ifndef _IVY_H
 #define _IVY_H
 

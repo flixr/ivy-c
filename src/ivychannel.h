@@ -1,3 +1,16 @@
+/*
+ *
+ * Ivy, C interface
+ *
+ * Copyright 1997-1998 
+ * Centre d'Etudes de la Navigation Aerienne
+ *
+ * Basic I/O handling
+ *
+ * $Id$
+ *
+ */
+
 #ifndef _IVYCHANNEL_H
 #define _IVYCHANNEL_H
 
@@ -41,3 +54,4 @@ void BusSetChannelManagement( ChannelInit init_chan, ChannelSetUp setup_chan, Ch
 #endif
 
 #endif
+
