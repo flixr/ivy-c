@@ -22,25 +22,28 @@ MINOR=1
 XTINC = /usr/X11R6/include
 XTLIB = /usr/X11R6/lib 
 CC=gcc
-CFLAGS =  -g -Wall
+CFLAGS =  -g 
 OBJ = ivyloop.o timer.o ivysocket.o ivy.o 
 GOBJ = ivyloop.o timer.o ivysocket.o givy.o
 XTOBJ = ivyxtloop.o ivysocket.o ivy.o
+TCLOBJ = ivytcl.o ivysocket.o givy.o
 TARGETS = ivyprobe ivyxtprobe
 
 .c.o:
-	$(CC) -fPIC $(CFLAGS) -c $*.c
+	$(CC) $(CFLAGS) -c $*.c
 
-all: static-libs commands shared-libs
+all: static-libs commands shared-libs tcl-exts
 
 static-libs: libivy.a libgivy.a libxtivy.a
 
-shared-libs: libivy.so.$(MAJOR).$(MINOR) libgivy.so.$(MAJOR).$(MINOR) libxtivy.so.$(MAJOR).$(MINOR)
+shared-libs: libivy.so.$(MAJOR).$(MINOR) libgivy.so.$(MAJOR).$(MINOR) libxtivy.so.$(MAJOR).$(MINOR) 
+
+tcl-exts: ivytcl.so.$(MAJOR).$(MINOR)
 
 commands: $(TARGETS)
 
 givy.o: ivy.c
-	$(CC) -DGNU_REGEXP -fPIC -c $(CFLAGS) -o givy.o ivy.c
+	$(CC) -DGNU_REGEXP -c $(CFLAGS) -o givy.o ivy.c
 
 ivyprobe: ivyprobe.o libivy.a
 	$(CC)  $(CFLAGS) -o ivyprobe ivyprobe.o -L. -livy
@@ -72,6 +75,10 @@ libgivy.so.$(MAJOR).$(MINOR): $(GOBJ)
 libxtivy.so.$(MAJOR).$(MINOR): $(XTOBJ)
 	$(CC) -shared -Wl,-soname,libxtivy.so.$(MAJOR) -o $@ \
 	$(XTOBJ) -L$(XTLIB) -lXt -lX11 -lc
+
+ivytcl.so.$(MAJOR).$(MINOR): $(TCLOBJ)
+	$(CC) -shared -Wl,-soname,ivytcl.so.$(MAJOR) -o $@ \
+	$(TCLOBJ) -L$(TCLLIB) -ltcl -lc
 
 clean:
 	-rm -f $(TARGETS) *.o *.a *.so *.so.* *~
