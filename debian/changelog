@@ -1,0 +1,17 @@
+ivy-c (1.1-2) unstable; urgency=low
+
+  * Suppression du header list.h qui est aussi défini dans utils-c.
+  * Ajout du soname à la bibliothèque dynamique.
+  
+ -- Patrick Lecoanet <lecoanet@cena.dgac.fr>  Wed,  9 Dec 1998 11:24:34 +0100
+
+ivy-c (1.1-1) unstable; urgency=low
+
+  * Initial Release.
+
+ -- Patrick Lecoanet <lecoanet@cena.dgac.fr>  Tue, 13 Oct 1998 09:52:30 +0200
+
+Local variables:
+mode: debian-changelog
+add-log-mailing-address: "lecoanet@cena.dgac.fr"
+End:

@@ -1,0 +1,7 @@
+usr/include
+usr/lib/libivy.a
+usr/lib/libivy.so
+usr/lib/libgivy.a
+usr/lib/libgivy.so
+usr/X11R6/lib/libxtivy.a
+usr/X11R6/lib/libxtivy.so

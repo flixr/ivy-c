@@ -1,39 +1,72 @@
-XTINC =-I/usr/X11R6/include
-XTLIB =-L/usr/X11R6/lib 
-CC=gcc #-g -DDEBUG
+XTINC = /usr/X11R6/include
+XTLIB = /usr/X11R6/lib 
+CC=gcc
+CFLAGS =  -g -DDEBUG
 OBJ = ivyloop.o timer.o ivysocket.o ivy.o 
 GOBJ = ivyloop.o timer.o ivysocket.o givy.o
 XTOBJ = ivyxtloop.o ivysocket.o ivy.o
 
-all: libivy.a libgivy.a libxtivy.a libivy.so libgivy.so libxtivy.so testivy testxtivy
+VERSION=1
+MAJOR=1
+
+.c.o:
+	$(CC) -fPIC $(CFLAGS) -c $*.c
+
+all: static-libs commands shared-libs
+
+static-libs: libivy.a libgivy.a libxtivy.a
+
+shared-libs: libivy.so.$(VERSION).$(MAJOR) libgivy.so.$(VERSION).$(MAJOR) libxtivy.so.$(VERSION).$(MAJOR)
+
+commands: testivy testxtivy
 
 givy.o: ivy.c
-	$(CC) -DGNU_REGEXP -c $(CFLAGS) -o givy.o ivy.c
+	$(CC) -DGNU_REGEXP -fPIC -c $(CFLAGS) -o givy.o ivy.c
 
+testivy: testivy.o libivy.a
+	$(CC)  $(CFLAGS) -o testivy testivy.o -L. -livy
 
-testivy: testivy.o $(OBJ)
-	$(CC) -o testivy testivy.o $(OBJ)
- 
 testxtivy.o : testivy.c
-	$(CC) -c testivy.c -o testxtivy.o $(XTINC) -DXTMAINLOOP
+	$(CC)  $(CFLAGS) -c testivy.c -o testxtivy.o -I$(XTINC) -DXTMAINLOOP
 
-testxtivy: testxtivy.o $(XTOBJ)
-	$(CC) -o testxtivy testxtivy.o $(XTOBJ) $(XTLIB) -lXt -lX11
+testxtivy: testxtivy.o libxtivy.a
+	$(CC) -o testxtivy testxtivy.o -L. -L$(XTLIB) -lxtivy -lXt -lX11
 
 libivy.a: $(OBJ)
-	ar q libivy.a $(OBJ)
+	ar q $@ $(OBJ)
 
 libgivy.a: $(GOBJ)
-	ar q libgivy.a $(GOBJ)
+	ar q $@ $(GOBJ)
 
 libxtivy.a: $(XTOBJ)
-	ar q libxtivy.a $(XTOBJ)
+	ar q $@ $(XTOBJ)
 
-libivy.so: $(OBJ)
-	ld -o libivy.so -shared $(OBJ)
+libivy.so.$(VERSION).$(MAJOR): $(OBJ)
+	$(CC) -shared -Wl,-soname,libivy.so.$(VERSION) -o $@ $(OBJ) -lc
 
-libgivy.so: $(GOBJ)
-	ld -o libgivy.so -shared $(GOBJ)
+libgivy.so.$(VERSION).$(MAJOR): $(GOBJ)
+	$(CC) -shared -Wl,-soname,libgivy.so.$(VERSION) -o $@ $(GOBJ) -lc
 
-libxtivy.so: $(XTOBJ)
-	ld -o libxtivy.so -shared $(XTOBJ)
+libxtivy.so.$(VERSION).$(MAJOR): $(XTOBJ)
+	$(CC) -shared -Wl,-soname,libxtivy.so.$(VERSION) -o $@ \
+	$(XTOBJ) -L$(XTLIB) -lXt -lX11 -lc
+
+clean:
+	-rm -f *.o *.a *.so *~
+
+install: all
+	install -m755 testivy $(DESTDIR)/usr/bin
+	install -m755 testxtivy $(DESTDIR)/usr/X11R6/bin
+
+	install -m644 libivy.a $(DESTDIR)/usr/lib
+	install -m644 libgivy.a $(DESTDIR)/usr/lib
+	install -m644 libxtivy.a $(DESTDIR)/usr/X11R6/lib
+
+	install -m644 libivy.so.$(VERSION).$(MAJOR) $(DESTDIR)/usr/lib
+	install -m644 libgivy.so.$(VERSION).$(MAJOR) $(DESTDIR)/usr/lib
+	install -m644 libxtivy.so.$(VERSION).$(MAJOR) $(DESTDIR)/usr/X11R6/lib
+	cd $(DESTDIR)/usr/lib && ln -s libivy.so.$(VERSION).$(MAJOR) libivy.so
+	cd $(DESTDIR)/usr/lib && ln -s libgivy.so.$(VERSION).$(MAJOR) libgivy.so
+	cd $(DESTDIR)/usr/X11R6/lib && ln -s libxtivy.so.$(VERSION).$(MAJOR) libxtivy.so
+
+	install -m644 *.h $(DESTDIR)/usr/include

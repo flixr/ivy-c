@@ -1,0 +1,19 @@
+Source: ivy-c
+Section: devel
+Priority: extra
+Maintainer: Patrick Lecoanet <lecoanet@cena.dgac.fr>
+Standards-Version: 2.3.0.0
+
+Package: ivy-c
+Architecture: any
+Depends: ${shlibs:Depends}
+Description: Bus logiciel PII.
+ Bus logiciel PII. Fichiers de runtime.
+
+Package: ivy-c-dev
+Architecture: any
+Depends: ivy-c, libc6-dev, xlib6g-dev
+Provides: ivy-c-dev
+Conflicts: ivy-c-dev
+Description: Bus logiciel PII.
+ Bus logiciel PII. Fichiers nécessaires au développement.
