@@ -2,7 +2,7 @@
  *
  * Ivy, C interface
  *
- * Copyright 1997-1998 
+ * Copyright 1997-1999
  * Centre d'Etudes de la Navigation Aerienne
  *
  * Main functions
@@ -22,63 +22,65 @@ extern "C" {
 
 #define DEFAULT_BUS 2010
 
-typedef struct _clnt_lst *BusClientPtr;
+typedef struct _clnt_lst *IvyClientPtr;
 
-typedef enum { BusApplicationConnected, BusApplicationDisconnected } BusApplicationEvent;
+typedef enum { IvyApplicationConnected, IvyApplicationDisconnected } IvyApplicationEvent;
 
-extern void BusDefaultApplicationCallback( BusClientPtr app, void *user_data, BusApplicationEvent event ) ;
-/* callback callback appele sur connection deconnection d'une appli */
-typedef void (*BusApplicationCallback)( BusClientPtr app, void *user_data, BusApplicationEvent event ) ;
+extern void IvyDefaultApplicationCallback( IvyClientPtr app, void *user_data, IvyApplicationEvent event ) ;
+
+/* callback callback appele sur connexion deconnexion d'une appli */
+typedef void (*IvyApplicationCallback)( IvyClientPtr app, void *user_data, IvyApplicationEvent event ) ;
+
 /* callback appele sur reception de die */
-typedef void (*BusDieCallback)( BusClientPtr app, void *user_data, int id ) ;
+typedef void (*IvyDieCallback)( IvyClientPtr app, void *user_data, int id ) ;
 
 /* callback appele sur reception de messages normaux */
-typedef void (*MsgCallback)( BusClientPtr app, void *user_data, int argc, char **argv ) ;
+typedef void (*MsgCallback)( IvyClientPtr app, void *user_data, int argc, char **argv ) ;
+
 /* callback appele sur reception de messages directs */
-typedef void (*MsgDirectCallback)( BusClientPtr app, void *user_data, int id, char *msg ) ;
+typedef void (*MsgDirectCallback)( IvyClientPtr app, void *user_data, int id, char *msg ) ;
 
 /* identifiant d'une expression reguliere ( Bind/Unbind ) */
 typedef struct _msg_rcv *MsgRcvPtr;
 
 /* filtrage des regexps */
-void BusClasses( int argc, const char **argv);
+void IvyClasses( int argc, const char **argv);
 
-void BusInit(
-			 const char *AppName,				/* nom de l'application */
-			 unsigned short busnumber,			/* numero de bus ( port UDP ) */
-			 const char *ready,					/* ready Message peut etre NULL */
-			 BusApplicationCallback callback,	/* callback appele sur connection deconnection d'une appli */
-			 void *data,						/* user data passe au callback */
-			 BusDieCallback die_callback,		/* last change callback before die */
-			 void *die_data	);					/* user data */
+void IvyInit(
+	 const char *AppName,		/* nom de l'application */
+	 unsigned short busnumber,	/* numero de bus ( port UDP ) */
+	 const char *ready,		/* ready Message peut etre NULL */
+	 IvyApplicationCallback callback, /* callback appele sur connection deconnection d'une appli */
+	 void *data,			/* user data passe au callback */
+	 IvyDieCallback die_callback,	/* last change callback before die */
+	 void *die_data	);		/* user data */
 
-void BusStart();								/* emission du bonjour */
+void IvyStart();			/* emission du bonjour */
 
 /* query sur les applications connectees */
-char *GetApplicationName( BusClientPtr app );
-char *GetApplicationHost( BusClientPtr app );
-BusClientPtr GetApplication( char *name );
-char *GetApplicationList();
-char **GetApplicationMessages( BusClientPtr app);
-/* demande de reception d'un message */
+char *IvyGetApplicationName( IvyClientPtr app );
+char *IvyGetApplicationHost( IvyClientPtr app );
+IvyClientPtr IvyGetApplication( char *name );
+char *IvyGetApplicationList();
+char **IvyGetApplicationMessages( IvyClientPtr app); /* demande de reception d'un message */
 
-MsgRcvPtr BindMsg( MsgCallback callback, void *user_data, const char *fmt_regexp, ... ); /* avec sprintf prealable */
-void UnbindMsg( MsgRcvPtr id );
+MsgRcvPtr IvyBindMsg( MsgCallback callback, void *user_data, const char *fmt_regexp, ... ); /* avec sprintf prealable */
+void IvyUnbindMsg( MsgRcvPtr id );
 
-/* emmission d'un message d'erreur */
-void SendError( BusClientPtr app, int id, const char *fmt, ... );
+/* emission d'un message d'erreur */
+void IvySendError( IvyClientPtr app, int id, const char *fmt, ... );
 
 /* emmission d'un message die pour terminer l'application */
-void SendDieMsg( BusClientPtr app );
+void IvySendDieMsg( IvyClientPtr app );
 
-/* emmission d'un message retourne le nb effectivement emis */
+/* emission d'un message retourne le nb effectivement emis */
 
-int SendMsg( const char *fmt_message, ... );		/* avec sprintf prealable */
+int IvySendMsg( const char *fmt_message, ... );		/* avec sprintf prealable */
 
 /* Message Direct Inter-application */
 
-void BindDirectMsg( MsgDirectCallback callback, void *user_data);
-void SendDirectMsg( BusClientPtr app, int id, char *msg );
+void IvyBindDirectMsg( MsgDirectCallback callback, void *user_data);
+void IvySendDirectMsg( IvyClientPtr app, int id, char *msg );
 
 #ifdef __cplusplus
 }
