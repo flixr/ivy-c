@@ -480,56 +480,61 @@ static void ClientDelete( Client client, void *data )
 
 static void *ClientCreate( Client client )
 {
+
+#ifdef DEBUG
 	char *remotehost;
 	unsigned short remoteport;
 	SocketGetRemote( client, &remotehost, &remoteport );
-
-#ifdef DEBUG
 	printf("Connexion de %s:%hu\n", remotehost, remoteport );
 #endif //DEBUG
 
-	return SendService( client );
+	return SendService (client);
 }
 
 static void BroadcastReceive( Client client, void *data, char *line )
 {	
 	Client app;
-	char *remotehost;
 	int err;
 	int version;
-	unsigned short remoteport;
 	unsigned short serviceport;
-	SocketGetRemote( client, &remotehost, &remoteport );
+#ifdef DEBUG
+	unsigned short remoteport;
+	char *remotehost = 0;
+#endif
 
-	err = sscanf(line,"%d %hu",&version, &serviceport);
-	if ( err != 2 )
-		{
+	err = sscanf (line,"%d %hu", &version, &serviceport);
+	if ( err != 2 ) {
 		/* ignore the message */
-		printf(" Bad Supervision message expected 'version port' from %s:%d\n",remotehost, remoteport);
+		unsigned short remoteport;
+		char *remotehost;
+		SocketGetRemote( client, &remotehost, &remoteport );
+		printf(" Bad supervision message, expected 'version port' from %s:%d\n",remotehost, remoteport);
 		return;
-		}
-	if ( version != VERSION )
-		{
+	}
+	if ( version != VERSION ) {
 		/* ignore the message */
-		printf(" Bad Ivy verion number expected %d receive %d from %s:%d\n", VERSION,version,remotehost, remoteport);
+		unsigned short remoteport;
+		char *remotehost = 0;
+		SocketGetRemote( client, &remotehost, &remoteport );
+		printf(" Bad Ivy version number, expected %d and receive %d from %s:%d\n", VERSION, version, remotehost, remoteport);
 		return;
-		}
+	}
 	/* check if we receive our own message 
 	should test also the host */
 	if ( serviceport == ApplicationPort ) return;
 	
 #ifdef DEBUG
-	printf(" Broadcast de %s:%hu port %hu\n", remotehost, remoteport, serviceport );	
+	SocketGetRemote( client, &remotehost, &remoteport );
+	printf(" Broadcast de %s:%hu port %hu\n", remotehost, remoteport, serviceport );
 #endif //DEBUG
 
 	/* connect to the service and send the regexp */
 	app = SocketConnectAddr(SocketGetRemoteAddr(client), serviceport, 0, Receive, ClientDelete );
-	if ( app )
-		{
+	if (app) {
 		IvyClientPtr clnt;
 		clnt = SendService( app );
 		SocketSetData( app, clnt);
-		}
+	}
 }
 
 
@@ -744,7 +749,7 @@ char *IvyGetApplicationName( IvyClientPtr app )
 char *IvyGetApplicationHost( IvyClientPtr app )
 {
 	if ( app && app->client ) 
-		return SocketGetPeerHost( app->client );
+		return SocketGetPeerHost (app->client );
 	else return 0;
 }
 
