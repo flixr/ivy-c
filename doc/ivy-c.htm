@@ -1,0 +1,228 @@
+<HTML>
+<HEAD>
+</HEAD>
+<BODY>
+<!-- Ivy, C interface \- library managing connexions to a software bus-->
+<!-- Copyright (C) 1997-1999-->
+<!-- Centre d'Études de la Navigation Aérienne-->
+<!-- See the file "license.terms" for information on usage and redistribution-->
+<!-- of this file, and for a DISCLAIMER OF ALL WARRANTIES.-->
+<!-- -->
+<!-- -->
+<!--	# Start an argument description-->
+<!--	# define tabbing values for .AP-->
+<!--	# BS - start boxed text-->
+<!--	# ^y = starting y location-->
+<!--	# ^b = 1-->
+<H2><A NAME=NAME>NAME</A></H2>
+IvyInit, IvyStart, IvyStop, IvyBindMsg, IvyUnbindMsg, IvyBindDirectMsg,
+IvySendMsg, IvySendDirectMsg, IvySendDieMsg, IvySendError, IvyGetApplicationName,
+IvyGetApplicationHost, IvyGetApplication, IvyGetApplicationList,
+IvyGetApplicationMessages, IvyDefaultApplicationCallback, IvyClasses,
+IvyChannelInit, IvyChannelSetUp, IvyMainLoop, IvyChannelClose,
+IvyChannelDelete, IvyChannelHandleRead,
+IvyChannelHandleExcpt,  IvyXtChannelInit, IvyXtChannelSetUp
+IvyXtChannelClose, IvyXtHandleChannelRead, IvyXtHandleChannelDelete,
+IvyXtChannelAppContext, 
+<H2><A NAME=SYNOPSIS>SYNOPSIS</A></H2>
+useful library functions for communicating through a sofware bus
+<BR>
+<P>
+<B>IvyInit(</B><I>AppName, ready, callback, data, die_callback, die_data</I><B>)</B>
+<P>
+void
+<B>IvyStart(</B><I>bus</I><B>)</B>
+<P>
+void
+<B>IvyStop()</B>
+<P>
+MsgRcvPtr
+<B>IvyBindMsg(</B><I>callback, user_data, regexp, ...</I><B>)</B>
+<P>
+void
+<B>IvyUnbindMsg(</B><I>id</I><B>)</B>
+<P>
+void
+<B>IvyBindDirectMsg(</B><I>callback, user_data</I><B>)</B>
+<P>
+int
+<B>IvySendMsg(</B><I>fmt_message, ...</I><B>)</B>
+<P>
+void
+<B>IvySendDirectMsg(</B><I>app, id, msg</I><B>)</B>
+<P>
+void
+<B>IvySendDieMsg(</B><I>app</I><B>)</B>
+<P>
+void
+<B>IvySendError(</B><I>app, id, fmt, ...</I><B>)</B>
+<P>
+char*
+<B>IvyGetApplicationName(</B><I>app</I><B>)</B>
+<P>
+char*
+<B>IvyGetApplicationHost(</B><I>app</I><B>)</B>
+<P>
+char*
+<B>IvyGetApplication(</B><I>name</I><B>)</B>
+<P>
+char*
+<B>IvyGetApplicationList()</B>
+<P>
+char**
+<B>IvyGetApplicationMessages(</B>\fapp<B>)</B>
+<P>
+char*
+<B>IvyDefaultApplicationCallback(</B><I>app, user_data, Event</I><B>)</B>
+char*
+<B>IvyClasses(</B><I>argc, argv</I><B>)</B>
+<P>
+void
+<B>IvyChannelInit(</B><I>void</I><B>)</B>
+<P>
+Channel
+<B>IvyChannelSetUp(</B><I>fd, data, handle_delete, handle_read</I><B>)</B>
+<P>
+void
+<B>IvyMainLoop(</B><I>hook</I><B>)</B>
+<P>
+void
+<B>IvyChannelClose(</B><I>channel</I><B>)</B>
+<P>
+static void
+<B>IvyChannelDelete(</B><I>channel</I><B>)</B>
+<P>
+static void
+<B>IvyChannelHandleRead(</B><I>current</I><B>)</B>
+<P>
+static void
+<B>IvyChannelHandleExcpt(</B><I>current</I><B>)</B>
+<P>
+static void
+<B>IvyXtChannelInit(</B><I>void</I><B>)</B>
+<P>
+static void
+<B>IvyXtChannelSetUp(</B><I>fd, data, handle_delete, handle_read</I><B>)</B>
+<P>
+void
+<B>IvyXtChannelClose(</B><I>channel</I><B>)</B>
+<P>
+static void
+<B>IvyXtHandleChannelRead(</B><I>closure, source, id</I><B>)</B>
+<P>
+static void
+<B>IvyXtHandleChannelDelete(</B><I>closure, source, id</I><B>)</B>
+<P>
+void
+<B>IvyChannelAppContext(</B><I>cntx</I><B>)</B>
+<H2><A NAME=ARGUMENTS>ARGUMENTS</A></H2>
+<H2><A NAME=Section0></A></H2>
+<B>IvyInit</B>:
+Initialisation of a connection
+<P>
+<DL>
+<DT><CODE>const_char *AppName</CODE>
+(in) <DD>Application Name
+<DT><CODE>const_char *ready</CODE>
+(in) <DD>Ready Message (can be NULL)
+<DT><CODE>IvyApplicationCallback callback</CODE>
+(in) <DD>Callback to be called on a connexion/deconnexion of an application
+<DT><CODE>void *data</CODE>
+(in) <DD>user data 
+<DT><CODE>IvyDieCallback die_callback</CODE>
+(in) <DD>last change callback before die
+<DT><CODE>void *die_data</CODE>
+(in) <DD>user data
+</DL>
+<H2><A NAME=Section0></A></H2>
+<B>IvyStart</B>:
+Initialisation of TCP/UPD port and sending of a broadcast handshake on every network
+<DL>
+<DT><CODE>const_char *bus</CODE>
+(in) <DD>Bus (format : network list followed by broadcast port) example :
+123.231,123.123:2000 or 123.231 or :2000
+If no argument specified, check the environment variable <B>IVYBUS</B>, 
+else use the default value : 127.255.255.255:2010
+</DL>
+<H2><A NAME=Section0></A></H2>
+<B>IvyBindMsg</B>:
+Message binding
+<DL>
+<DT><CODE>MsgCallback callback</CODE>
+(in) <DD><DT><CODE>void *user_data</CODE>
+(in) <DD><DT><CODE>const_char *regexp</CODE>
+(in) <DD><DT><CODE>MsgRcvPtr id</CODE>
+(out) <DD></DL>
+<H2><A NAME=Section0></A></H2>
+<B>IvyUnbindMsg</B>:
+Message unbinding
+<DL>
+<DT><CODE>MsgRcvPtr id</CODE>
+(in) <DD></DL>
+<H2><A NAME=Section0></A></H2>
+<B>IvyChannelSetUp</B>:
+
+<DL>
+<DT><CODE>HANDLE fd</CODE>
+(in) <DD><DT><CODE>void *data</CODE>
+(in) <DD><DT><CODE>ChannelHandleDelete handle_delete</CODE>
+(in) <DD><DT><CODE>ChannelHandleRead handle_read</CODE>
+(in) <DD><DT><CODE>Channel out</CODE>
+(out) <DD></DL>
+<HR>
+<BR>
+<H2><A NAME=DESCRIPTION>DESCRIPTION</A></H2>
+<P>
+These procedures provide facilities for connecting applications on a
+software bus and managing messages exchanges among them.
+
+<H2><A NAME=EXAMPLES>EXAMPLES</A></H2>
+Simple C code:
+<BR>
+
+<BR>
+<PRE>
+
+#include "ivyloop.h"
+#include "ivysocket.h"
+#include "ivy.h"
+
+ int main (int argc, char* argv[]){
+	IvyInit ("IVYPROBE",
+		 bport,
+		 "IVYPROBE READY",
+		 ApplicationCallback,
+		 NULL,
+		 NULL,
+		 NULL)
+	IvyChannelSetUp(0, NULL, NULL, HandleStdin);
+	IvyStart (domains);
+	IvyMainLoop(0)
+};
+<BR>
+</PRE>
+
+<H2><A NAME=FILES>FILES</A></H2>
+<I>/usr/include/ivy.h</I>
+<I>/usr/include/ivyloop.h</I>
+<I>/usr/include/ivysocket.h</I>
+<H2><A NAME=ENVIRONMENT>ENVIRONMENT</A></H2>
+<I>IVYDOMAINS</I>
+<I>IVYBUS</I>
+<H2><A NAME=DIAGNOSTICS>DIAGNOSTICS</A></H2>
+error messages displayed
+<H2><A NAME=BUGS>BUGS</A></H2>
+none !
+<H2><A NAME=AUTHORS>AUTHORS</A></H2>
+Francois-Regis Colin &lt;fcolin@cenatoulouse.dgac.fr&gt;
+Stephane Chatty &lt;chatty@cenatoulouse.dgac.fr&gt;
+<H2><A NAME=Section1>SEE ALSO</A></H2>
+ivyprobe (1)
+<P>
+For further details, please refer to the Ivy html page at http://www.cenatls.cena.dgac.fr/pii/produits/Ivy.html
+<H2><A NAME=NOTES>NOTES</A></H2>
+In case of any comment or bug report on this library, please contact
+fcolin@cenatoulouse.dgac.fr, chatty@cenatoulouse.dgac.fr, jacomi@cenatoulouse.dgac.fr
+
+</BODY>
+</HTML>

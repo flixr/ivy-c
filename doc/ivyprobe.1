@@ -1,0 +1,16 @@
+.TH IVYPROBE 1 1/29/99
+.SH NAME
+ivyprobe, simple program for probing connections on a given port number for ivy software bus
+.SH SYNOPSIS
+.B ivyprobe [options] [regexp...]
+.SH DESCRIPTION
+ivyprobe gives the list of applications connected to a given bus port number, receives messages subscribed to (regexp format), and sends messages on the bus.
+.SH OPTIONS
+.TP
+.I "\-b PORT-NUMBER(1-32000)(not 2049)"
+The default port number is 2010.
+.TP
+.I "\-domain NETWORK-ADDRESS"
+The default network address is 127.255.255.255
+H SEE ALSO
+.IR ivy-c (1)
