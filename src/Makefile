@@ -16,6 +16,7 @@ CFLAGS =  -g
 OBJ = ivyloop.o timer.o ivysocket.o ivy.o 
 GOBJ = ivyloop.o timer.o ivysocket.o givy.o
 XTOBJ = ivyxtloop.o ivysocket.o ivy.o
+TARGETS = ivyprobe ivyxtprobe
 
 ifneq (strip $(MAJOR),)
 MAJOR=1
@@ -33,7 +34,7 @@ static-libs: libivy.a libgivy.a libxtivy.a
 
 shared-libs: libivy.so.$(MAJOR).$(MINOR) libgivy.so.$(MAJOR).$(MINOR) libxtivy.so.$(MAJOR).$(MINOR)
 
-commands: ivyprobe ivyxtprobe
+commands: $(TARGETS)
 
 givy.o: ivy.c
 	$(CC) -DGNU_REGEXP -fPIC -c $(CFLAGS) -o givy.o ivy.c
@@ -45,7 +46,7 @@ ivyxtprobe.o : ivyprobe.c
 	$(CC)  $(CFLAGS) -c ivyprobe.c -o ivyxtprobe.o -I$(XTINC) -DXTMAINLOOP
 
 ivyxtprobe: ivyxtprobe.o libxtivy.a
-	$(CC) -o ivyxtprobe ivyxtprobe.o -L. -L$(XTLIB) -lxtivy -lXt -lX11
+	$(CC) -o ivyxtprobe ivyxtprobe.o -L. -L$(XTLIB) -lxtivy -lXt -lX11 -lSM -lICE
 
 libivy.a: $(OBJ)
 	rm -f $@
@@ -70,7 +71,7 @@ libxtivy.so.$(MAJOR).$(MINOR): $(XTOBJ)
 	$(XTOBJ) -L$(XTLIB) -lXt -lX11 -lc
 
 clean:
-	-rm -f *.o *.a *.so *~
+	-rm -f $(TARGETS) *.o *.a *.so *.so.* *~
 
 install: all
 	install -m755 ivyprobe $(DESTDIR)/usr/bin
