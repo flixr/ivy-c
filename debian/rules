@@ -47,7 +47,7 @@ binary-arch:	checkroot build
 	dh_link usr/lib/libivy.so.$(MAJOR).$(MINOR) usr/lib/libivy.so
 	dh_link usr/lib/libgivy.so.$(MAJOR).$(MINOR) usr/lib/libgivy.so
 	dh_link usr/lib/libtclivy.so.$(MAJOR).$(MINOR) usr/lib/libtclivy.so
-	dh_link usr/lib/libxtivy.so.$(MAJOR).$(MINOR) usr/X11R6/lib/libxtivy.so
+	dh_link usr/X11R6/lib/libxtivy.so.$(MAJOR).$(MINOR) usr/X11R6/lib/libxtivy.so
 
 	dh_fixperms
 
