@@ -8,7 +8,7 @@ SED_COMMAND='s/.*(\([^)]*\)).*/\1/p'
 MAJOR := $(shell sed -n $(SED_COMMAND) debian/changelog | head -1 | sed -n 's/\([0-9]*\)\..*/\1/p')
 MINOR := $(shell sed -n $(SED_COMMAND) debian/changelog | head -1 | sed -n 's/[0-9]*\.\([0-9\.]*\).*/\1/p')
 VERSION = $(MAJOR).$(MINOR)
-CVS_TAG := $(shell echo -n $(VERSION) | sed -n 's/\./_/gp')
+CVS_TAG := V$(shell echo -n $(VERSION) | sed -n 's/\./_/gp')
 
 build:
 	$(checkdir)
@@ -75,6 +75,6 @@ define checkversion
 endef
 
 tag:
-	-@if (test -x cvs); then cvs tag $(CVS_TAG) .; fi
+	-@if (test -x `which cvs`); then cvs tag $(CVS_TAG) .; fi
 
 .PHONY: binary binary-arch binary-indep clean checkroot
