@@ -77,6 +77,7 @@ extern void SocketGetRemote( Client client, char **host, unsigned short *port );
 extern void SocketSendBroadcast( Client client, unsigned long host, unsigned short port, char *fmt, ... );
 
 #ifdef XTMAINLOOP
+#include <X11/Intrinsic.h>
 extern void SetSocketAppContext( XtAppContext cntx );
 #endif
 

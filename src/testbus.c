@@ -49,6 +49,21 @@ void HandleStdin( Channel channel, int fd, void *data)
 					else printf( "No Application %s!!!\n",arg);
 				}
 			}
+		if ( strcmp(cmd, "dieall-yes-i-am-sure") == 0 )
+                        {
+			arg = GetApplicationList();
+			arg = strtok( arg, " " );
+			while ( arg )
+				{
+				app = GetApplication( arg );
+                                if ( app )
+                                        SendDieMsg( app );
+                                        else printf( "No Application %s!!!\n",arg);
+                                arg = strtok( NULL, " ");
+				}
+			
+                        }
+                
 		if ( strcmp(cmd,  "bind" ) == 0 )
 			{
 			arg = strtok( NULL, "'" );
@@ -122,7 +137,7 @@ void ApplicationCallback( BusClientPtr app, void *user_data, BusApplicationEvent
 	switch ( event )  {
 	case BusApplicationConnected:
 		app_count++;
-		printf("Application(%d): %s ready on %s\n",app_count, appname, host);
+		printf("Application(%s): ready on %s\n", appname,  host);
 		printf("Application(%s): Begin Messages\n", appname);
 		msgList = GetApplicationMessages( app );
 		while( *msgList  )
@@ -133,10 +148,10 @@ void ApplicationCallback( BusClientPtr app, void *user_data, BusApplicationEvent
 		break;
 	case BusApplicationDisconnected:
 		app_count--;
-		printf("Application(%d): %s bye on %s\n",app_count, appname, host);
+		printf("Application(%s): bye on %s\n", appname,  host);
 		break;
 	default:
-		printf("Application(%d): %s unkown event %d\n", app_count, appname, event);
+		printf("Application(%s): unkown event %d\n", appname, event);
 		break;
 	}
 

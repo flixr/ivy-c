@@ -1,4 +1,4 @@
-XTINC = 
+XTINC =-I/usr/local/X11R6.3/include 
 CC=gcc
 OBJ = timer.o bussocket.o bus.o 
 GOBJ = timer.o bussocket.o gbus.o
@@ -13,7 +13,7 @@ xtsocket.o: bussocket.c
 	$(CC) -DXTMAINLOOP $(XTINC) -c $(CFLAGS) -o xtsocket.o bussocket.c
 
 testbus: testbus.o $(OBJ)
-	$(CC) -o testbus testbus.o $(OBJ)
+	$(CC) -o testbus testbus.o $(OBJ) -lsocket -lnsl
 
 libbus.a: $(OBJ)
 	ar q libbus.a $(OBJ)

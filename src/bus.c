@@ -129,7 +129,7 @@ static int MsgCall( const char *message, MsgSndPtr msg,  Client client )
 #else
 	unsigned int i;
 #endif
-
+	memset( match, -1, sizeof(match )); /* work around bug !!!*/
 	if (regexec(&msg->regexp, message, MAX_MATCHING_ARGS, match, 0)==0) {
 #ifdef DEBUG
 		printf( "Sending message id=%d '%s'\n",msg->id,message);
@@ -381,7 +381,7 @@ static void Receive( Client client, void *data, char *line )
 		case Die:
 			
 #ifdef DEBUG
-			printf("Die Message\n",);
+			printf("Die Message\n");
 #endif //DEBUG
 
 			if ( application_die_callback)

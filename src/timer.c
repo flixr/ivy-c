@@ -1,12 +1,13 @@
 /* Module de gestion des timers autour d'un select */
 #include <stdio.h>
 #include <sys/types.h>
-#include <sys/timeb.h>
-#include <stdlib.h>
 #include <time.h>
+#include <stdlib.h>
 #include <memory.h> 
 #ifdef WIN32
 #include <windows.h>
+#else
+#include <sys/time.h>
 #endif
 #include "list.h"
 #include "timer.h"
@@ -33,17 +34,15 @@ TimerId timers = NULL;
 
 static long currentTime()
 {	
-	struct timeval tv;
 	unsigned long current;
-	gettimeofday (&tv, 0);
-	current = 1000 * tv.tv_sec + tv.tv_usec / 1000;
-	return  current;
-
-#if 0
-	unsigned long current;
-	current = clock();
-	return  current;
+#ifdef WIN32
+	current = GetTickCount();
+#else
+	struct timeval stamp;
+	gettimeofday( &stamp, NULL );
+	current = stamp.tv_sec * MILLISEC + stamp.tv_usec/MILLISEC;
 #endif
+	return  current;
 }
 static void SetNewTimeout( unsigned long current, unsigned long when )
 {
