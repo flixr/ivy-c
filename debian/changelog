@@ -1,3 +1,12 @@
+ivy-c (3.5) unstable; urgency=low
+
+  * ivyprobe: removed the trailing "\n" at the end of the messages sent by ivyprobe when
+    sending direct messages or binding new regexps, closes bug C002
+  * ivyprobe: added a DirectCallback to display direct messages sent by peers,
+  * ivyprobe: prevents binding to invalid regexps. Fails with an error message
+
+ -- Yannick Jestin <jestni@cena.fr>  Mon, 17 Feb 2003 17:45:00 +0100
+
 ivy-c (3.4) unstable; urgency=low
 
   * support of multicast, with IP adresses between 224.0.0.0 and 239.255.255.255
