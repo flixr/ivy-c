@@ -214,6 +214,9 @@ Server SocketServer(unsigned short port,
 
 	if (setsockopt(fd,SOL_SOCKET,SO_REUSEADDR,(char*)&one,sizeof(one)) < 0)
 		{
+#ifdef WIN32
+		fprintf(stderr," setsockopt %d\n",WSAGetLastError());
+#endif
 		perror ("*** set socket option SO_REUSEADDR ***");
 		exit(0);
 		} 

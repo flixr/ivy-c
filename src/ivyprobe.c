@@ -33,6 +33,10 @@
 #include <string.h>
 #ifdef WIN32
 #include <windows.h>
+#ifdef __MINGW32__
+#include <regex.h> 
+#include <getopt.h>
+#endif
 #else
 #include <sys/time.h>
 #include <unistd.h>
@@ -309,7 +313,10 @@ int main(int argc, char *argv[])
 		IvyGlutChannelSetUp (0, NULL, NULL, HandleStdin);
 #endif
 #ifdef IVYMAINLOOP
+#ifndef WIN32
+/* Stdin not compatible with select , select only accept socket */
 		IvyChannelSetUp (0, NULL, NULL, HandleStdin);
+#endif
 #endif
 
 	IvyStart (bus);

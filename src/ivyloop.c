@@ -179,6 +179,7 @@ void IvyMainLoop(void(*hook)(void))
 		exset = open_fds;
 		ready = select(64, &rdset, 0,  &exset, TimerGetSmallestTimeout());
 		if (ready < 0 && (errno != EINTR)) {
+         		fprintf (stderr, "select error %d\n",errno);
 			perror("select");
 			return;
 		}

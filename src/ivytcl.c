@@ -31,7 +31,8 @@
 struct _channel {
 	HANDLE fd;
 	void *data;
-	ChannelHandleDelete handle_delete;
+	Tcl_Channel tcl_channel;
+        ChannelHandleDelete handle_delete;
 	ChannelHandleRead handle_read;
 	};
 
@@ -43,28 +44,30 @@ ChannelInit channel_init = IvyTclChannelInit;
 ChannelSetUp channel_setup = IvyTclChannelSetUp;
 ChannelClose channel_close = IvyTclChannelClose;
 
+#ifdef WIN32
+WSADATA WsaData;
+#endif
+
 
 void IvyTclChannelInit(void)
 {
-
+#ifdef WIN32
+	int error;
+#endif 
 	if ( channel_initialized ) return;
 
 	/* pour eviter les plantages quand les autres applis font core-dump */
 #ifndef WIN32
 	signal( SIGPIPE, SIG_IGN);
 #endif
+#ifdef WIN32
+	error = WSAStartup (0x0101, &WsaData);
+	  if (error == SOCKET_ERROR) {
+	      printf ("WSAStartup failed.\n");
+	  }
+#endif
 	channel_initialized = 1;
 }
-
-void IvyTclChannelClose( Channel channel )
-{
-
-	if ( channel->handle_delete )
-		(*channel->handle_delete)( channel->data );
-	Tcl_DeleteFileHandler(channel->fd);
-	ckfree((char *) channel);
-}
-
 static void
 IvyHandleFd(ClientData	cd,
 	    int		mask)
@@ -79,6 +82,17 @@ IvyHandleFd(ClientData	cd,
     (*channel->handle_delete)(channel->data);
   }
 }
+
+void IvyTclChannelClose( Channel channel )
+{
+
+	if ( channel->handle_delete )
+		(*channel->handle_delete)( channel->data );
+	Tcl_DeleteChannelHandler(channel->tcl_channel, IvyHandleFd, (ClientData) channel);
+	ckfree((char *) channel);
+}
+
+
 Channel IvyTclChannelSetUp(HANDLE fd, void *data,
 				ChannelHandleDelete handle_delete,
 				ChannelHandleRead handle_read
@@ -99,7 +113,8 @@ Channel IvyTclChannelSetUp(HANDLE fd, void *data,
 	channel->fd = fd;
 
 	/*printf("Create handle fd %d\n", fd);*/
-  	Tcl_CreateFileHandler(fd, TCL_READABLE|TCL_EXCEPTION,	IvyHandleFd, (ClientData) channel);
+	channel->tcl_channel = Tcl_MakeTcpClientChannel((void*)fd);
+  	Tcl_CreateChannelHandler(channel->tcl_channel, TCL_READABLE|TCL_EXCEPTION,	IvyHandleFd, (ClientData) channel);
 	return channel;
 }
 

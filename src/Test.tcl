@@ -9,7 +9,7 @@ proc msgCB {str} {
  puts "TCL:Message:$str"
 }
 Ivy::init TESTTCL "TESTTCL Ready" conCB discCB 
-Ivy::start 143.196.53.255:2011
+Ivy::start ""
 Ivy::bind "(.*)" msgCB 
 Ivy::applist
 Ivy::send test
