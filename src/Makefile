@@ -17,7 +17,7 @@
 
 
 MAJOR=3
-MINOR=2
+MINOR=4
 
 XTINC = -I/usr/X11R6/include
 XTLIB = -L/usr/X11R6/lib 
@@ -27,9 +27,8 @@ GTKLIB = `gtk-config --libs`
 #GTKLIB = -L/usr/lib -L/usr/X11R6/lib
 GLUTINC = -I/usr/include -I.
 GLUTLIB = -L.
-TCLVERSION = 8.2
-TCLINC = -I/usr/include/tcl$(TCLVERSION)
-
+TCLINC = -I/usr/include/
+TCLLIB = -ltcl
 
 CC=gcc
 CFLAGS = -g
@@ -132,7 +131,7 @@ libglutivy.so.$(MAJOR).$(MINOR): $(GTKOBJ)
 
 libtclivy.so.$(MAJOR).$(MINOR): $(TCLOBJ)
 	$(CC) -shared -Wl,-soname,libtclivy.so.$(MAJOR) -o $@ \
-	$(TCLOBJ) $(TCLLIB) -ltcl$(TCLVERSION) -lc
+	$(TCLOBJ) $(TCLLIB)  -lc
 
 clean:
 	-rm -f $(TARGETS) *.o *.a *.so *.so.* *~
