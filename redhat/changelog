@@ -1,0 +1,28 @@
+$Version = "3.2";
+$Release = 1;
+
+$ChangeLog = ' * Sat Feb 20 1999 Stéphane Chatty <chatty@cenatoulouse.dgac.fr>
+- Generation of ivy-c-3.0-2
+- New version 3.0, with new syntax for bus specification.
+
+ * Sat Feb 20 1999 Stéphane Chatty <chatty@cenatoulouse.dgac.fr>
+- Generation of ivy-c-3.0-3
+- New Makefile with major and minor numbers
+
+ * Sat Feb 20 1999 Stéphane Chatty <chatty@cenatoulouse.dgac.fr>
+- Generation of ivy-c-3.0-4
+- First attempt to fix dependencies
+
+ * Sat Feb 20 1999 Stéphane Chatty <chatty@cenatoulouse.dgac.fr>
+- Generation of ivy-c-3.0-5
+- Fixed Makefile: added links for shared libs
+
+ * Tue Apr 13 1999 Michelle Jacomi <jacomi@cenatoulouse.dgac.fr>
+- Generation of ivy-c-3.0-8
+- doc files added to ivy-c package
+
+ * Mon Mar 13 2000 Stéphane Chatty <chatty@cena.fr>
+- Generation of ivy-c-3.2-1
+- First package with new version of rpmize. This is ivy-c 3.2
+
+';

@@ -1,0 +1,10 @@
+$Summary = "Ivy, C interface";
+$Name = "ivy-c";
+$Copyright = "CENA";
+$Vendor = "Centre d'Etudes de la Navigation Aerienne";
+$Distribution = "Toccata";
+$Group = "Libraries";
+$Url = "http://www.tls.cena.fr/divisions/PII/";
+$BuildArchitectures = "i386";
+$Description = "Ivy, C interface";
+
