@@ -17,7 +17,8 @@
 
 
 MAJOR=3
-MINOR=0
+MINOR=1
+
 XTINC = /usr/X11R6/include
 XTLIB = /usr/X11R6/lib 
 CC=gcc
