@@ -81,18 +81,23 @@ clean:
 	-rm -f $(TARGETS) *.o *.a *.so *.so.* *~
 
 install: all
-	install -m755 ivyprobe $(DESTDIR)/usr/bin
-	install -m755 ivyxtprobe $(DESTDIR)/usr/X11R6/bin
+	test -d $(PREFIX)/usr/bin || mkdirhier $(PREFIX)/usr/bin
+	test -d $(PREFIX)/usr/X11R6/bin || mkdirhier $(PREFIX)/usr/X11R6/bin
+	test -d $(PREFIX)/usr/lib || mkdirhier $(PREFIX)/usr/lib
+	test -d $(PREFIX)/usr/X11R6/lib || mkdirhier $(PREFIX)/usr/X11R6/lib
+	test -d $(PREFIX)/usr/include || mkdirhier $(PREFIX)/usr/include
+	install -m755 ivyprobe $(PREFIX)/usr/bin
+	install -m755 ivyxtprobe $(PREFIX)/usr/X11R6/bin
 
-	install -m644 libivy.a $(DESTDIR)/usr/lib
-	install -m644 libgivy.a $(DESTDIR)/usr/lib
-	install -m644 libxtivy.a $(DESTDIR)/usr/X11R6/lib
+	install -m644 libivy.a $(PREFIX)/usr/lib
+	install -m644 libgivy.a $(PREFIX)/usr/lib
+	install -m644 libxtivy.a $(PREFIX)/usr/X11R6/lib
 
-	install -m644 libivy.so.$(MAJOR).$(MINOR) $(DESTDIR)/usr/lib
-	install -m644 libgivy.so.$(MAJOR).$(MINOR) $(DESTDIR)/usr/lib
-	install -m644 libxtivy.so.$(MAJOR).$(MINOR) $(DESTDIR)/usr/X11R6/lib
-	cd $(DESTDIR)/usr/lib && ln -s libivy.so.$(MAJOR).$(MINOR) libivy.so
-	cd $(DESTDIR)/usr/lib && ln -s libgivy.so.$(MAJOR).$(MINOR) libgivy.so
-	cd $(DESTDIR)/usr/X11R6/lib && ln -s libxtivy.so.$(MAJOR).$(MINOR) libxtivy.so
+	install -m644 libivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/lib
+	install -m644 libgivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/lib
+	install -m644 libxtivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/X11R6/lib
+	ln -s $(PREFIX)/usr/lib/libivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/lib/libivy.so
+	ln -s $(PREFIX)/usr/lib/libgivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/lib/libgivy.so
+	ln -s $(PREFIX)/usr/X11R6/lib/libxtivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/X11R6/lib/libxtivy.so
 
-	install -m644 *.h $(DESTDIR)/usr/include
+	install -m644 *.h $(PREFIX)/usr/include
