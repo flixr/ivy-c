@@ -116,12 +116,18 @@ void ApplicationCallback( BusClientPtr app, void *user_data, BusApplicationEvent
 {
 	char *appname;
 	char *host;
+	char **msgList;
 	appname = GetApplicationName( app );
 	host = GetApplicationHost( app );
 	switch ( event )  {
 	case BusApplicationConnected:
 		app_count++;
 		printf("Application(%d): %s ready on %s\n",app_count, appname, host);
+		printf("Application(%s): Begin Messages\n", appname);
+		msgList = GetApplicationMessages( app );
+		while( *msgList  )
+			printf("Application(%s): Receive '%s'\n",appname,*msgList++);
+		printf("Application(%s): End Messages\n",appname);
 		if ( app_count == wait_count )
 			ChannelSetUp( 0, NULL, NULL, HandleStdin);
 		break;
