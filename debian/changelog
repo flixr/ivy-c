@@ -1,4 +1,4 @@
-ivy-c (3.3) unstable; urgency=low
+ivy-c (3.4) unstable; urgency=low
 
   * support of multicast, with IP adresses between 224.0.0.0 and 239.255.255.255
     (i.e. no support for named group), by frc

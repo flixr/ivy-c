@@ -7,6 +7,7 @@ Standards-Version: 3.1.1.1
 Package: ivy-c
 Architecture: any
 Depends: ${shlibs:Depends}
+Build-Depends: debhelper, libc6-dev, xlib6g-dev, tcl8.2-dev, libgtk1.2-dev
 Conflicts: ivy-tcl
 Description: Ivy software bus. runtime Package
  Ivy is mostly a communication convention between processes, implemented
