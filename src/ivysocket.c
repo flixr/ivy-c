@@ -42,7 +42,6 @@
 #include "ivysocket.h"
 #include "ivyloop.h"
 
-
 #define MAX_BUFFER 2048
 
 struct _server {
@@ -68,16 +67,12 @@ struct _client {
 	void *data;
 };
 
-
 static Server servers_list = NULL;
 static Client clients_list = NULL;
-
-
 
 #ifdef WIN32
 WSADATA	WsaData;
 #endif
-
 
 void SocketInit()
 {
@@ -96,7 +91,7 @@ static void DeleteSocket(void *data)
 		(*client->handle_delete) (client, client->data );
 	shutdown (client->fd, 2 );
 	close (client->fd );
-	LIST_REMOVE (clients_list, client );
+	IVY_LIST_REMOVE (clients_list, client );
 }
 
 static void DeleteServerSocket(void *data)
@@ -108,7 +103,7 @@ static void DeleteServerSocket(void *data)
 #endif
         shutdown (server->fd, 2 );
         close (server->fd );
-        LIST_REMOVE (servers_list, server);
+        IVY_LIST_REMOVE (servers_list, server);
 }
 static void HandleSocket (Channel channel, HANDLE fd, void *data)
 {
@@ -174,7 +169,7 @@ static void HandleServer(Channel channel, HANDLE fd, void *data)
 		perror ("*** accept ***");
 		return;
 		};
-	LIST_ADD (clients_list, client );
+	IVY_LIST_ADD (clients_list, client );
 	if (!client )
 		{
 		fprintf(stderr,"NOK Memory Alloc Error\n");
@@ -247,7 +242,7 @@ Server SocketServer(unsigned short port,
 		};
 	
 
-	LIST_ADD (servers_list, server );
+	IVY_LIST_ADD (servers_list, server );
 	if (!server )
 		{
 		fprintf(stderr,"NOK Memory Alloc Error\n");
@@ -262,12 +257,10 @@ Server SocketServer(unsigned short port,
 	return server;
 }
 
-
 unsigned short SocketServerGetPort (Server server )
 {
 	return server ? server->port : 0;
 }
-
 
 void SocketServerClose (Server server )
 {
@@ -366,12 +359,11 @@ void SocketBroadcast ( char *fmt, ... )
 	va_start (ap, fmt );
 	len = vsprintf (buffer, fmt, ap );
 	va_end (ap );
-	LIST_EACH (clients_list, client )
+	IVY_LIST_EACH (clients_list, client )
 		{
 		SocketSendRaw (client, buffer, len );
 		}
 }
-
 
 /*
 Ouverture d'un canal TCP/IP en mode client
@@ -384,14 +376,12 @@ Client SocketConnect (char * host, unsigned short port,
 {
 	struct hostent *rhost;
 
-
 	if ((rhost = gethostbyname (host )) == NULL) {
 		fprintf(stderr, "Erreur %s Calculateur inconnu !\n",host);
 		 return NULL;
 	}
 	return SocketConnectAddr ((struct in_addr*)(rhost->h_addr), port, data, interpretation, handle_delete);
 }
-
 
 Client SocketConnectAddr (struct in_addr * addr, unsigned short port, 
 			  void *data, 
@@ -417,7 +407,7 @@ Client SocketConnectAddr (struct in_addr * addr, unsigned short port,
 		return NULL;
 	};
 
-	LIST_ADD (clients_list, client );
+	IVY_LIST_ADD (clients_list, client );
 	if (!client ) {
 			fprintf(stderr,"NOK Memory Alloc Error\n");
 			close (handle );
@@ -436,7 +426,6 @@ Client SocketConnectAddr (struct in_addr * addr, unsigned short port,
 
 	return client;
 }
-
 
 int SocketWaitForReply (Client client, char *buffer, int size, int delai)
 {
@@ -491,7 +480,6 @@ int SocketWaitForReply (Client client, char *buffer, int size, int delai)
 	return (ptr_nl - buffer);
 }
 
-
 /* Socket UDP */
 
 Client SocketBroadcastCreate (unsigned short port, 
@@ -540,7 +528,7 @@ Client SocketBroadcastCreate (unsigned short port,
 			return NULL;
 		};
 
-	LIST_ADD(clients_list, client );
+	IVY_LIST_ADD(clients_list, client );
 	if (!client ) {
 		fprintf(stderr,"NOK Memory Alloc Error\n");
 		close (handle );

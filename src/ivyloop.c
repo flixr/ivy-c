@@ -35,7 +35,6 @@
 #include <signal.h>
 #endif
 
-
 #include "list.h"
 #include "ivychannel.h"
 #include "ivyloop.h"
@@ -50,12 +49,9 @@ struct _channel {
 	ChannelHandleRead handle_read;
 };
 
-
-
 ChannelInit channel_init = IvyChannelInit;
 ChannelSetUp channel_setup = IvyChannelSetUp;
 ChannelClose channel_close = IvyChannelClose;
-
 
 static Channel channels_list = NULL;
 
@@ -81,14 +77,14 @@ IvyChannelDelete (Channel channel)
 		(*channel->handle_delete) (channel->data);
 
 	FD_CLR (channel->fd, &open_fds);
-	LIST_REMOVE (channels_list, channel);
+	IVY_LIST_REMOVE (channels_list, channel);
 }
 
 static void
 ChannelDefferedDelete ()
 {
 	Channel channel, next;
-	LIST_EACH_SAFE (channels_list, channel,next)	{
+	IVY_LIST_EACH_SAFE (channels_list, channel,next)	{
 		if (channel->tobedeleted ) {
 			IvyChannelDelete (channel);
 		}
@@ -102,7 +98,7 @@ Channel IvyChannelSetUp (HANDLE fd, void *data,
 {
 	Channel channel;
 
-	LIST_ADD (channels_list, channel);
+	IVY_LIST_ADD (channels_list, channel);
 	if (!channel) {
 		fprintf(stderr,"NOK Memory Alloc Error\n");
 		exit(0);
@@ -123,7 +119,7 @@ IvyChannelHandleRead (fd_set *current)
 {
 	Channel channel, next;
 	
-	LIST_EACH_SAFE (channels_list, channel, next) {
+	IVY_LIST_EACH_SAFE (channels_list, channel, next) {
 		if (FD_ISSET (channel->fd, current)) {
 			(*channel->handle_read)(channel,channel->fd,channel->data);
 		}
@@ -134,7 +130,7 @@ static void
 IvyChannelHandleExcpt (fd_set *current)
 {
 	Channel channel,next;
-	LIST_EACH_SAFE (channels_list, channel, next) {
+	IVY_LIST_EACH_SAFE (channels_list, channel, next) {
 		if (FD_ISSET (channel->fd, current)) {
 			if (channel->handle_delete)
 				(*channel->handle_delete)(channel->data);
@@ -164,7 +160,6 @@ void IvyChannelInit (void)
 	channel_initialized = 1;
 }
 
-
 void IvyStop (void)
 {
 	MainLoop = 0;
@@ -176,8 +171,6 @@ void IvyMainLoop(void(*hook)(void))
 	fd_set rdset;
 	fd_set exset;
 	int ready;
-
-
 
 	while (MainLoop) {
 		ChannelDefferedDelete();

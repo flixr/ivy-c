@@ -79,7 +79,7 @@ static void AdjTimeout(unsigned long current)
 	{
 	/* recherche de la plus courte echeance dans la liste */
 	newTimeout =  timers->when ; /* remise a la premiere valeur */
-	LIST_EACH( timers , timer )
+	IVY_LIST_EACH( timers , timer )
 		{
 		if ( timer->when < newTimeout  )
 				newTimeout = timer->when;
@@ -103,7 +103,7 @@ TimerId TimerRepeatAfter( int count, long time, TimerCb cb, void *user_data )
 	/* si y a rien a faire et ben on fait rien */
 	if ( cb == NULL ) return NULL;
 
-	LIST_ADD( timers, timer )
+	IVY_LIST_ADD( timers, timer )
 	if ( timer )
 	{
 	timer->repeat = count;
@@ -121,7 +121,7 @@ void TimerRemove( TimerId timer )
 {
 	unsigned long stamp;
 	if ( !timer ) return;
-	LIST_REMOVE( timers, timer );
+	IVY_LIST_REMOVE( timers, timer );
 	stamp = currentTime();
 	AdjTimeout(stamp);
 }
@@ -152,7 +152,7 @@ void TimerScan()
 	
 	stamp = currentTime();
 	/* recherche des timers echu dans la liste */
-	LIST_EACH_SAFE( timers , timer, next )
+	IVY_LIST_EACH_SAFE( timers , timer, next )
 	{
 	if ( timer->when <= stamp )
 		{
@@ -166,7 +166,7 @@ void TimerScan()
 			}
 			else
 			{
-			LIST_REMOVE( timers, timer );
+			IVY_LIST_REMOVE( timers, timer );
 			}
 		}
 	}

@@ -62,7 +62,6 @@ typedef enum {
 
 } MsgType;	
 
-
 typedef struct _msg_snd *MsgSndPtr;
 
 struct _msg_rcv {			/* requete d'emission d'un client */
@@ -72,7 +71,6 @@ struct _msg_rcv {			/* requete d'emission d'un client */
 	MsgCallback callback;		/* callback a declanche a la reception */
 	void *user_data;		/* stokage d'info client */
 };
-
 
 struct _msg_snd {			/* requete de reception d'un client */
 	MsgSndPtr next;
@@ -122,7 +120,6 @@ static *application_die_user_data = 0;
 /* liste des messages a recevoir */
 static MsgRcvPtr msg_recv = 0;
 
-
 /* liste des clients connectes */
 static IvyClientPtr clients = 0;
 
@@ -157,20 +154,19 @@ static void IvyCleanup()
 	IvyClientPtr clnt,next;
 
 	/* destruction des connexions clients */
-	LIST_EACH_SAFE( clients, clnt, next )
+	IVY_LIST_EACH_SAFE( clients, clnt, next )
 	{
 		/* on dit au revoir */
 		MsgSendTo( clnt->client, Bye, 0, "" );
 		SocketClose( clnt->client );
-		LIST_EMPTY( clnt->msg_send );
+		IVY_LIST_EMPTY( clnt->msg_send );
 	}
-	LIST_EMPTY( clients );
+	IVY_LIST_EMPTY( clients );
 
 	/* destruction des sockets serveur et supervision */
 	SocketServerClose( server );
 	SocketClose( broadcast );
 }
-
 
 static int
 MsgCall (const char *message, MsgSndPtr msg,  Client client)
@@ -230,12 +226,11 @@ ClientCall (IvyClientPtr clnt, const char *message)
 	MsgSndPtr msg;
 	int match_count = 0;
 	/* recherche dans la liste des requetes recues de ce client */
-	LIST_EACH (clnt->msg_send, msg) {
+	IVY_LIST_EACH (clnt->msg_send, msg) {
 		match_count+= MsgCall (message, msg, clnt->client);
 	}
 	return match_count;
 }
-
 
 static int CheckRegexp(char *exp)
 {
@@ -263,7 +258,7 @@ static int CheckConnected( IvyClientPtr clnt )
 	if ( clnt->app_port == 0 )
 		return 0;
 	/* recherche dans la liste des clients de la presence de clnt */
-	LIST_EACH( clients, client )
+	IVY_LIST_EACH( clients, client )
 	{
 		/* client different mais port identique */
 		if ( (client != clnt) && (clnt->app_port == client->app_port) )
@@ -331,7 +326,7 @@ static void Receive( Client client, void *data, char *line )
 			reg = regcomp(&regexp, arg, REG_ICASE|REG_EXTENDED);
 			if ( reg == 0 )
 				{
-				LIST_ADD( clnt->msg_send, snd )
+				IVY_LIST_ADD( clnt->msg_send, snd )
 				if ( snd )
 					{
 					snd->id = id;
@@ -353,11 +348,11 @@ static void Receive( Client client, void *data, char *line )
 			printf("Regexp Delete id=%d\n",  id);
 #endif //DEBUG
 
-			LIST_ITER( clnt->msg_send, snd, ( id != snd->id ));
+			IVY_LIST_ITER( clnt->msg_send, snd, ( id != snd->id ));
 			if ( snd )
 				{
 				free( snd->str_regexp );
-				LIST_REMOVE( clnt->msg_send, snd  );
+				IVY_LIST_REMOVE( clnt->msg_send, snd  );
 				}
 			break;
 		case StartRegexp:
@@ -402,7 +397,7 @@ static void Receive( Client client, void *data, char *line )
 		printf("Message id=%d msg='%s'\n", id, arg);
 #endif //DEBUG
 
-			LIST_EACH( msg_recv, rcv )
+			IVY_LIST_EACH( msg_recv, rcv )
 				{
 				if ( id == rcv->id )
 					{
@@ -454,7 +449,7 @@ static IvyClientPtr SendService( Client client )
 {
 	IvyClientPtr clnt;
 	MsgRcvPtr msg;
-	LIST_ADD( clients, clnt )
+	IVY_LIST_ADD( clients, clnt )
 	if ( clnt )
 		{
 		clnt->msg_send = 0;
@@ -462,7 +457,7 @@ static IvyClientPtr SendService( Client client )
 		clnt->app_name = strdup("Unknown");
 		clnt->app_port = 0;
 		MsgSendTo( client, StartRegexp, ApplicationPort, ApplicationName);
-		LIST_EACH(msg_recv, msg )
+		IVY_LIST_EACH(msg_recv, msg )
 			{
 			MsgSendTo( client, AddRegexp,msg->id,msg->regexp);
 			}
@@ -492,13 +487,13 @@ static void ClientDelete( Client client, void *data )
 #endif //DEBUG
 
 	if ( clnt->app_name ) free( clnt->app_name );
-	LIST_EACH( clnt->msg_send, msg)
+	IVY_LIST_EACH( clnt->msg_send, msg)
 	{
 		/*regfree(msg->regexp);*/
 		free( msg->str_regexp);
 	}
-	LIST_EMPTY( clnt->msg_send );
-	LIST_REMOVE( clients, clnt );
+	IVY_LIST_EMPTY( clnt->msg_send );
+	IVY_LIST_REMOVE( clients, clnt );
 }
 
 static void *ClientCreate( Client client )
@@ -561,7 +556,6 @@ static void BroadcastReceive( Client client, void *data, char *line )
 	}
 }
 
-
 void IvyInit (const char *appname, const char *ready, 
 			 IvyApplicationCallback callback, void *data,
 			 IvyDieCallback die_callback, void *die_data
@@ -582,7 +576,6 @@ void IvyClasses( int argc, const char **argv)
 	messages_classes_count = argc;
 	messages_classes = argv;
 }
-
 
 void IvyStart (const char* bus)
 {
@@ -703,7 +696,7 @@ IvyUnbindMsg (MsgRcvPtr msg)
 {
 	IvyClientPtr clnt;
 	/* Send to already connected clients */
-	LIST_EACH (clients, clnt ) {
+	IVY_LIST_EACH (clients, clnt ) {
 		MsgSendTo( clnt->client, DelRegexp,msg->id, "");
 	}
 }
@@ -716,7 +709,7 @@ _BindMsg (MsgCallback callback, void *user_data, const char *regexp )
 	IvyClientPtr clnt;
 	MsgRcvPtr msg;
 	/* add Msg to the query list */
-	LIST_ADD( msg_recv, msg );
+	IVY_LIST_ADD( msg_recv, msg );
 	if (msg)	{
 		msg->id = recv_id++;
 		msg->regexp = strdup(regexp);
@@ -725,7 +718,7 @@ _BindMsg (MsgCallback callback, void *user_data, const char *regexp )
 	}
 	/* Send to already connected clients */
 	/* recherche dans la liste des requetes recues de mes clients */
-	LIST_EACH( clients, clnt ) {
+	IVY_LIST_EACH( clients, clnt ) {
 		MsgSendTo( clnt->client, AddRegexp,msg->id,msg->regexp);
 	}
 	return msg;
@@ -750,7 +743,7 @@ _SendMsg (const char *message)
 	int match_count = 0;
 
 	/* recherche dans la liste des requetes recues de mes clients */
-	LIST_EACH (clients, clnt) {
+	IVY_LIST_EACH (clients, clnt) {
 		match_count += ClientCall (clnt, message);
 	}
 #ifdef DEBUG
@@ -829,7 +822,7 @@ void IvyDefaultApplicationCallback( IvyClientPtr app, void *user_data, IvyApplic
 IvyClientPtr IvyGetApplication( char *name )
 {
 	IvyClientPtr app = 0;
-	LIST_ITER( clients, app, strcmp(name, app->app_name) != 0 );
+	IVY_LIST_ITER( clients, app, strcmp(name, app->app_name) != 0 );
 	return app;
 }
 
@@ -838,7 +831,7 @@ char *IvyGetApplicationList()
 	static char applist[4096];
 	IvyClientPtr app;
 	applist[0] = '\0';
-	LIST_EACH( clients, app )
+	IVY_LIST_EACH( clients, app )
 		{
 		strcat( applist, app->app_name );
 		strcat( applist, " " );
@@ -853,7 +846,7 @@ char **IvyGetApplicationMessages( IvyClientPtr app )
 	int msgCount= 0;
 	memset( messagelist, 0 , sizeof( messagelist ));
 	/* recherche dans la liste des requetes recues de ce client */
-	LIST_EACH( app->msg_send, msg )
+	IVY_LIST_EACH( app->msg_send, msg )
 	{
 	messagelist[msgCount++]= msg->str_regexp;
 	}
