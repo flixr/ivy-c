@@ -17,12 +17,23 @@ extern "C" {
 #include <netinet/in.h>
 #endif
 
+/* General Init */
+extern void SocketInit();
 
-/* Server Part */
+/* Forward def */
 typedef struct _client *Client;
 typedef void (*SocketInterpretation)( Client client, void *data, char *ligne);
 
-extern void SocketInit();
+/* Server Part */
+typedef struct _server *Server;
+extern Server SocketServer(unsigned short port, 
+	void*(*create)(Client client),
+	void(*handle_delete)(Client client, void *data),
+	SocketInterpretation interpretation);
+extern unsigned short SocketServerGetPort( Server server );
+extern void SocketServerClose( Server server );
+
+/* Client Part */
 
 extern void SocketClose( Client client );
 extern void SocketSend( Client client, char *fmt, ... );
@@ -31,14 +42,6 @@ extern char *SocketGetPeerHost( Client client );
 extern void SocketSetData( Client client, void *data );
 extern void *SocketGetData( Client client );
 extern void SocketBroadcast( char *fmt, ... );
-
-extern int SocketServer(unsigned short port, 
-	void*(*create)(Client client),
-	void(*handle_delete)(Client client, void *data),
-	SocketInterpretation interpretation);
-
-/* Client Part */
-
 extern Client SocketConnect( char * host, unsigned short port,
 			void *data, 
 			SocketInterpretation interpretation,
