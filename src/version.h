@@ -13,7 +13,7 @@
  *      modify it under the terms of the GNU LGPL Library General Public License
  *      as published by the Free Software Foundation; either version 2
  *      of the License, or (at your option) any later version.
- *      On Debian systems LGPL can be found in the file /usr/doc/copyright/LGPL
+ *      On Debian systems LGPL can be found in the file /usr/share/common-licenses/LGPL
  *      Or look at http://www.gnu.org/copyleft/lgpl.html
  *
  *      This program is distributed in the hope that it will be useful,

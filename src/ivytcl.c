@@ -556,7 +556,7 @@ IvyBindDirectCmd(ClientData	clientData,
 }
 
 int
-Ivytcl_Init(Tcl_Interp *interp)
+Tclivy_Init(Tcl_Interp *interp)
 {
 
   Tcl_CreateCommand(interp, "Ivy::init", IvyInitCmd, NULL, NULL);

@@ -16,7 +16,7 @@ build:
 clean:
 	$(checkdir)
 	-rm -f build
-	-rm -rf debian/tmp `find debian/* -type d ! -name CVS` debian/files* core
+	-rm -rf debian/tmp debian/*~ debian/copyright `find debian/* -type d ! -name CVS` debian/files* core
 	-rm -f debian/*substvars
 	cd src && make clean
 
@@ -33,12 +33,13 @@ binary-arch:	checkroot build
 	cd debian/tmp && install -d `cat ../dirs`
 
 	cd src && make installlibs PREFIX=`pwd`/../debian/tmp MAJOR=$(MAJOR) MINOR=$(MINOR)
+	cd src && make installbins PREFIX=`pwd`/../debian/tmp
 
 	-rm debian/tmp/usr/include/list.h # it's yet in utils-c-dev
 	-cp src/version.h debian/copyright
-	-strip --strip-unneeded debian/tmp/usr/lib/libivy.so.$(MAJOR).$(MINOR)
-	-strip --strip-unneeded debian/tmp/usr/lib/libtclivy.so.$(MAJOR).$(MINOR)
-	-strip --strip-unneeded debian/tmp/usr/X11R6/lib/libxtivy.so.$(MAJOR).$(MINOR)
+	dh_strip debian/tmp/usr/lib/libivy.so.$(MAJOR).$(MINOR)
+	dh_strip debian/tmp/usr/lib/libtclivy.so.$(MAJOR).$(MINOR)
+	dh_strip debian/tmp/usr/X11R6/lib/libxtivy.so.$(MAJOR).$(MINOR)
 
 	dh_link usr/lib/libivy.so.$(MAJOR).$(MINOR) usr/lib/libivy.so.$(MAJOR)
 	dh_link usr/lib/libgivy.so.$(MAJOR).$(MINOR) usr/lib/libgivy.so.$(MAJOR)
@@ -51,7 +52,7 @@ binary-arch:	checkroot build
 
 	dh_fixperms
 
-	debstd
+	debstd doc/man-ivy-c.html doc/ivy-c-*.html
 
 	-rmdir debian/tmp/usr/include
 
