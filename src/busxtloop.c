@@ -20,7 +20,6 @@
 #endif
 
 
-
 #include <X11/Intrinsic.h>
 
 #include "buschannel.h"
@@ -30,8 +29,8 @@ struct _channel {
 	XtInputId id_read;
 	XtInputId id_delete;
 	void *data;
-	void (*handle_delete)( void *data );
-	void (*handle_read)( Channel channel, HANDLE fd, void *data);
+	ChannelHandleDelete handle_delete;
+	ChannelHandleRead handle_read;
 	};
 
 
