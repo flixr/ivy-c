@@ -144,6 +144,7 @@ void HandleStdin (Channel channel, HANDLE fd, void *data)
 			printf("	.help				- this help\n");
 			printf("	.quit				- terminate this application\n");
 			printf("	.die appname			- send die msg to appname\n");
+			printf("	.dieall-yes-i-am-sure		- send die msg to all applis\n");
 			printf("	.direct appname	id 'arg'	- send direct msg to appname\n");
 			printf("	.where appname			- on which host is appname\n");
 			printf("	.bind 'regexp'			- add a msg to receive\n");
