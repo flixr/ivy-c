@@ -1,16 +1,18 @@
 /*
+ *	Ivy, C interface
  *
- * Ivy, C interface
+ *	Copyright (C) 1997-2000
+ *	Centre d'Études de la Navigation Aérienne
  *
- * Copyright 1997-1999
- * Centre d'Etudes de la Navigation Aerienne
+ *	Timers used in select based main loop
  *
- * Timers used in select based main loop
+ *	Authors: François-Régis Colin <fcolin@cena.dgac.fr>
  *
- * $Id$
- *
+ *	$Id$
+ * 
+ *	Please refer to file version.h for the
+ *	copyright notice regarding this software
  */
-
 
 /* Module de gestion des timers autour d'un select */
 #include <stdio.h>

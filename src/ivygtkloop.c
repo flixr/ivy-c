@@ -1,12 +1,12 @@
 /*
  *	Ivy, C interface
  *
- *	Copyright (C) 1997-1999
+ *	Copyright (C) 1997-2000
  *	Centre d'Études de la Navigation Aérienne
  *
- * 	Main loop based on Gtk Toolkit
+ * 	Main loop based on the Gtk Toolkit
  *
- *	Authors: François-Régis Colin <colin@tls.cena.fr>
+ *	Authors: François-Régis Colin <fcolin@cena.fr>
  *
  *	$Id$
  * 

@@ -1,3 +1,19 @@
+/*
+ *	Ivy, C interface
+ *
+ *	Copyright (C) 1997-2000
+ *	Centre d'Études de la Navigation Aérienne
+ *
+ * 	Main loop based on Tcl
+ *
+ *	Authors: François-Régis Colin <fcolin@cena.dgac.fr>
+ *
+ *	$Id$
+ * 
+ *	Please refer to file version.h for the
+ *	copyright notice regarding this software
+ */
+
 #include <sys/time.h>
 #include <unistd.h>
 #include <malloc.h>

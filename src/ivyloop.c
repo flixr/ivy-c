@@ -1,13 +1,13 @@
 /*
  *	Ivy, C interface
  *
- *	Copyright (C) 1997-1999
+ *	Copyright (C) 1997-2000
  *	Centre d'Études de la Navigation Aérienne
  *
  * 	Main loop based on select
  *
- *	Authors: François-Régis Colin <colin@cenatoulouse.dgac.fr>
- *		 Stéphane Chatty <chatty@cenatoulouse.dgac.fr>
+ *	Authors: François-Régis Colin <fcolin@cena.dgac.fr>
+ *		 Stéphane Chatty <chatty@cena.dgac.fr>
  *
  *	$Id$
  * 

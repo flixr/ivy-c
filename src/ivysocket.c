@@ -1,12 +1,12 @@
 /*
  *	Ivy, C interface
  *
- *	Copyright 1997-1999
+ *	Copyright 1997-2000
  *	Centre d'Etudes de la Navigation Aerienne
  *
  *	Sockets
  *
- *	Authors: Francois-Regis Colin <fcolin@cenatoulouse.dgac.fr>
+ *	Authors: Francois-Regis Colin <fcolin@cena.dgac.fr>
  *
  *	$Id$
  *

@@ -1,3 +1,19 @@
+/*
+ *	Ivy, C interface
+ *
+ *	Copyright (C) 1997-2000
+ *	Centre d'Études de la Navigation Aérienne
+ *
+ * 	Simple lists in C
+ *
+ *	Authors: François-Régis Colin <fcolin@cena.dgac.fr>
+ *
+ *	$Id$
+ * 
+ *	Please refer to file version.h for the
+ *	copyright notice regarding this software
+ */
+
 #define LIST_ITER( list, p, cond ) \
 	p = list; \
 	while ( p && (cond) ) p = p->next 
