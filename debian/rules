@@ -23,6 +23,7 @@ clean:
 	-rm -f build
 	-rm -rf debian/tmp `find debian/* -type d ! -name CVS` debian/files* core
 	-rm -f debian/*substvars
+	cd src && make clean
 
 binary-indep:	checkroot build
 	$(checkdir)
