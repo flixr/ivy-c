@@ -2,7 +2,7 @@
  *
  * Ivy, C interface
  *
- * Copyright 1997-1998 
+ * Copyright 1997-1999
  * Centre d'Etudes de la Navigation Aerienne
  *
  * Main loop handling around select
@@ -20,8 +20,7 @@
 #include <stdarg.h>
 #include <string.h>
 
-#ifdef WIN32
-#else
+#ifndef WIN32
 #include <unistd.h>
 #include <sys/time.h>
 #include <sys/types.h>
@@ -45,8 +44,13 @@ struct _channel {
 	int tobedeleted;
 	ChannelHandleDelete handle_delete;
 	ChannelHandleRead handle_read;
-	};
+};
 
+
+
+ChannelInit channel_init = IvyChannelInit;
+ChannelSetUp channel_setup = IvyChannelSetUp;
+ChannelClose channel_close = IvyChannelClose;
 
 
 static Channel channels_list = NULL;
@@ -60,12 +64,12 @@ static int MainLoop = 1;
 WSADATA					WsaData;
 #endif
 
-void BusLoopChannelClose( Channel channel )
+void IvyChannelClose( Channel channel )
 {
 	channel->tobedeleted = 1;
 }
 
-static void BusLoopChannelDelete( Channel channel )
+static void IvyChannelDelete( Channel channel )
 {
 	if ( channel->handle_delete )
 		(*channel->handle_delete)( channel->data );
@@ -73,6 +77,7 @@ static void BusLoopChannelDelete( Channel channel )
 	FD_CLR(channel->fd, &open_fds);
 	LIST_REMOVE( channels_list, channel );
 }
+
 static void ChannelDefferedDelete()
 {
 	Channel channel,next;
@@ -80,12 +85,12 @@ static void ChannelDefferedDelete()
 		{
 		if ( channel->tobedeleted  )
 			{
-			BusLoopChannelDelete( channel );
+			IvyChannelDelete( channel );
 			}
 		}
 }
 
-Channel BusLoopChannelSetUp(HANDLE fd, void *data, 
+Channel IvyChannelSetUp(HANDLE fd, void *data, 
 				ChannelHandleDelete handle_delete,
 				ChannelHandleRead handle_read
 				)						
@@ -109,7 +114,7 @@ Channel BusLoopChannelSetUp(HANDLE fd, void *data,
 	return channel;
 }
 
-static void BusLoopChannelHandleRead(fd_set *current)
+static void IvyChannelHandleRead(fd_set *current)
 {
 	Channel channel,next;
 	
@@ -122,7 +127,7 @@ static void BusLoopChannelHandleRead(fd_set *current)
 		}
 }
 
-static void BusLoopChannelHandleExcpt(fd_set *current)
+static void IvyChannelHandleExcpt(fd_set *current)
 {
 	Channel channel,next;
 	LIST_EACH_SAFE( channels_list, channel, next )
@@ -130,12 +135,12 @@ static void BusLoopChannelHandleExcpt(fd_set *current)
 		if (FD_ISSET( channel->fd, current ) )
 			{
 			(*channel->handle_delete)(channel->data);
-//			BusLoopChannelClose( channel );
+//			IvyChannelClose( channel );
 			}
 		}
 }
 
-void BusLoopChannelInit(void)
+void IvyChannelInit(void)
 {
 #ifdef WIN32
 	int error;
@@ -157,37 +162,37 @@ void BusLoopChannelInit(void)
 }
 
 
-void BusLoopChannelStop(void)
+void IvyChannelStop(void)
 {
 	MainLoop = 0;
 }
 
-void BusLoopChannelMainLoop(void(*hook)(void))
+void IvyMainLoop(void(*hook)(void))
 {
 
-fd_set rdset;
-fd_set exset;
-int ready;
+	fd_set rdset;
+	fd_set exset;
+	int ready;
 
 
 
-   while (MainLoop) {
-	ChannelDefferedDelete();
-   	if ( hook ) (*hook)();
-    rdset = open_fds;
-    exset = open_fds;
-	ready = select(64, &rdset, 0,  &exset, TimerGetSmallestTimeout());
-	if ( ready < 0 && ( errno != EINTR ))
+	while (MainLoop) {
+		ChannelDefferedDelete();
+	   	if ( hook ) (*hook)();
+		rdset = open_fds;
+		exset = open_fds;
+		ready = select(64, &rdset, 0,  &exset, TimerGetSmallestTimeout());
+		if ( ready < 0 && ( errno != EINTR ))
 		{
-		perror("select");
-		return;
+			perror("select");
+			return;
 		}
-	TimerScan();
-    if ( ready > 0 )
+		TimerScan();
+		if ( ready > 0 )
 		{
-		BusLoopChannelHandleExcpt(&exset);
-		BusLoopChannelHandleRead(&rdset);
-		continue;
+			IvyChannelHandleExcpt(&exset);
+			IvyChannelHandleRead(&rdset);
+			continue;
 		}
 	}
 }

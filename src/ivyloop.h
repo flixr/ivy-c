@@ -2,7 +2,7 @@
  *
  * Ivy, C interface
  *
- * Copyright 1997-1998 
+ * Copyright 1997-1999
  * Centre d'Etudes de la Navigation Aerienne
  *
  * Main loop based on select
@@ -31,18 +31,18 @@ extern "C" {
 #define HANDLE int
 #endif
 
-extern void BusLoopChannelInit(void);
-extern void BusLoopChannelStop(void);
-extern void BusLoopChannelMainLoop(void(*hook)(void) );
+extern void IvyChannelInit(void);
+extern void IvyChannelStop(void);
+extern void IvyMainLoop(void(*hook)(void) );
 
-extern Channel BusLoopChannelSetUp(
-						HANDLE fd,
-						void *data,
-						ChannelHandleDelete handle_delete,
-						ChannelHandleRead handle_read
-						);
+extern Channel IvyChannelSetUp(
+			HANDLE fd,
+			void *data,
+			ChannelHandleDelete handle_delete,
+			ChannelHandleRead handle_read
+);
 
-extern void BusLoopChannelClose( Channel channel );
+extern void IvyChannelClose( Channel channel );
 
 
 #ifdef __cplusplus

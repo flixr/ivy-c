@@ -2,7 +2,7 @@
  *
  * Ivy, C interface
  *
- * Copyright 1997-1998 
+ * Copyright 1997-1999
  * Centre d'Etudes de la Navigation Aerienne
  *
  * Sockets
@@ -37,10 +37,8 @@
 #include "list.h"
 #include "ivychannel.h"
 #include "ivysocket.h"
+#include "ivyloop.h"
 
-static  ChannelInit channel_init = NULL;
-static  ChannelSetUp channel_setup = NULL;
-static  ChannelClose channel_close = NULL;
 
 #define MAX_BUFFER 2048
 
@@ -73,27 +71,19 @@ static Client clients_list = NULL;
 
 
 
-
 #ifdef WIN32
-WSADATA					WsaData;
+WSADATA	WsaData;
 #endif
-
-void BusSetChannelManagement( ChannelInit init_chan, ChannelSetUp setup_chan, ChannelClose close_chan )
-{
-	channel_init = init_chan;
-	channel_setup = setup_chan;
-	channel_close = close_chan;
-}
 
 
 void SocketInit()
 {
 	if ( ! channel_init )
 	{
-		fprintf( stderr, "You Must call BusSetChannelManagement before all !!!\n");
+		fprintf( stderr, "Channel management functions not set, exiting.\n");
 		exit(-1);
 	}
-	 (*channel_init)();
+	(*channel_init)();
 }
 
 static void DeleteSocket(void *data)
@@ -105,6 +95,7 @@ static void DeleteSocket(void *data)
 	close( client->fd );
 	LIST_REMOVE( clients_list, client );
 }
+
 static void HandleSocket( Channel channel, HANDLE fd, void *data)
 {
 	Client client = (Client)data;

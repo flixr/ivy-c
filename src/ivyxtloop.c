@@ -2,7 +2,7 @@
  *
  * Ivy, C interface
  *
- * Copyright 1997-1998 
+ * Copyright 1997-1999
  * Centre d'Etudes de la Navigation Aerienne
  *
  * Main loop based on X Toolkit
@@ -53,8 +53,30 @@ static int channel_initialized = 0;
 
 static XtAppContext    app = NULL;
 
+ChannelInit channel_init = IvyXtChannelInit;
+ChannelSetUp channel_setup = IvyXtChannelSetUp;
+ChannelClose channel_close = IvyXtChannelClose;
 
-void BusXtChannelClose( Channel channel )
+
+void IvyXtChannelInit(void)
+{
+
+	if ( channel_initialized ) return;
+
+	/* pour eviter les plantages quand les autres applis font core-dump */
+#ifndef WIN32
+	signal( SIGPIPE, SIG_IGN);
+#endif
+	/* verifie si init correct */
+	if ( !app )
+	{
+		fprintf( stderr, "You must call IvyXtChannelAppContext before XtMainLoop. Exiting.\n");
+		exit(-1);
+	}
+	channel_initialized = 1;
+}
+
+void IvyXtChannelClose( Channel channel )
 {
 
 	if ( channel->handle_delete )
@@ -63,7 +85,8 @@ void BusXtChannelClose( Channel channel )
 	XtRemoveInput( channel->id_delete );
 }
 
-static void BusXtHandleChannelRead( XtPointer closure, int* source, XtInputId* id )
+
+static void IvyXtHandleChannelRead( XtPointer closure, int* source, XtInputId* id )
 {
 	Channel channel = (Channel)closure;
 #ifdef DEBUG
@@ -71,7 +94,8 @@ static void BusXtHandleChannelRead( XtPointer closure, int* source, XtInputId* i
 #endif
 	(*channel->handle_read)(channel,*source,channel->data);
 }
-static void BusXtHandleChannelDelete( XtPointer closure, int* source, XtInputId* id )
+
+static void IvyXtHandleChannelDelete( XtPointer closure, int* source, XtInputId* id )
 {
 	Channel channel = (Channel)closure;
 #ifdef DEBUG
@@ -79,7 +103,14 @@ static void BusXtHandleChannelDelete( XtPointer closure, int* source, XtInputId*
 #endif
 	(*channel->handle_delete)(channel->data);
 }
-Channel BusXtChannelSetUp(HANDLE fd, void *data,
+
+
+void IvyXtChannelAppContext( XtAppContext cntx )
+{
+	app = cntx;
+}
+
+Channel IvyXtChannelSetUp(HANDLE fd, void *data,
 				ChannelHandleDelete handle_delete,
 				ChannelHandleRead handle_read
 				)						
@@ -97,34 +128,9 @@ Channel BusXtChannelSetUp(HANDLE fd, void *data,
 	channel->handle_read = handle_read;
 	channel->data = data;
 
-	channel->id_read = XtAppAddInput( app, fd, (XtPointer)XtInputReadMask, BusXtHandleChannelRead, channel);
-	channel->id_delete = XtAppAddInput( app, fd, (XtPointer)XtInputExceptMask, BusXtHandleChannelDelete, channel);
+	channel->id_read = XtAppAddInput( app, fd, (XtPointer)XtInputReadMask, IvyXtHandleChannelRead, channel);
+	channel->id_delete = XtAppAddInput( app, fd, (XtPointer)XtInputExceptMask, IvyXtHandleChannelDelete, channel);
 
 	return channel;
 }
-
-
-void BusXtChannelAppContext( XtAppContext cntx )
-{
-	app = cntx;
-}
-
-void BusXtChannelInit(void)
-{
-
-	if ( channel_initialized ) return;
-
-	/* pour eviter les plantages quand les autres applis font core-dump */
-#ifndef WIN32
-	signal( SIGPIPE, SIG_IGN);
-#endif
-	/* verifie si init correct */
-	if ( !app )
-	{
-		fprintf( stderr, "You Must call BusXtChannelAppContext to Use XtMainLoop !!!\n");
-		exit(-1);
-	}
-	channel_initialized = 1;
-}
-
 
