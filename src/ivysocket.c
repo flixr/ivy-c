@@ -340,15 +340,17 @@ Client SocketConnect( char * host, unsigned short port,
 			void (*handle_delete)(Client client, void *data)
 			)
 {
-struct hostent *rhost;
+	struct hostent *rhost;
 
 
-if ((rhost = gethostbyname( host )) == NULL){
-     	fprintf(stderr, "Erreur %s Calculateur inconnu !\n",host);
-      return NULL;
-	};
-return SocketConnectAddr( (struct in_addr*)(rhost->h_addr), port, data, interpretation, handle_delete);
+	if ((rhost = gethostbyname( host )) == NULL) {
+		fprintf(stderr, "Erreur %s Calculateur inconnu !\n",host);
+		 return NULL;
+	}
+	return SocketConnectAddr( (struct in_addr*)(rhost->h_addr), port, data, interpretation, handle_delete);
 }
+
+
 Client SocketConnectAddr( struct in_addr * addr, unsigned short port, 
 			void *data, 
 			SocketInterpretation interpretation,
