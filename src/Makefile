@@ -1,6 +1,6 @@
 XTINC =-I/usr/X11R6/include
 XTLIB =-L/usr/X11R6/lib 
-CC=gcc -g -DDEBUG
+CC=gcc #-g -DDEBUG
 OBJ = ivyloop.o timer.o ivysocket.o ivy.o 
 GOBJ = ivyloop.o timer.o ivysocket.o givy.o
 XTOBJ = ivyxtloop.o ivysocket.o ivy.o
