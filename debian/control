@@ -1,7 +1,7 @@
 Source: ivy-c
 Section: devel
 Priority: extra
-Maintainer: Herve Damiano <damiano@cenatoulouse.dgac.fr>
+Maintainer: Herve Damiano <damiano@cena.fr>
 Standards-Version: 2.3.0.0
 
 Package: ivy-c
@@ -13,8 +13,6 @@ Description: Bus logiciel PII.
 
 Package: ivy-c-dev
 Architecture: any
-Depends: ivy-c (= 3.1-5), libc6-dev, xlib6g-dev, utils-c-dev
-Provides: ivy-c-dev
-Conflicts: ivy-c-dev
+Depends: ivy-c (= 3.2-1), libc6-dev, xlib6g-dev, tcl8.2-dev
 Description: Bus logiciel PII.
  Bus logiciel PII. Fichiers nécessaires au développement.

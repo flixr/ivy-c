@@ -1,8 +1,19 @@
+ivy-c (3.2-1) unstable; urgency=low
+
+  * remove dependancy to utils-c-dev, not useful at install time, but
+  *   at build time only. See README.debian
+  * Makefile changed. Split install into several install* targets.
+  * rules changed to remove list.h from package.
+  * rules changed so that it won't use Makefile to install executables,
+  *   docs and links.
+
+ -- Herve DAMIANO <damiano@cena.fr>  Wed, 19 Jan 2000 15:56:37 +0100
+
 ivy-c (3.1-5) unstable; urgency=low
 
   * add a dependance for utils-c-dev, which provides list.h ...
 
- -- Yannick Jestin <jestin@cena.fr> Fri Jan 14 15:58:52 CET 2000
+ -- Yannick Jestin <jestin@cena.fr>  Fri,  Jan 14 15:58:52 CET 2000
 
 ivy-c (3.1-4) unstable; urgency=low
 
@@ -67,5 +78,5 @@ ivy-c (1.1-1) unstable; urgency=low
 
 Local variables:
 mode: debian-changelog
-add-log-mailing-address: "damiano@cenatoulouse.dgac.fr"
+add-log-mailing-address: "damiano@cena.fr"
 End:
