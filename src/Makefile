@@ -37,7 +37,7 @@ GOBJ = ivyloop.o timer.o ivysocket.o givy.o
 XTOBJ = ivyxtloop.o ivysocket.o ivy.o
 GTKOBJ = ivygtkloop.o ivysocket.o ivy.o
 GLUTOBJ = ivyglutloop.o ivysocket.o ivy.o
-TCLOBJ = ivytcl.o ivysocket.o givy.o
+TCLOBJ = ivytcl.o  ivyloop.o timer.o ivysocket.o givy.o
 TARGETS = ivyprobe ivygtkprobe ivyxtprobe 
 # not yiet need Modified Glut ivyglutprobe
 
