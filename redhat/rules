@@ -9,7 +9,7 @@ $BuildArchitectures = "i586";
 $Description = "This is the C library that implements the
 connection to the Ivy software bus developed at CENA";
 $Requires = "ivy-c = \%{version}-\%{release} " .
-	"glibc libgtk+1.2 libglib2 libxfree86 tcl" ;
+	"glibc libpcre libgtk+1.2 libglib2 libxfree86 tcl" ;
 
 
 $FindFiles = "(find \$RPM_BUILD_ROOT -type f -print ; find \$RPM_BUILD_ROOT -type l -print) | sed \"s\@^\$RPM_BUILD_ROOT\@\@g\" | sort | join redhat/files - ";
