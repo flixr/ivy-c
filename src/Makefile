@@ -20,7 +20,7 @@ XTOBJ = ivyxtloop.o ivysocket.o ivy.o
 ifneq (strip $(MAJOR),)
 MAJOR=1
 endif
-ifneq(strip $(MINOR),)
+ifneq (strip $(MINOR),)
 MINOR=2
 endif
 
