@@ -1,22 +1,21 @@
 /*
  *	Ivy, C interface
  *
- *      Copyright (C) 1997-1999
- *      Centre d'Études de la Navigation Aérienne
+ *	Copyright 1997-1999
+ *	Centre d'Etudes de la Navigation Aerienne
  *
- * 	Sockets
+ *	Sockets
  *
- *      Authors: François-Régis Colin <colin@cenatoulouse.dgac.fr>
- *		 Stéphane Chatty <chatty@cenatoulouse.dgac.fr>
+ *	Authors: Francois-Regis Colin <fcolin@cenatoulouse.dgac.fr>
  *
  *	$Id$
- * 
- *      Please refer to file version.h for the
- *      copyright notice regarding this software
  *
+ *	Please refer to file version.h for the
+ *	copyright notice regarding this software
  */
-#ifndef _IVYSOCKET_H
-#define _IVYSOCKET_H
+
+#ifndef IVYSOCKET_H
+#define IVYSOCKET_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -39,7 +38,7 @@ extern void SocketInit();
 
 /* Forward def */
 typedef struct _client *Client;
-typedef void (*SocketInterpretation)( Client client, void *data, char *ligne);
+typedef void (*SocketInterpretation) (Client client, void *data, char *ligne);
 
 /* Server Part */
 typedef struct _server *Server;
@@ -81,7 +80,7 @@ extern Client SocketBroadcastCreate(
 			);
 /* recuperation de l'emetteur du message */
 extern struct in_addr * SocketGetRemoteAddr( Client client );
-extern void SocketGetRemote( Client client, char **host, unsigned short *port );
+extern void SocketGetRemoteHost (Client client, char **host, unsigned short *port );
 /* emmission d'un broadcast UDP */
 extern void SocketSendBroadcast( Client client, unsigned long host, unsigned short port, char *fmt, ... );
 

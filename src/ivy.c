@@ -1,19 +1,19 @@
 /*
+ *
  *	Ivy, C interface
  *
- *      Copyright (C) 1997-1999
- *      Centre d'Études de la Navigation Aérienne
+ *	Copyright 1997-1999 
+ *	Centre d'Etudes de la Navigation Aerienne
  *
- * 	Main functions
+ *	Main functions
  *
- *      Authors: François-Régis Colin <colin@cenatoulouse.dgac.fr>
- *		 Stéphane Chatty <chatty@cenatoulouse.dgac.fr>
+ *	Authors: Francois-Regis Colin <fcolin@cenatoulouse.dgac.fr>
+ *		Stephane Chatty <chatty@cenatoulouse.dgac.fr>
  *
  *	$Id$
- * 
- *      Please refer to file version.h for the
- *      copyright notice regarding this software
  *
+ *	Please refer to file version.h for the
+ *	copyright notice regarding this software
  */
 
 #include <stdlib.h>
@@ -42,9 +42,9 @@
 
 #if 1
 /* temporary hack for compatibility */
-static char* DefaultIvyDomains = "143.196.1.255, 143.196.2.255, 143.196.53.255";
+static char* DefaultIvyBus = "143.196.1.255, 143.196.2.255, 143.196.53.255";
 #else
-static char* DefaultIvyDomains = "127.0.0.255";
+static char* DefaultIvyBus = "127.255.255.255";
 #endif
 
 typedef enum {
@@ -469,7 +469,7 @@ static void ClientDelete( Client client, void *data )
 	
 #ifdef DEBUG
 	/* probably bogus call, but this is for debug only anyway */
-	SocketGetRemote( client, &remotehost, &remoteport );
+	SocketGetRemoteHost( client, &remotehost, &remoteport );
 	printf("Deconnexion de %s:%hu\n", remotehost, remoteport );
 #endif //DEBUG
 
@@ -489,7 +489,7 @@ static void *ClientCreate( Client client )
 #ifdef DEBUG
 	char *remotehost;
 	unsigned short remoteport;
-	SocketGetRemote( client, &remotehost, &remoteport );
+	SocketGetRemoteHost( client, &remotehost, &remoteport );
 	printf("Connexion de %s:%hu\n", remotehost, remoteport );
 #endif //DEBUG
 
@@ -512,24 +512,25 @@ static void BroadcastReceive( Client client, void *data, char *line )
 		/* ignore the message */
 		unsigned short remoteport;
 		char *remotehost;
-		SocketGetRemote( client, &remotehost, &remoteport );
-		printf(" Bad supervision message, expected 'version port' from %s:%d\n",remotehost, remoteport);
+		SocketGetRemoteHost (client, &remotehost, &remoteport );
+		printf (" Bad supervision message, expected 'version port' from %s:%d\n",
+				remotehost, remoteport);
 		return;
 	}
 	if ( version != VERSION ) {
 		/* ignore the message */
 		unsigned short remoteport;
 		char *remotehost = 0;
-		SocketGetRemote( client, &remotehost, &remoteport );
-		printf(" Bad Ivy version number, expected %d and receive %d from %s:%d\n", VERSION, version, remotehost, remoteport);
+		SocketGetRemoteHost (client, &remotehost, &remoteport );
+		fprintf (stderr, "Bad Ivy version, expected %d and got %d from %s:%d\n",
+			VERSION, version, remotehost, remoteport);
 		return;
 	}
-	/* check if we receive our own message 
-	should test also the host */
-	if ( serviceport == ApplicationPort ) return;
+	/* check if we received our own message. SHOULD ALSO TEST THE HOST */
+	if (serviceport == ApplicationPort) return;
 	
 #ifdef DEBUG
-	SocketGetRemote( client, &remotehost, &remoteport );
+	SocketGetRemoteHost (client, &remotehost, &remoteport );
 	printf(" Broadcast de %s:%hu port %hu\n", remotehost, remoteport, serviceport );
 #endif //DEBUG
 
@@ -543,7 +544,7 @@ static void BroadcastReceive( Client client, void *data, char *line )
 }
 
 
-void IvyInit(const char *appname, unsigned short busnumber, const char *ready, 
+void IvyInit(const char *appname, unsigned short port, const char *ready, 
 			 IvyApplicationCallback callback, void *data,
 			 IvyDieCallback die_callback, void *die_data
 			 )
@@ -551,16 +552,12 @@ void IvyInit(const char *appname, unsigned short busnumber, const char *ready,
 	SocketInit();
 
 	ApplicationName = appname;
-	SupervisionPort = busnumber;
+	SupervisionPort = port;
 	application_callback = callback;
 	application_user_data = data;
 	application_die_callback = die_callback;
 	application_die_user_data = die_data;
 	ready_message = ready;
-	server = SocketServer( ANYPORT, ClientCreate, ClientDelete, Receive );
-	ApplicationPort = SocketServerGetPort(server);
-	broadcast =  SocketBroadcastCreate( SupervisionPort, 0, BroadcastReceive );
-
 }
 
 void IvyClasses( int argc, const char **argv)
@@ -570,39 +567,71 @@ void IvyClasses( int argc, const char **argv)
 }
 
 
-void IvyStart (const char* domains)
+void IvyStart (const char* bus)
 {
-
 	unsigned long mask = 0xffffffff; 
 	unsigned char elem = 0;
 	int numdigit = 0;
 	int numelem = 0;
 	int error = 0;
+	const char* p = bus;	/* used for decoding address list */
+	const char* q;		/* used for decoding port number */
+	int port;
 
-	/* find broadcast address list */
+	
+	/*
+	 * Initialize TCP port
+	 */
+	server = SocketServer(ANYPORT, ClientCreate, ClientDelete, Receive );
+	ApplicationPort = SocketServerGetPort(server);
 
-	const char* p = domains;
+	/*
+	 * Find network list as well as broadcast port
+	 * (we accept things like 123.231,123.123:2000 or 123.231 or :2000),
+	 * Initialize UDP port
+	 * Send a broadcast handshake on every network
+	 */
+
+	/* first, let's find something to parse */
 	if (!p)
-		p = getenv ("IVYDOMAINS");
+		p = getenv ("IVYBUS");
 	if (!p) 
-		p = DefaultIvyDomains;
+		p = DefaultIvyBus;
 
-	/* parse broadcast address list
+	/* then, let's get a port number */
+	q = strchr (p, ':');
+	if (q && (port = atoi (q+1)))
+		SupervisionPort = port;
+#if 0
+	else
+		SupervisionPort = ;
+#endif
+
+	/*
+	 * Now we have a port number it's time to initialize the UDP port
+	 */
+	broadcast =  SocketBroadcastCreate (SupervisionPort, 0, BroadcastReceive );
+
+
+	/* then, if we only have a port number, resort to default value for network */
+	if (p == q)
+		p = DefaultIvyBus;
+
+	/* and finally, parse network list and send broadcast handshakes.
 	   This is painful but inet_aton is sloppy.
 	   If someone knows other builtin routines that do that... */
-
 	for (;;) {
 		/* address elements are up to 3 digits... */
 		if (!error && isdigit (*p)) {
 			if (numdigit < 3 && numelem < 4) {
-				elem = 10*elem +  *p -'0';
+				elem = 10 * elem +  *p -'0';
 			} else {
 				error = 1;
 			}
 
-		/* ... terminated by a point or a comma or the end of string */
-		} else if (!error && (*p == '.' || *p == ',' || *p == '\0')) {
-			mask = (mask ^ (0xff<< (8*(3 -numelem)))) | (elem << (8*(3 - numelem)));
+		/* ... terminated by a point, a comma or a colon, or the end of string */
+		} else if (!error && (*p == '.' || *p == ',' || *p == ':' || *p == '\0')) {
+			mask = (mask ^ (0xff << (8*(3-numelem)))) | (elem << (8*(3-numelem)));
 
 			/* after a point, expect next address element */
 			if (*p == '.') {
@@ -618,8 +647,8 @@ void IvyStart (const char* domains)
 			numdigit = 0;
 			elem = 0;
 
-		/* recover from bad addresses at next comma or at end of string */
-		} else if (*p == ',' || *p == '\0') {
+		/* recover from bad addresses at next comma or colon or at end of string */
+		} else if (*p == ',' || *p == ':' || *p == '\0') {
 			fprintf (stderr, "bad broadcast address\n");
 			elem = 0;
 			numelem = 0;
@@ -635,13 +664,16 @@ void IvyStart (const char* domains)
 			error = 1;
 		}
 
-		/* end of string */
-		if (!*p)
+		/* end of string or colon */
+		if (*p == '\0' || *p == ':')
 			break;
 		++p;
 	}
 
+#ifdef DEBUG
 	fprintf (stderr,"Listening on TCP:%hu\n",ApplicationPort);
+#endif
+
 }
 
 /* desabonnements */

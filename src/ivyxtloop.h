@@ -1,22 +1,22 @@
 /*
  *	Ivy, C interface
  *
- *      Copyright (C) 1997-1999
- *      Centre d'Études de la Navigation Aérienne
+ *	Copyright (C) 1997-1999
+ *	Centre d'Études de la Navigation Aérienne
  *
  * 	Main loop based on X Toolkit
  *
- *      Authors: François-Régis Colin <colin@cenatoulouse.dgac.fr>
+ *	Authors: François-Régis Colin <colin@cenatoulouse.dgac.fr>
  *		 Stéphane Chatty <chatty@cenatoulouse.dgac.fr>
  *
  *	$Id$
  * 
- *      Please refer to file version.h for the
- *      copyright notice regarding this software
- *
+ *	Please refer to file version.h for the
+ *	copyright notice regarding this software
  */
-#ifndef _IVYXTLOOP_H
-#define _IVYXTLOOP_H
+
+#ifndef IVYXTLOOP_H
+#define IVYXTLOOP_H
 
 #ifdef __cplusplus
 extern "C" {

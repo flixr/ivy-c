@@ -1,22 +1,23 @@
 /*
  *	Ivy, C interface
  *
- *      Copyright (C) 1997-1999
- *      Centre d'Études de la Navigation Aérienne
+ *	Copyright (C) 1997-1999
+ *	Centre d'Études de la Navigation Aérienne
  *
  * 	Main loop handling around select
  *
- *      Authors: François-Régis Colin <colin@cenatoulouse.dgac.fr>
+ *	Authors: François-Régis Colin <colin@cenatoulouse.dgac.fr>
  *		 Stéphane Chatty <chatty@cenatoulouse.dgac.fr>
  *
  *	$Id$
  * 
- *      Please refer to file version.h for the
- *      copyright notice regarding this software
+ *	Please refer to file version.h for the
+ *	copyright notice regarding this software
  *
  */
-#ifndef _IVYLOOP_H
-#define _IVYLOOP_H
+
+#ifndef IVYLOOP_H
+#define IVYLOOP_H
 
 #ifdef __cplusplus
 extern "C" {

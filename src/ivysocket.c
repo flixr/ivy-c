@@ -1,20 +1,19 @@
 /*
  *	Ivy, C interface
  *
- *      Copyright (C) 1997-1999
- *      Centre d'Études de la Navigation Aérienne
+ *	Copyright 1997-1999
+ *	Centre d'Etudes de la Navigation Aerienne
  *
- * 	Sockets
+ *	Sockets
  *
- *      Authors: François-Régis Colin <colin@cenatoulouse.dgac.fr>
- *		 Stéphane Chatty <chatty@cenatoulouse.dgac.fr>
+ *	Authors: Francois-Regis Colin <fcolin@cenatoulouse.dgac.fr>
  *
  *	$Id$
- * 
- *      Please refer to file version.h for the
- *      copyright notice regarding this software
  *
+ *	Please refer to file version.h for the
+ *	copyright notice regarding this software
  */
+
 #ifdef WIN32
 #include <windows.h>
 #endif
@@ -276,11 +275,13 @@ char *SocketGetPeerHost( Client client )
 	if ( host == NULL ) return "can't translate addr";
 	return host->h_name;
 }
+
 struct in_addr * SocketGetRemoteAddr( Client client )
 {
 	return &client->from.sin_addr;
 }
-void SocketGetRemote( Client client, char **host, unsigned short *port )
+
+void SocketGetRemoteHost (Client client, char **host, unsigned short *port )
 {
 	struct hostent *hostp;
 	/* extract hostname and port from last message received */
@@ -290,6 +291,7 @@ void SocketGetRemote( Client client, char **host, unsigned short *port )
 		else *host = hostp->h_name;
 	*port = ntohs( client->from.sin_port );
 }
+
 void SocketClose( Client client )
 {
 	(*channel_close)( client->channel );
@@ -302,10 +304,12 @@ void SocketSendRaw( Client client, char *buffer, int len )
 	if ( err != len )
 		perror( "*** send ***");
 }
+
 void SocketSetData( Client client, void *data )
 {
 	client->data = data;
 }
+
 void SocketSend( Client client, char *fmt, ... )
 {
 	char buffer[4096];
@@ -316,6 +320,7 @@ void SocketSend( Client client, char *fmt, ... )
 	SocketSendRaw( client, buffer, len );
 	va_end ( ap );
 }
+
 void *SocketGetData( Client client )
 {
 	return client->data;

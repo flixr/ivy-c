@@ -1,20 +1,20 @@
 /*
  *	Ivy probe
  *
- *      Copyright (C) 1997-1999
- *      Centre d'Études de la Navigation Aérienne
+ *	Copyright (C) 1997-1999
+ *	Centre d'Études de la Navigation Aérienne
  *
  * 	Main and only file
  *
- *      Authors: François-Régis Colin <colin@cenatoulouse.dgac.fr>
+ *	Authors: François-Régis Colin <colin@cenatoulouse.dgac.fr>
  *		 Stéphane Chatty <chatty@cenatoulouse.dgac.fr>
  *
  *	$Id$
  * 
- *      Please refer to file version.h for the
- *      copyright notice regarding this software
- *
+ *	Please refer to file version.h for the
+ *	copyright notice regarding this software
  */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -84,20 +84,20 @@ void HandleStdin( Channel channel, HANDLE fd, void *data)
 				}
 			}
 		if ( strcmp(cmd, "dieall-yes-i-am-sure") == 0 )
-                        {
+	                  {
 			arg = IvyGetApplicationList();
 			arg = strtok( arg, " \n" );
 			while ( arg )
 				{
 				app = IvyGetApplication( arg );
-                                if ( app )
-                                        IvySendDieMsg( app );
-                                        else printf( "No Application %s!!!\n",arg);
-                                arg = strtok( NULL, " ");
+	                          if ( app )
+	                                  IvySendDieMsg( app );
+	                                  else printf( "No Application %s!!!\n",arg);
+	                          arg = strtok( NULL, " ");
 				}
 			
-                        }
-                
+	                  }
+	          
 		if ( strcmp(cmd,  "bind" ) == 0 )
 			{
 			arg = strtok( NULL, "'" );
@@ -156,7 +156,7 @@ void HandleStdin( Channel channel, HANDLE fd, void *data)
 	}
 	else 
 	{
-        cmd = strtok (buf, "\n");
+	  cmd = strtok (buf, "\n");
 	err = IvySendMsg( cmd );
 	printf("-> Sent to %d peer%s\n", err, err == 1 ? "" : "s");
 	}
