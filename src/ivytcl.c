@@ -164,9 +164,10 @@ IvyAppCB(IvyClientPtr	app,
   else {
     strcat(script_to_call, "???");
   }
-  strcat(script_to_call, " ");
+  strcat(script_to_call, " \"");
   strcat(script_to_call, app_event_str[event%2]);
-
+  strcat(script_to_call, "\"");
+  
   Tcl_Preserve(filter->interp);
   result = Tcl_GlobalEval(filter->interp, script_to_call);
   ckfree(script_to_call);
@@ -197,8 +198,9 @@ IvyDieCB(IvyClientPtr	app,
   size = strlen(filter->script) + INTEGER_SPACE + 1;
   script_to_call = ckalloc(size);
   strcpy(script_to_call, filter->script);
-  strcat(script_to_call, " ");
+  strcat(script_to_call, " \"");
   strcat(script_to_call, idstr);
+  strcat(script_to_call, "\"");
   
   Tcl_Preserve(filter->interp);
   result = Tcl_GlobalEval(filter->interp, script_to_call);
@@ -220,18 +222,20 @@ IvyMsgCB(IvyClientPtr	app,
   int		result, i, size;
   char		*script_to_call;
   
-  size = strlen(filter->script) + 1;
+  size = strlen(filter->script) + 3;
   for (i = 0; i < argc; i++) {
-    size += strlen(argv[i]) + 1;
+    size += strlen(argv[i]) + 3;
   }
   size ++;
   script_to_call = ckalloc(size);
   strcpy(script_to_call, filter->script);
-  strcat(script_to_call, " ");
+  strcat(script_to_call, " {");
   for (i = 0; i < argc; i++) {
-    strcat(script_to_call, argv[i]);
-    strcat(script_to_call, " ");
+    strcat(script_to_call, "\"");
+	strcat(script_to_call, argv[i]);
+    strcat(script_to_call, "\" ");
   }
+  strcat(script_to_call, "}");
   
   Tcl_Preserve(filter->interp);
   result = Tcl_GlobalEval(filter->interp, script_to_call);
@@ -264,8 +268,9 @@ IvyDirectMsgCB(IvyClientPtr	app,
   strcpy(script_to_call, filter->script);
   strcat(script_to_call, " ");
   strcat(script_to_call, int_buffer);
-  strcat(script_to_call, " ");
+  strcat(script_to_call, " \"");
   strcat(script_to_call, msg);
+  strcat(script_to_call, "\"");
   
   Tcl_Preserve(filter->interp);
   result = Tcl_GlobalEval(filter->interp, script_to_call);
