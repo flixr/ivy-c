@@ -24,7 +24,7 @@ all: static-libs commands shared-libs
 
 static-libs: libivy.a libgivy.a libxtivy.a
 
-shared-libs: libivy.so.$(VERSION).$(MAJOR_MINOR) libgivy.so.$(VERSION).$(MAJOR_MINOR libxtivy.so.$(VERSION).$(MAJOR_MINOR)
+shared-libs: libivy.so.$(VERSION).$(MAJOR_MINOR) libgivy.so.$(VERSION).$(MAJOR_MINOR) libxtivy.so.$(VERSION).$(MAJOR_MINOR)
 
 commands: testivy testxtivy
 
