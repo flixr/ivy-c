@@ -7,6 +7,7 @@ Standards-Version: 2.3.0.0
 Package: ivy-c
 Architecture: any
 Depends: ${shlibs:Depends}
+Conflicts: ivy-tcl
 Description: Bus logiciel PII.
  Bus logiciel PII. Fichiers de runtime.
 
