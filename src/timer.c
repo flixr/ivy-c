@@ -43,7 +43,7 @@ struct _timer {
 	unsigned long when;
 	TimerCb callback;
 	void *user_data;
-	}Timer;
+	};
 
 /* liste des timers */
 TimerId timers = NULL;

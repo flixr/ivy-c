@@ -45,7 +45,7 @@
  * Obligatoire puisque la substitution de domain, et de bus n'est pas
  * effectuée si on stringifie directement dans la macro GenerateIvyBus */
 #define str(bus) #bus
-#define GenerateIvyBus(domain,bus) str(domain)##":"str(bus)
+#define GenerateIvyBus(domain,bus) str(domain)":"str(bus)
 static char* DefaultIvyBus = GenerateIvyBus(DEFAULT_DOMAIN,DEFAULT_BUS);
 
 typedef enum {
