@@ -2,6 +2,8 @@ ivy-c (3.1-5) unstable; urgency=low
 
   * add a dependance for utils-c-dev, which provides list.h ...
 
+ -- Yannick Jestin <jestin@cena.fr> Fri Jan 14 15:58:52 CET 2000
+
 ivy-c (3.1-4) unstable; urgency=low
 
   * resolve a conflict between ivy-c and ivy-c-dev due to a wrong version number in control file
