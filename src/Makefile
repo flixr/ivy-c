@@ -166,7 +166,7 @@ installbins: commands
 	install -m755 ivyprobe $(PREFIX)/usr/bin
 	install -m755 ivyxtprobe $(PREFIX)/usr/X11R6/bin
 	install -m755 ivygtkprobe $(PREFIX)/usr/X11R6/bin
-	install -m755 ivyglutprobe $(PREFIX)/usr/X11R6/bin
+#	install -m755 ivyglutprobe $(PREFIX)/usr/X11R6/bin
 
 installdocs:
 	test -d $(PREFIX)/usr/doc/ivy-c || mkdirhier $(PREFIX)/usr/doc/ivy-c
