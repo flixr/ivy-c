@@ -22,7 +22,6 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
-#include <sys/ioctl.h>
 
 #ifdef WIN32
 #define close closesocket
@@ -63,7 +62,6 @@ struct _client {
 	struct sockaddr_in from;
 	SocketInterpretation interpretation;
 	void (*handle_delete)(Client client, void *data);
-	FILE *socket_output;	/* Handle buffered output */
 	char terminator;	/* character delimiter of the message */ 
 	long buffer_size;
 	char *buffer;		/* dynamicaly reallocated */
@@ -79,7 +77,7 @@ WSADATA	WsaData;
 #endif
 
 // fonction de formtage a la printf d'un buffer avec reallocation dynamique  
-int make_message(char ** buffer, int *size,  const char *fmt, va_list ap)
+int make_message(char ** buffer, int *size,  int offset, const char *fmt, va_list ap)
 {
     /* Guess we need no more than BUFFER_INIT_SIZE bytes. */
     int n;
@@ -92,7 +90,11 @@ int make_message(char ** buffer, int *size,  const char *fmt, va_list ap)
 		}
     while (1) {
     /* Try to print in the allocated space. */
-    n = vsnprintf (*buffer, *size, fmt, ap);
+#ifdef WIN32
+	n = _vsnprintf (*buffer + offset, *size - offset, fmt, ap);
+#else
+    n = vsnprintf (*buffer + offset, *size - offset, fmt, ap);
+#endif
     /* If that worked, return the string size. */
     if (n > -1 && n < *size)
         return n;
@@ -105,7 +107,15 @@ int make_message(char ** buffer, int *size,  const char *fmt, va_list ap)
         return -1;
     }
 }
-
+int make_message_var(char ** buffer, int *size,  int offset, const char *fmt, ... )
+{
+	va_list ap;
+	int len;
+	va_start (ap, fmt );
+	len = make_message (buffer,size, offset, fmt, ap );
+	va_end (ap );
+	return len;
+}
 
 void SocketInit()
 {
@@ -235,12 +245,6 @@ static void HandleServer(Channel channel, HANDLE fd, void *data)
 	client->ptr = client->buffer;
 	client->handle_delete = server->handle_delete;
 	client->data = (*server->create) (client );
-	client->socket_output = fdopen( client->fd, "w" );
-	if (!client->socket_output )
-		{
-			perror("Socket Buffered output fdopen:");
-			exit(0);
-		} 
 }
 
 Server SocketServer(unsigned short port, 
@@ -399,24 +403,9 @@ void SocketSend (Client client, char *fmt, ... )
 	if (!client)
 		return;
 	va_start (ap, fmt );
-	len = make_message (&buffer,&size, fmt, ap );
+	len = make_message (&buffer,&size, 0, fmt, ap );
 	SocketSendRaw (client, buffer, len );
 	va_end (ap );
-}
-void SocketSendBuffered (Client client, char *fmt, ... )
-{
-	va_list ap;
-	if (!client)
-		return;
-	va_start (ap, fmt );
-	vfprintf (client->socket_output, fmt, ap );
-	va_end (ap );
-}
-void SocketFlush ( Client client )
-{
-	if (!client)
-		return;
-	fflush( client->socket_output );
 }
 
 void *SocketGetData (Client client )
@@ -433,7 +422,7 @@ void SocketBroadcast ( char *fmt, ... )
 	int len;
 	
 	va_start (ap, fmt );
-	len = make_message (&buffer, &size, fmt, ap );
+	len = make_message (&buffer, &size, 0, fmt, ap );
 	va_end (ap );
 	IVY_LIST_EACH (clients_list, client )
 		{
@@ -507,12 +496,6 @@ Client SocketConnectAddr (struct in_addr * addr, unsigned short port,
 	client->from.sin_family = AF_INET;
 	client->from.sin_addr = *addr;
 	client->from.sin_port = htons (port);
-	client->socket_output = fdopen( client->fd, "w" );
-	if (!client->socket_output )
-		{
-			perror("Socket Buffered output fdopen:");
-			exit(0);
-		} 
 	return client;
 }
 // TODO factoriser avec HandleRead !!!!
@@ -637,12 +620,6 @@ Client SocketBroadcastCreate (unsigned short port,
 	client->interpretation = interpretation;
 	client->ptr = client->buffer;
 	client->data = data;
-	client->socket_output = fdopen( client->fd, "w" );
-	if (!client->socket_output )
-		{
-			perror("Socket Buffered output fdopen:");
-			exit(0);
-		} 
 	return client;
 }
 
@@ -658,7 +635,7 @@ void SocketSendBroadcast (Client client, unsigned long host, unsigned short port
 		return;
 
 	va_start (ap, fmt );
-	len = make_message (&buffer, &size, fmt, ap );
+	len = make_message (&buffer, &size, 0, fmt, ap );
 	/* Send UDP packet to the dest */
 	remote.sin_family = AF_INET;
 	remote.sin_addr.s_addr = htonl (host );

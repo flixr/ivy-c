@@ -1,0 +1,97 @@
+#
+#	Ivy, C interface
+#
+#	Copyright (C) 1997-2002
+#	Centre d'Études de la Navigation Aérienne
+#
+# 	Makefile
+#
+#	Authors: François-Régis Colin <fcolin@cena.fr>
+# 		 Stéphane Chatty <chatty@cena.fr>
+# 		 Yannick Jestin <jestin@cena.fr>
+#
+#	Please refer to file version.h for the
+#	copyright notice regarding this software
+#
+
+
+# change this in version.h too !!!!
+MAJOR=3
+MINOR=7
+
+PCREINC = -I "C:\Program Files\GnuWin32\include" #`pcre-config --cflags`
+PCRELIB = "C:\Program Files\GnuWin32\lib\libpcre.lib" #`pcre-config --libs`
+
+PCRE_OPT = PCRE_CASELESS
+REGCOMP_OPT = REG_ICASE
+
+#	PCRE_OPT = 0
+#	REGCOMP_OPT = REG_EXTENDED	
+
+
+#PCREOBJ = `pcre-config --prefix`/lib/libpcre.a
+PCREOBJ = 
+
+#CC=gcc
+#CFLAGS = -g -Wall
+CFLAGS = -DWIN32 -nologo
+#LIBTOOL=ar q # linux and solaris
+#LIBTOOL=libtool -static -o
+LIBTOOL=lib -nologo /out:
+
+#REGEXP = -DGNU_REGEXP  -DREGCOMP_OPT=$(REGCOMP_OPT) # deprecated !
+REGEXP= -DUSE_PCRE_REGEX -DPCRE_OPT=$(PCRE_OPT)
+# on activeTCL , set #define CHANNEL to null, and add ivyloop.obj in the ivytcl target,
+# see below
+CHANNEL = -DTCL_CHANNEL_INTEGRATION 
+
+
+OBJ = ivyloop.obj timer.obj ivysocket.obj ivy.obj 
+
+# WINDOWS add ivyloop.obj if TCL_CHANNEL_INTEGRATION is not set
+TARGETS = ivyprobe ivyperf 
+TARGETLIBS=libivy.dll
+
+.c.obj:
+	$(CC) $(CFLAGS) -c $*.c
+
+all: static-libs commands shared-libs
+
+static-libs: libivy.lib
+
+shared-libs: $(TARGETLIBS)
+
+commands: $(TARGETS)
+
+ivy.obj: ivy.c
+	$(CC) -c $(CFLAGS) $(REGEXP) $(PCREINC) ivy.c
+
+
+ivyprobe: ivyprobe.obj libivy.lib
+	$(CC)  $(CFLAGS) -o $@ ivyprobe.obj libivy.lib wsock32.lib $(PCRELIB)
+
+ivyprobe.obj : ivyprobe.c 
+	$(CC)  $(CFLAGS) $(REGEXP) $(PCREINC) -c ivyprobe.c -o $@ 
+	
+ivyperf: ivyperf.obj libivy.lib
+	$(CC)  $(CFLAGS) -o $@ ivyperf.obj libivy.lib wsock32.lib $(PCRELIB)
+
+ivyperf.obj : ivyperf.c
+	$(CC)  $(CFLAGS) $(REGEXP) $(PCREINC) -c ivyperf.c -o $@
+
+
+libivy.lib: $(OBJ)
+	del /f $@
+	$(LIBTOOL)$@ $(OBJ)
+
+
+# TODO this PCREOBJ is a dirty hack
+
+libivy.dll: $(OBJ)
+	$(CC) /dll -o $@ $(OBJ) $(PCRELIB)
+
+clean:
+	-del /f $(TARGETS) $(TARGETLIBS) *.obj *.a *.dll *~
+
+
+

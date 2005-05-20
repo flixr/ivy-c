@@ -17,7 +17,10 @@
  */
 
 #include <stdlib.h>
+#ifdef WIN32
+#else
 #include <arpa/inet.h>
+#endif
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
@@ -186,6 +189,9 @@ static void IvyCleanup()
 static int
 MsgCall (const char *message, MsgSndPtr msg,  Client client)
 {
+	static char *buffer = NULL; /* Use satic mem to eliminate multiple call to malloc /free */
+	static int size = 0;		/* donc non reentrant !!!! */
+	int offset = 0;
   	int ovector[OVECSIZE];
 	int index;
   	int rc=pcre_exec(
@@ -204,19 +210,18 @@ MsgCall (const char *message, MsgSndPtr msg,  Client client)
 	// il faut essayer d'envoyer le message en une seule fois sur la socket
 	// pour eviter au maximun de passer dans le select plusieur fois par message du protocole Ivy
 	// pour eviter la latence ( PB de perfo detecte par ivyperf ping roudtrip )
-	SocketSendBuffered( client, "%d %d" ARG_START ,Msg, msg->id);
+	offset += make_message_var( &buffer, &size, offset, "%d %d" ARG_START ,Msg, msg->id);
 #ifdef DEBUG
 	printf( "Send matching args count %ld\n",msg->regexp.re_nsub);
 #endif
 	index=1;
 	while ( index<rc ) {
-		SocketSendBuffered( client, "%.*s" ARG_END , ovector[2*index+1]- ovector[2*index],
+		offset += make_message_var( &buffer, &size, offset, "%.*s" ARG_END , ovector[2*index+1]- ovector[2*index],
 			    message + ovector[2*index]);
 		++index;
 	}
-	
-	SocketSendBuffered (client, "\n");
-	SocketFlush( client );
+	offset += make_message_var( &buffer, &size, offset, "\n");
+	SocketSendRaw(client, buffer , offset);
 	return 1;
 }
 
@@ -836,7 +841,7 @@ IvyBindMsg (MsgCallback callback, void *user_data, const char *fmt_regex, ... )
 	MsgRcvPtr msg;
 
 	va_start (ap, fmt_regex );
-	make_message( &buffer, &size, fmt_regex, ap );
+	make_message( &buffer, &size, 0, fmt_regex, ap );
 	va_end  (ap );
 
 	/* add Msg to the query list */
@@ -864,7 +869,7 @@ int IvySendMsg(const char *fmt, ...)
 	va_list ap;
 	
 	va_start( ap, fmt );
-	make_message( &buffer, &size, fmt, ap );
+	make_message( &buffer, &size, 0, fmt, ap );
 	va_end ( ap );
 
 	/* recherche dans la liste des requetes recues de mes clients */
@@ -884,7 +889,7 @@ void IvySendError( IvyClientPtr app, int id, const char *fmt, ... )
 	va_list ap;
 	
 	va_start( ap, fmt );
-	make_message( &buffer, &size, fmt, ap );
+	make_message( &buffer, &size, 0, fmt, ap );
 	va_end ( ap );
 	MsgSendTo( app->client, Error, id, buffer);
 }

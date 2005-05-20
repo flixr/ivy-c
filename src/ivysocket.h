@@ -49,7 +49,8 @@ extern "C" {
 extern void SocketInit();
 
 /* utility fonction do make vsprintf without buffer limit */
-extern int make_message(char ** buffer, int *size,  const char *fmt, va_list ap);
+extern int make_message(char ** buffer, int *size,  int offset, const char *fmt, va_list ap);
+extern int make_message_var(char ** buffer, int *size,  int offset, const char *fmt, ...);
 
 /* Forward def */
 typedef struct _client *Client;
@@ -68,8 +69,6 @@ extern void SocketServerClose( Server server );
 
 extern void SocketClose( Client client );
 extern void SocketSend( Client client, char *fmt, ... );
-extern void SocketSendBuffered (Client client, char *fmt, ... );
-extern void SocketFlush ( Client client );
 extern void SocketSendRaw( Client client, char *buffer, int len );
 extern char *SocketGetPeerHost( Client client );
 extern void SocketSetData( Client client, void *data );
