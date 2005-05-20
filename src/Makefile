@@ -17,7 +17,7 @@
 
 # change this in version.h too !!!!
 MAJOR=3
-MINOR=6
+MINOR=7
 
 XTINC = -I/usr/X11R6/include
 XTLIB = -L/usr/X11R6/lib -lXt -lX11 -lSM -lICE
@@ -75,7 +75,7 @@ GLIBOBJ = ivyglibloop.o ivysocket.o ivy.o
 GLUTOBJ = ivyglutloop.o ivysocket.o ivy.o
 TCLOBJ = ivytcl.o  timer.o ivysocket.o givy.o
 # WINDOWS add ivyloop.o if TCL_CHANNEL_INTEGRATION is not set
-TARGETS = ivyprobe ivyglibprobe ivyxtprobe 
+TARGETS = ivyprobe ivyperf ivyglibprobe ivyxtprobe 
 TARGETLIBS=libivy.so.$(MAJOR).$(MINOR) libgivy.so.$(MAJOR).$(MINOR) libxtivy.so.$(MAJOR).$(MINOR) libglibivy.so.$(MAJOR).$(MINOR) libtclivy.so.$(MAJOR).$(MINOR)
 # not yet need Modified Glut ivyglutprobe
 
@@ -107,11 +107,17 @@ ivyglutloop.o: ivyglutloop.c ivyglutloop.h
 ivyglibloop.o: ivyglibloop.c ivyglibloop.h
 	$(CC) -c $(CFLAGS) $(GLIBINC) ivyglibloop.c
 
-ivyprobe: ivyprobe.o
+ivyprobe: ivyprobe.o libivy.a
 	$(CC)  $(CFLAGS) -o $@ ivyprobe.o -L. -livy $(PCRELIB) $(EXTRALIB)
 
-ivyprobe.o : ivyprobe.c
+ivyprobe.o : ivyprobe.c 
 	$(CC)  $(CFLAGS) $(REGEXP) -c ivyprobe.c -o $@
+	
+ivyperf: ivyperf.o libivy.a
+	$(CC)  $(CFLAGS) -o $@ ivyperf.o -L. -livy $(PCRELIB) $(EXTRALIB)
+
+ivyperf.o : ivyperf.c
+	$(CC)  $(CFLAGS) $(REGEXP) -c ivyperf.c -o $@
 
 ivyxtprobe.o : ivyprobe.c
 	$(CC)  $(CFLAGS) $(REGEXP) -DXTMAINLOOP -c ivyprobe.c -o $@ $(XTINC)

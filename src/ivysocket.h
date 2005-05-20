@@ -20,7 +20,9 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-	
+
+#include <stdarg.h>
+
 /* general Handle */
 
 #define ANYPORT	0
@@ -46,6 +48,9 @@ extern "C" {
 /* General Init */
 extern void SocketInit();
 
+/* utility fonction do make vsprintf without buffer limit */
+extern int make_message(char ** buffer, int *size,  const char *fmt, va_list ap);
+
 /* Forward def */
 typedef struct _client *Client;
 typedef void (*SocketInterpretation) (Client client, void *data, char *ligne);
@@ -63,6 +68,8 @@ extern void SocketServerClose( Server server );
 
 extern void SocketClose( Client client );
 extern void SocketSend( Client client, char *fmt, ... );
+extern void SocketSendBuffered (Client client, char *fmt, ... );
+extern void SocketFlush ( Client client );
 extern void SocketSendRaw( Client client, char *buffer, int len );
 extern char *SocketGetPeerHost( Client client );
 extern void SocketSetData( Client client, void *data );

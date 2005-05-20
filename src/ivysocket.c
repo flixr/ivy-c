@@ -6,7 +6,7 @@
  *
  *	Sockets
  *
- *	Authors: Francois-Regis Colin <fcolin@cena.dgac.fr>
+ *	Authors: Francois-Regis Colin <fcolin@cena.fr>
  *
  *	$Id$
  *
@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
+#include <sys/ioctl.h>
 
 #ifdef WIN32
 #define close closesocket
@@ -42,7 +43,7 @@
 #include "ivysocket.h"
 #include "ivyloop.h"
 
-#define MAX_BUFFER 2048
+#define BUFFER_SIZE 4096	/* taille buffer initiale on multiple pas deux a chaque realloc */
 
 struct _server {
 	Server next;
@@ -62,7 +63,10 @@ struct _client {
 	struct sockaddr_in from;
 	SocketInterpretation interpretation;
 	void (*handle_delete)(Client client, void *data);
-	char buffer[MAX_BUFFER+2];
+	FILE *socket_output;	/* Handle buffered output */
+	char terminator;	/* character delimiter of the message */ 
+	long buffer_size;
+	char *buffer;		/* dynamicaly reallocated */
 	char *ptr;
 	void *data;
 };
@@ -73,6 +77,35 @@ static Client clients_list = NULL;
 #ifdef WIN32
 WSADATA	WsaData;
 #endif
+
+// fonction de formtage a la printf d'un buffer avec reallocation dynamique  
+int make_message(char ** buffer, int *size,  const char *fmt, va_list ap)
+{
+    /* Guess we need no more than BUFFER_INIT_SIZE bytes. */
+    int n;
+	if ( *size == 0 || *buffer == NULL )
+		{
+		*size = BUFFER_SIZE;
+		*buffer = malloc (BUFFER_SIZE);
+		if ( *buffer == NULL )
+		    return -1;
+		}
+    while (1) {
+    /* Try to print in the allocated space. */
+    n = vsnprintf (*buffer, *size, fmt, ap);
+    /* If that worked, return the string size. */
+    if (n > -1 && n < *size)
+        return n;
+    /* Else try again with more space. */
+    if (n > -1)    /* glibc 2.1 */
+        *size = n+1; /* precisely what is needed */
+    else           /* glibc 2.0 */
+        *size *= 2;  /* twice the old size */
+    if ((*buffer = realloc (*buffer, *size)) == NULL)
+        return -1;
+    }
+}
+
 
 void SocketInit()
 {
@@ -113,13 +146,19 @@ static void HandleSocket (Channel channel, HANDLE fd, void *data)
 	long nb_to_read = 0;
 	long nb;
 	socklen_t len;
-
+	
 	/* limitation taille buffer */
-	nb_to_read = MAX_BUFFER - (client->ptr - client->buffer );
+	nb_to_read = client->buffer_size - (client->ptr - client->buffer );
 	if (nb_to_read == 0 ) {
-		fprintf(stderr, "Erreur message trop long sans LF\n");
-		client->ptr  = client->buffer;
-		return;
+		client->buffer_size *= 2; /* twice old size */
+		client->buffer = realloc( client->buffer, client->buffer_size );
+		if (!client->buffer )
+		{
+		fprintf(stderr,"HandleSocket Buffer Memory Alloc Error\n");
+		exit(0);
+		}
+		fprintf(stderr, "Buffer Limit reached realloc new size %ld\n", client->buffer_size );
+		nb_to_read = client->buffer_size - (client->ptr - client->buffer );
 	}
 	len = sizeof (client->from );
 	nb = recvfrom (fd, client->ptr, nb_to_read,0,(struct sockaddr *)&client->from,
@@ -133,22 +172,21 @@ static void HandleSocket (Channel channel, HANDLE fd, void *data)
 		(*channel_close) (client->channel );
 		return;
 	}
-	
 	client->ptr += nb;
-	*(client->ptr) = '\0';
 	ptr = client->buffer;
-	while ((ptr_nl = strchr (ptr, '\n' )))
+	while ((ptr_nl = memchr (ptr, client->terminator,  client->ptr - ptr )))
 		{
-		*ptr_nl = '\0';
+		*ptr_nl ='\0';
 		if (client->interpretation )
 			(*client->interpretation) (client, client->data, ptr );
 			else fprintf (stderr,"Socket No interpretation function ???\n");
 		ptr = ++ptr_nl;
 		}
-	if (*ptr != '\0' )
+	if (ptr < client->ptr )
 		{ /* recopie ligne incomplete au debut du buffer */
-		strcpy (client->buffer, ptr );
-		client->ptr = client->buffer + strlen(client->buffer);
+		len = client->ptr - ptr;
+		memcpy (client->buffer, ptr, len  );
+		client->ptr = client->buffer + len;
 		}
 		else
 		{
@@ -182,6 +220,14 @@ static void HandleServer(Channel channel, HANDLE fd, void *data)
 		close (fd );
 		exit(0);
 		}
+	client->buffer_size = BUFFER_SIZE;
+	client->buffer = malloc( client->buffer_size );
+	if (!client->buffer )
+		{
+		fprintf(stderr,"HandleSocket Buffer Memory Alloc Error\n");
+		exit(0);
+		}
+		client->terminator = '\n';
 	client->from = remote2;
 	client->fd = ns;
 	client->channel = (*channel_setup) (ns, client,  DeleteSocket, HandleSocket );
@@ -189,7 +235,12 @@ static void HandleServer(Channel channel, HANDLE fd, void *data)
 	client->ptr = client->buffer;
 	client->handle_delete = server->handle_delete;
 	client->data = (*server->create) (client );
-	
+	client->socket_output = fdopen( client->fd, "w" );
+	if (!client->socket_output )
+		{
+			perror("Socket Buffered output fdopen:");
+			exit(0);
+		} 
 }
 
 Server SocketServer(unsigned short port, 
@@ -341,16 +392,31 @@ void SocketSetData (Client client, void *data )
 
 void SocketSend (Client client, char *fmt, ... )
 {
-	char buffer[4096];
+	static char *buffer = NULL; /* Use satic mem to eliminate multiple call to malloc /free */
+	static int size = 0;		/* donc non reentrant !!!! */
 	va_list ap;
 	int len;
-
 	if (!client)
 		return;
 	va_start (ap, fmt );
-	len = vsprintf (buffer, fmt, ap );
+	len = make_message (&buffer,&size, fmt, ap );
 	SocketSendRaw (client, buffer, len );
 	va_end (ap );
+}
+void SocketSendBuffered (Client client, char *fmt, ... )
+{
+	va_list ap;
+	if (!client)
+		return;
+	va_start (ap, fmt );
+	vfprintf (client->socket_output, fmt, ap );
+	va_end (ap );
+}
+void SocketFlush ( Client client )
+{
+	if (!client)
+		return;
+	fflush( client->socket_output );
 }
 
 void *SocketGetData (Client client )
@@ -361,12 +427,13 @@ void *SocketGetData (Client client )
 void SocketBroadcast ( char *fmt, ... )
 {
 	Client client;
-	char buffer[4096];
+	static char *buffer = NULL; /* Use satic mem to eliminate multiple call to malloc /free */
+	static int size = 0;		/* donc non reentrant !!!! */
 	va_list ap;
 	int len;
 	
 	va_start (ap, fmt );
-	len = vsprintf (buffer, fmt, ap );
+	len = make_message (&buffer, &size, fmt, ap );
 	va_end (ap );
 	IVY_LIST_EACH (clients_list, client )
 		{
@@ -423,6 +490,14 @@ Client SocketConnectAddr (struct in_addr * addr, unsigned short port,
 			exit(0);
 	}
 	
+	client->buffer_size = BUFFER_SIZE;
+	client->buffer = malloc( client->buffer_size );
+	if (!client->buffer )
+		{
+		fprintf(stderr,"HandleSocket Buffer Memory Alloc Error\n");
+		exit(0);
+		}
+		client->terminator = '\n';
 	client->fd = handle;
 	client->channel = (*channel_setup) (handle, client,  DeleteSocket, HandleSocket );
 	client->interpretation = interpretation;
@@ -432,10 +507,15 @@ Client SocketConnectAddr (struct in_addr * addr, unsigned short port,
 	client->from.sin_family = AF_INET;
 	client->from.sin_addr = *addr;
 	client->from.sin_port = htons (port);
-
+	client->socket_output = fdopen( client->fd, "w" );
+	if (!client->socket_output )
+		{
+			perror("Socket Buffered output fdopen:");
+			exit(0);
+		} 
 	return client;
 }
-
+// TODO factoriser avec HandleRead !!!!
 int SocketWaitForReply (Client client, char *buffer, int size, int delai)
 {
 	fd_set rdset;
@@ -483,7 +563,7 @@ int SocketWaitForReply (Client client, char *buffer, int size, int delai)
 
 		ptr += nb;
 		*ptr = '\0';
-		ptr_nl = strchr (buffer, '\n' );
+		ptr_nl = strchr (buffer, client->terminator );
 	} while (!ptr_nl );
 	*ptr_nl = '\0';
 	return (ptr_nl - buffer);
@@ -544,19 +624,33 @@ Client SocketBroadcastCreate (unsigned short port,
 		exit(0);
 	}
 	
+	client->buffer_size = BUFFER_SIZE;
+	client->buffer = malloc( client->buffer_size );
+	if (!client->buffer )
+		{
+		fprintf(stderr,"HandleSocket Buffer Memory Alloc Error\n");
+		exit(0);
+		}
+		client->terminator = '\n';
 	client->fd = handle;
 	client->channel = (*channel_setup) (handle, client,  DeleteSocket, HandleSocket );
 	client->interpretation = interpretation;
 	client->ptr = client->buffer;
 	client->data = data;
-
+	client->socket_output = fdopen( client->fd, "w" );
+	if (!client->socket_output )
+		{
+			perror("Socket Buffered output fdopen:");
+			exit(0);
+		} 
 	return client;
 }
 
 void SocketSendBroadcast (Client client, unsigned long host, unsigned short port, char *fmt, ... )
 {
 	struct sockaddr_in remote;
-	char buffer[4096];
+	static char *buffer = NULL; /* Use satic mem to eliminate multiple call to malloc /free */
+	static int size = 0;		/* donc non reentrant !!!! */
 	va_list ap;
 	int err,len;
 
@@ -564,7 +658,7 @@ void SocketSendBroadcast (Client client, unsigned long host, unsigned short port
 		return;
 
 	va_start (ap, fmt );
-	len = vsprintf (buffer, fmt, ap );
+	len = make_message (&buffer, &size, fmt, ap );
 	/* Send UDP packet to the dest */
 	remote.sin_family = AF_INET;
 	remote.sin_addr.s_addr = htonl (host );
