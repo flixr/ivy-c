@@ -877,7 +877,7 @@ int IvySendMsg(const char *fmt, ...)
 		match_count += ClientCall (clnt, buffer);
 	}
 #ifdef DEBUG
-	if ( match_count == 0 ) printf( "Warning no recipient for %s\n",message);
+	if ( match_count == 0 ) printf( "Warning no recipient for %s\n",buffer);
 #endif
 	return match_count;
 }
