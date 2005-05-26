@@ -6,8 +6,8 @@
  *
  * 	Main functions
  *
- *	Authors: François-Régis Colin <fcolin@cena.dgac.fr>
- *		 Stéphane Chatty <chatty@cena.dgac.fr>
+ *	Authors: François-Régis Colin <fcolin@cena.fr>
+ *		 Stéphane Chatty <chatty@cena.fr>
  *
  *	$Id$
  * 
@@ -65,10 +65,10 @@ void IvyInit(
 	 void *die_data 		/* user data */
 	 );
   
-  void IvySetBindCallback(	 
+void IvySetBindCallback(	 
 			  IvyBindCallback bind_callback,
 			  void *bind_data );
-  void IvyDelBindCallback(); 
+void IvyDelBindCallback(); 
 void IvyStart (const char*);
 void IvyStop ();
 
@@ -96,6 +96,10 @@ int IvySendMsg( const char *fmt_message, ... );		/* avec sprintf prealable */
 
 void IvyBindDirectMsg( MsgDirectCallback callback, void *user_data);
 void IvySendDirectMsg( IvyClientPtr app, int id, char *msg );
+
+/* boucle principale d'Ivy */
+/* use of internal MainLoop or XtMainLoop, or other MainLoop integration */
+extern void IvyMainLoop(void(*hook)(void));
 
 #ifdef __cplusplus
 }

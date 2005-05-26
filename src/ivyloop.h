@@ -6,8 +6,8 @@
  *
  * 	Main loop handling around select
  *
- *	Authors: François-Régis Colin <fcolin@cena.dgac.fr>
- *		 Stéphane Chatty <chatty@cena.dgac.fr>
+ *	Authors: François-Régis Colin <fcolin@cena.fr>
+ *		 Stéphane Chatty <chatty@cena.fr>
  *
  *	$Id$
  * 
@@ -25,30 +25,9 @@ extern "C" {
 
 #include "ivychannel.h"
 
-/* general Handle */
-
-#define ANYPORT	0
-
-#ifdef WIN32
-#include <windows.h>
-#define HANDLE SOCKET
-#else
-#define HANDLE int
-#endif
-
-
 
 extern void IvyMainLoop(void(*hook)(void) );
-
-
-extern void IvyChannelInit(void);
-extern void IvyChannelClose( Channel channel );
-extern Channel IvyChannelSetUp(
-			HANDLE fd,
-			void *data,
-			ChannelHandleDelete handle_delete,
-			ChannelHandleRead handle_read);
-
+extern void IvyIdle();
 
 
 #ifdef __cplusplus

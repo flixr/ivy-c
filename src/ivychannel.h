@@ -6,7 +6,7 @@
  *
  * 	Basic I/O handling
  *
- *	Authors: François-Régis Colin <fcolin@cena.dgac.fr>
+ *	Authors: François-Régis Colin <fcolin@cena.fr>
  *
  *	$Id$
  * 
@@ -37,10 +37,12 @@ typedef void (*ChannelHandleDelete)( void *data );
 typedef void (*ChannelHandleRead)( Channel channel, HANDLE fd, void *data);
 
 /* fonction appele par le bus pour initialisation */
-typedef void (*ChannelInit)(void);
+extern void IvyChannelInit(void);
+/* fonction appele par le bus pour terminaison */
+extern void IvyChannelStop(void);
 						
 /* fonction appele par le bus pour mise en place des callback sur le canal */
-typedef Channel (*ChannelSetUp)(
+extern Channel IvyChannelOpen(
 	HANDLE fd,
 	void *data,
 	ChannelHandleDelete handle_delete,
@@ -48,11 +50,7 @@ typedef Channel (*ChannelSetUp)(
 );
 
 /* fonction appele par le bus pour fermeture du canal */
-typedef void (*ChannelClose)( Channel channel );
-
-extern ChannelInit channel_init;
-extern ChannelClose channel_close;
-extern ChannelSetUp channel_setup;
+extern void IvyChannelClose( Channel channel );
 
 #ifdef __cplusplus
 }

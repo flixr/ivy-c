@@ -54,25 +54,16 @@ extern int optind;
 
 
 #endif
-#ifdef XTMAINLOOP
-#include "ivyxtloop.h"
-#endif
-#ifdef GLIBMAINLOOP
-#include <glib.h>
-#include "ivyglibloop.h"
-#endif
-#ifdef GLUTMAINLOOP
-#include "ivyglutloop.h"
-#endif
-#ifdef IVYMAINLOOP
-#include "ivyloop.h"
-#endif
+
+#include "ivychannel.h"
 #include "ivysocket.h"
 #include "ivy.h"
 #include "timer.h"
 #ifdef XTMAINLOOP
+#include "ivyxtloop.h"
 #include <X11/Intrinsic.h>
 XtAppContext cntx;
+
 #endif
 
 int app_count = 0;
@@ -125,19 +116,8 @@ void HandleStdin (Channel channel, HANDLE fd, void *data)
 	int err;
 	line = fgets(buf, 4096, stdin);
 	if  (!line)	{
-#ifdef XTMAINLOOP
-		IvyXtChannelClose (channel);
-#endif
-#ifdef GLIBMAINLOOP
-		IvyGlibChannelClose(channel);
-#endif
-#ifdef GLUTMAINLOOP
-		IvyGlutChannelClose(channel);
-#endif
-#ifdef IVYMAINLOOP
 		IvyChannelClose (channel);
 		IvyStop();
-#endif
 		return;
 	}
 	if  (*line == '.') {
@@ -236,8 +216,11 @@ void HandleStdin (Channel channel, HANDLE fd, void *data)
 		}
 	} else {
 		cmd = strtok (buf, "\n");
+		if ( cmd )
+		{
 		err = IvySendMsg (cmd);
 		printf("-> Sent to %d peer%s\n", err, err == 1 ? "" : "s");
+		}
 	}
 }
 
@@ -259,18 +242,8 @@ void ApplicationCallback (IvyClientPtr app, void *user_data, IvyApplicationEvent
 			printf("%s subscribes to '%s'\n",appname,*msgList++);
 /*		printf("Application(%s): End Messages\n",appname);*/
 		if  (app_count == wait_count)
-#ifdef XTMAINLOOP
-		IvyXtChannelSetUp (0, NULL, NULL, HandleStdin);
-#endif
-#ifdef GLIBMAINLLOP
-		IvyGlibChannelSetUp( 0, NULL, NULL, HandleStdin);
-#endif
-#ifdef GLUTMAINLLOP
-		IvyGlutChannelSetUp( 0, NULL, NULL, HandleStdin);
-#endif
-#ifdef IVYMAINLOOP
-		IvyChannelSetUp (0, NULL, NULL, HandleStdin);
-#endif
+
+		IvyChannelOpen (0, NULL, NULL, HandleStdin);
 		break;
 
 	case IvyApplicationDisconnected:
@@ -359,21 +332,11 @@ int main(int argc, char *argv[])
 		IvyBindMsg (Callback, NULL, argv[optind]);
 
 	if  (wait_count == 0)
-#ifdef XTMAINLOOP
-		IvyXtChannelSetUp (0, NULL, NULL, HandleStdin);
-#endif
-#ifdef GLIBMAINLOOP
-		IvyGlibChannelSetUp (0, NULL, NULL, HandleStdin);
-#endif
-#ifdef GLUTMAINLOOP
-		IvyGlutChannelSetUp (0, NULL, NULL, HandleStdin);
-#endif
-#ifdef IVYMAINLOOP
 #ifndef WIN32
 /* Stdin not compatible with select , select only accept socket */
-		IvyChannelSetUp (0, NULL, NULL, HandleStdin);
+	IvyChannelOpen (0, NULL, NULL, HandleStdin);
 #endif
-#endif
+
 
 	IvyStart (bus);
 
@@ -387,18 +350,8 @@ int main(int argc, char *argv[])
 #ifdef XTMAINLOOP
 	XtAppMainLoop (cntx);
 #endif
-#ifdef GLIBMAINLOOP
-	{
-	  GMainLoop *ml =  g_main_loop_new(NULL, FALSE);
-	  g_main_loop_run(ml);
-	}
-#endif
-#ifdef GLUTMAINLOOP
-	glutMainLoop();
-#endif
 
-#ifdef IVYMAINLOOP
 	IvyMainLoop (0);
-#endif
+
 	return 0;
 }

@@ -16,8 +16,8 @@
 
 
 # change this in version.h too !!!!
-MAJOR=3
-MINOR=7
+MAJOR=4
+MINOR=0
 
 XTINC = -I/usr/X11R6/include
 XTLIB = -L/usr/X11R6/lib -lXt -lX11 -lSM -lICE

@@ -6,7 +6,7 @@
  *
  * 	Simple lists in C
  *
- *	Authors: François-Régis Colin <fcolin@cena.dgac.fr>
+ *	Authors: François-Régis Colin <fcolin@cena.fr>
  *
  *	$Id$
  * 

@@ -40,7 +40,6 @@
 #include "list.h"
 #include "ivychannel.h"
 #include "ivysocket.h"
-#include "ivyloop.h"
 
 #define BUFFER_SIZE 4096	/* taille buffer initiale on multiple pas deux a chaque realloc */
 
@@ -52,6 +51,7 @@ struct _server {
 	void *(*create)(Client client);
 	void (*handle_delete)(Client client, void *data);
 	SocketInterpretation interpretation;
+	char terminator;	/* character delimiter of the client message */ 
 };
 
 struct _client {
@@ -119,12 +119,7 @@ int make_message_var(char ** buffer, int *size,  int offset, const char *fmt, ..
 
 void SocketInit()
 {
-	if (! channel_init )
-	{
-		fprintf (stderr, "Channel management functions not set, exiting.\n");
-		exit(-1);
-	}
-	(*channel_init)();
+	IvyChannelInit();
 }
 
 static void DeleteSocket(void *data)
@@ -175,11 +170,11 @@ static void HandleSocket (Channel channel, HANDLE fd, void *data)
 		       &len);
 	if (nb  < 0) {
 		perror(" Read Socket ");
-		(*channel_close) (client->channel );
+		IvyChannelClose(client->channel );
 		return;
 	}
 	if (nb == 0 ) {
-		(*channel_close) (client->channel );
+		IvyChannelClose(client->channel );
 		return;
 	}
 	client->ptr += nb;
@@ -237,10 +232,10 @@ static void HandleServer(Channel channel, HANDLE fd, void *data)
 		fprintf(stderr,"HandleSocket Buffer Memory Alloc Error\n");
 		exit(0);
 		}
-		client->terminator = '\n';
+	client->terminator = server->terminator;
 	client->from = remote2;
 	client->fd = ns;
-	client->channel = (*channel_setup) (ns, client,  DeleteSocket, HandleSocket );
+	client->channel = IvyChannelOpen (ns, client,  DeleteSocket, HandleSocket );
 	client->interpretation = server->interpretation;
 	client->ptr = client->buffer;
 	client->handle_delete = server->handle_delete;
@@ -313,7 +308,7 @@ Server SocketServer(unsigned short port,
 		exit(0);
 		}
 	server->fd = fd;
-	server->channel =	(*channel_setup) (fd, server, DeleteServerSocket, HandleServer );
+	server->channel = IvyChannelOpen(fd, server, DeleteServerSocket, HandleServer );
 	server->create = create;
 	server->handle_delete = handle_delete;
 	server->interpretation = interpretation;
@@ -330,7 +325,7 @@ void SocketServerClose (Server server )
 {
 	if (!server)
 		return;
-	(*channel_close) (server->channel );
+	IvyChannelClose (server->channel );
 }
 
 char *SocketGetPeerHost (Client client )
@@ -373,7 +368,7 @@ void SocketGetRemoteHost (Client client, char **host, unsigned short *port )
 void SocketClose (Client client )
 {
 	if (client)
-		(*channel_close) (client->channel );
+		IvyChannelClose (client->channel );
 }
 
 void SocketSendRaw (Client client, char *buffer, int len )
@@ -436,6 +431,7 @@ Ouverture d'un canal TCP/IP en mode client
 Client SocketConnect (char * host, unsigned short port, 
 			void *data, 
 			SocketInterpretation interpretation,
+			char terminator,
 			void (*handle_delete)(Client client, void *data)
 			)
 {
@@ -445,12 +441,13 @@ Client SocketConnect (char * host, unsigned short port,
 		fprintf(stderr, "Erreur %s Calculateur inconnu !\n",host);
 		 return NULL;
 	}
-	return SocketConnectAddr ((struct in_addr*)(rhost->h_addr), port, data, interpretation, handle_delete);
+	return SocketConnectAddr ((struct in_addr*)(rhost->h_addr), port, data, interpretation, terminator, handle_delete);
 }
 
 Client SocketConnectAddr (struct in_addr * addr, unsigned short port, 
 			  void *data, 
 			  SocketInterpretation interpretation,
+			  char terminator,
 			  void (*handle_delete)(Client client, void *data)
 			  )
 {
@@ -486,9 +483,9 @@ Client SocketConnectAddr (struct in_addr * addr, unsigned short port,
 		fprintf(stderr,"HandleSocket Buffer Memory Alloc Error\n");
 		exit(0);
 		}
-		client->terminator = '\n';
+	client->terminator = terminator;
 	client->fd = handle;
-	client->channel = (*channel_setup) (handle, client,  DeleteSocket, HandleSocket );
+	client->channel = IvyChannelOpen (handle, client,  DeleteSocket, HandleSocket );
 	client->interpretation = interpretation;
 	client->ptr = client->buffer;
 	client->data = data;
@@ -554,7 +551,8 @@ int SocketWaitForReply (Client client, char *buffer, int size, int delai)
 
 /* Socket UDP */
 
-Client SocketBroadcastCreate (unsigned short port, 
+Client SocketBroadcastCreate (
+				unsigned short port, 
 				void *data, 
 				SocketInterpretation interpretation
 			)
@@ -614,9 +612,9 @@ Client SocketBroadcastCreate (unsigned short port,
 		fprintf(stderr,"HandleSocket Buffer Memory Alloc Error\n");
 		exit(0);
 		}
-		client->terminator = '\n';
+	client->terminator = '\n';
 	client->fd = handle;
-	client->channel = (*channel_setup) (handle, client,  DeleteSocket, HandleSocket );
+	client->channel = IvyChannelOpen (handle, client,  DeleteSocket, HandleSocket );
 	client->interpretation = interpretation;
 	client->ptr = client->buffer;
 	client->data = data;

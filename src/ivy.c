@@ -7,8 +7,8 @@
  *
  *	Main functions
  *
- *	Authors: Francois-Regis Colin <fcolin@cena.dgac.fr>
- *		Stephane Chatty <chatty@cena.dgac.fr>
+ *	Authors: Francois-Regis Colin <fcolin@cena.fr>
+ *		Stephane Chatty <chatty@cena.fr>
  *
  *	$Id$
  *
@@ -40,12 +40,13 @@
 #include "list.h"
 #include "ivy.h"
 
-#define VERSION 3
+#define VERSION 4
 
 #define MAX_MATCHING_ARGS 20
 
-#define ARG_START "\002"
-#define ARG_END "\003"
+#define ARG_START '\002'
+#define ARG_END '\003'
+#define MESSAGE_TERMINATOR '\0'
 
 #define DEFAULT_DOMAIN 127.255.255.255
 
@@ -58,15 +59,19 @@ static char* DefaultIvyBus = GenerateIvyBus(DEFAULT_DOMAIN,DEFAULT_BUS);
 
 typedef enum {
 
-	Bye,			/* l'application emettrice se termine */
-	AddRegexp,		/* expression reguliere d'un client */
-	Msg,			/* message reel */
-	Error,			/* error message */
-	DelRegexp,		/* Remove expression reguliere */
-	EndRegexp,		/* end of the regexp list */
+	Bye,				/* l'application emettrice se termine */
+	AddRegexp,			/* expression reguliere d'un client */
+	Msg,				/* message reel */
+	Error,				/* error message */
+	DelRegexp,			/* Remove expression reguliere */
+	EndRegexp,			/* end of the regexp list */
 	StartRegexp,		/* debut des expressions */
-	DirectMsg,		/* message direct a destination de l'appli */
-	Die			/* demande de terminaison de l'appli */
+	DirectMsg,			/* message direct a destination de l'appli */
+	Die,				/* demande de terminaison de l'appli */
+	Ping = 9,			/* checks the presence of the other */
+	Pong = 10,			/* checks the presence of the other */
+	AddBinding = 11,	/* other methods for binding message based on hash table */
+	DelBinding = 12,	/* other methods for binding message based on hash table */
 
 } MsgType;	
 
@@ -145,7 +150,7 @@ static const char *ready_message = 0;
 /*
  * function like strok but do not eat consecutive separator
  * */
-static char * nextArg( char *s, const char *separator )
+static char * nextArg( char *s, const char separator )
 {
 		static char *start = NULL;
 			static char *end = NULL;
@@ -155,15 +160,15 @@ static char * nextArg( char *s, const char *separator )
 												}
 					start = end;
 							
-						while ( *end && *end != *separator )
+						while ( *end && *end != separator )
 									end++;
-							if ( *end == *separator ) *end++ = '\0';  
+							if ( *end == separator ) *end++ = '\0';  
 								if ( end == start ) return NULL;
 									return start;
 }
 static void MsgSendTo( Client client, MsgType msgtype, int id, const char *message )
 {
-	SocketSend( client, "%d %d" ARG_START "%s\n", msgtype, id, message);
+	SocketSend( client, "%d %d%c%s%c", msgtype, id, ARG_START, message, MESSAGE_TERMINATOR);
 }
 
 static void IvyCleanup()
@@ -210,17 +215,19 @@ MsgCall (const char *message, MsgSndPtr msg,  Client client)
 	// il faut essayer d'envoyer le message en une seule fois sur la socket
 	// pour eviter au maximun de passer dans le select plusieur fois par message du protocole Ivy
 	// pour eviter la latence ( PB de perfo detecte par ivyperf ping roudtrip )
-	offset += make_message_var( &buffer, &size, offset, "%d %d" ARG_START ,Msg, msg->id);
+	offset += make_message_var( &buffer, &size, offset, "%d %d%c",Msg, msg->id, ARG_START);
 #ifdef DEBUG
 	printf( "Send matching args count %ld\n",msg->regexp.re_nsub);
 #endif
 	index=1;
 	while ( index<rc ) {
-		offset += make_message_var( &buffer, &size, offset, "%.*s" ARG_END , ovector[2*index+1]- ovector[2*index],
-			    message + ovector[2*index]);
+		offset += make_message_var( &buffer, &size, offset, "%.*s%c", 
+				ovector[2*index+1]- ovector[2*index],
+			    message + ovector[2*index],
+				ARG_END);
 		++index;
 	}
-	offset += make_message_var( &buffer, &size, offset, "\n");
+	offset += make_message_var( &buffer, &size, offset, "%c", MESSAGE_TERMINATOR);
 	SocketSendRaw(client, buffer , offset);
 	return 1;
 }
@@ -229,7 +236,10 @@ MsgCall (const char *message, MsgSndPtr msg,  Client client)
 static int
 MsgCall (const char *message, MsgSndPtr msg,  Client client)
 {
-	regmatch_t match[MAX_MATCHING_ARGS+1];
+	static char *buffer = NULL; /* Use satic mem to eliminate multiple call to malloc /free */
+	static int size = 0;		/* donc non reentrant !!!! */
+	int offset = 0;
+  	regmatch_t match[MAX_MATCHING_ARGS+1];
 #ifdef GNU_REGEXP
 	regmatch_t* p;
 #else
@@ -245,8 +255,8 @@ MsgCall (const char *message, MsgSndPtr msg,  Client client)
 	// il faut essayer d'envoyer le message en une seule fois sur la socket
 	// pour eviter au maximun de passer dans le select plusieur fois par message du protocole Ivy
 	// pour eviter la latence ( PB detecte par ivyperf ping roudtrip )
-	SocketSendBuffered( client, "%d %d" ARG_START ,Msg, msg->id);
-
+	offset += make_message_var( &buffer, &size, offset, "%d %d%c",Msg, msg->id, ARG_START);
+	
 #ifdef DEBUG
 	printf( "Send matching args count %ld\n",msg->regexp.re_nsub);
 #endif //DEBUG
@@ -254,8 +264,10 @@ MsgCall (const char *message, MsgSndPtr msg,  Client client)
 #ifdef GNU_REGEXP
 	p = &match[1];
 	while ( p->rm_so != -1 ) {
-		SocketSendBuffered( client, "%.*s" ARG_END , p->rm_eo - p->rm_so, 
-			    message + p->rm_so); 
+		offset += make_message_var( &buffer, &size, offset, "%.*s%c", 
+				p->rm_eo - p->rm_so,
+			    message + p->rm_so,
+				ARG_END);
 		++p;
 	}
 #else
@@ -266,10 +278,10 @@ MsgCall (const char *message, MsgSndPtr msg,  Client client)
 			printf ("Send matching arg%d %.*s\n",i,(int)(match[i].rm_eo - match[i].rm_so), 
 				message + match[i].rm_so);
 #endif
-			SocketSendBuffered (client, "%.*s" ARG_END ,(int)(match[i].rm_eo - match[i].rm_so), 
+			offset += make_message_var( &buffer, &size, offset, "%.*s" ARG_END ,(int)(match[i].rm_eo - match[i].rm_so), 
 				message + match[i].rm_so);
 		} else {
-			SocketSendBuffered (client, ARG_END);
+			offset += make_message_var( &buffer, &size, offset, "%c", ARG_END);
 #ifdef DEBUG
 			printf( "Send matching arg%d VIDE\n",i);
 #endif //DEBUG
@@ -277,8 +289,8 @@ MsgCall (const char *message, MsgSndPtr msg,  Client client)
 	}
 #endif
 
-	SocketSendBuffered (client, "\n");
-	SocketFlush(client);
+	offset += make_message_var( &buffer, &size, offset, "%c", MESSAGE_TERMINATOR);
+	SocketSendRaw(client, buffer , offset);
 	return 1;
 }
 #endif /* USE_PCRE_REGEX */
@@ -357,7 +369,7 @@ static void Receive( Client client, void *data, char *line )
 #endif
 
 	err = sscanf( line ,"%d %d", &kind_of_msg, &id );
-	arg = strstr( line , ARG_START );
+	arg = strchr( line , ARG_START );
 	if ( (err != 2) || (arg == 0)  )
 		{
 		printf("Quitting bad format  %s\n",  line);
@@ -659,7 +671,7 @@ static void BroadcastReceive( Client client, void *data, char *line )
 #endif //DEBUG
 
 	/* connect to the service and send the regexp */
-	app = SocketConnectAddr(SocketGetRemoteAddr(client), serviceport, 0, Receive, ClientDelete );
+	app = SocketConnectAddr(SocketGetRemoteAddr(client), serviceport, 0, Receive, MESSAGE_TERMINATOR, ClientDelete );
 	if (app) {
 		IvyClientPtr clnt;
 		clnt = SendService( app );
@@ -680,6 +692,11 @@ void IvyInit (const char *appname, const char *ready,
 	application_die_callback = die_callback;
 	application_die_user_data = die_data;
 	ready_message = ready;
+}
+
+void IvyStop()
+{
+	IvyChannelStop();
 }
 
 void IvySetBindCallback(IvyBindCallback bind_callback, void *bind_data

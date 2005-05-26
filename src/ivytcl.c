@@ -6,7 +6,7 @@
  *
  * 	Main loop based on Tcl
  *
- *	Authors: François-Régis Colin <fcolin@cena.dgac.fr>
+ *	Authors: François-Régis Colin <fcolin@cena.fr>
  *
  *	$Id$
  * 
@@ -38,9 +38,6 @@
 // mais il y a des problemes sur les socket server 
 // Il n'y a pas de Tcl_MakeTCPserver
 
-ChannelInit channel_init = IvyTclChannelInit;
-ChannelSetUp channel_setup = IvyTclChannelSetUp;
-ChannelClose channel_close = IvyTclChannelClose;
 
 struct _channel {
 	HANDLE fd;
@@ -59,7 +56,7 @@ static int channel_initialized = 0;
 WSADATA WsaData;
 #endif
 
-void IvyTclChannelInit(void)
+void IvyChannelInit(void)
 {
 #ifdef WIN32
 	int error;
@@ -78,6 +75,15 @@ void IvyTclChannelInit(void)
 #endif
 	channel_initialized = 1;
 }
+void IvyChannelStop(void)
+{
+	channel_initialized = 0;
+
+#ifndef TCL_CHANNEL_INTEGRATION
+	Tcl_CancelIdleCall(IvyIdleProc,0);
+#endif
+
+}
 static void
 IvyHandleFd(ClientData	cd,
 	    int		mask)
@@ -93,7 +99,7 @@ IvyHandleFd(ClientData	cd,
   }
 }
 
-void IvyTclChannelClose( Channel channel )
+void IvyChannelClose( Channel channel )
 {
 
 	if ( channel->handle_delete )
@@ -103,7 +109,7 @@ void IvyTclChannelClose( Channel channel )
 }
 
 
-Channel IvyTclChannelSetUp(HANDLE fd, void *data,
+Channel IvyChannelOpen(HANDLE fd, void *data,
 				ChannelHandleDelete handle_delete,
 				ChannelHandleRead handle_read
 				)						
@@ -137,14 +143,6 @@ void IvyIdleProc(ClientData clientData)
 }
 #endif
 
-void
-TclIvyStop ()
-{
-  /* To be implemented */
-#ifndef TCL_CHANNEL_INTEGRATION
-	Tcl_CancelIdleCall(IvyIdleProc,0);
-#endif
-}
 /* Code from PLC */
 
 #define INTEGER_SPACE 30

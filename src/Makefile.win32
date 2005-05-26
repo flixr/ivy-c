@@ -16,8 +16,8 @@
 
 
 # change this in version.h too !!!!
-MAJOR=3
-MINOR=7
+MAJOR=4
+MINOR=0
 
 PCREINC = -I "C:\Program Files\GnuWin32\include" #`pcre-config --cflags`
 PCRELIB = "C:\Program Files\GnuWin32\lib\libpcre.lib" #`pcre-config --libs`
@@ -83,9 +83,6 @@ ivyperf.obj : ivyperf.c
 libivy.lib: $(OBJ)
 	del /f $@
 	$(LIBTOOL)$@ $(OBJ)
-
-
-# TODO this PCREOBJ is a dirty hack
 
 libivy.dll: $(OBJ)
 	$(CC) /dll -o $@ $(OBJ) $(PCRELIB)

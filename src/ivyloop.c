@@ -6,8 +6,8 @@
  *
  * 	Main loop based on select
  *
- *	Authors: François-Régis Colin <fcolin@cena.dgac.fr>
- *		 Stéphane Chatty <chatty@cena.dgac.fr>
+ *	Authors: François-Régis Colin <fcolin@cena.fr>
+ *		 Stéphane Chatty <chatty@cena.fr>
  *
  *	$Id$
  * 
@@ -49,9 +49,6 @@ struct _channel {
 	ChannelHandleRead handle_read;
 };
 
-ChannelInit channel_init = IvyChannelInit;
-ChannelSetUp channel_setup = IvyChannelSetUp;
-ChannelClose channel_close = IvyChannelClose;
 
 static Channel channels_list = NULL;
 
@@ -91,7 +88,7 @@ ChannelDefferedDelete ()
 	}
 }
 
-Channel IvyChannelSetUp (HANDLE fd, void *data, 
+Channel IvyChannelOpen (HANDLE fd, void *data, 
 				ChannelHandleDelete handle_delete,
 				ChannelHandleRead handle_read
 				)						
@@ -160,7 +157,7 @@ void IvyChannelInit (void)
 	channel_initialized = 1;
 }
 
-void IvyStop (void)
+void IvyChannelStop (void)
 {
 	MainLoop = 0;
 }

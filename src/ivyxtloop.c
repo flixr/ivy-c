@@ -6,8 +6,8 @@
  *
  * 	Main loop based on the X Toolkit
  *
- *	Authors: François-Régis Colin <fcolin@cena.dgac.fr>
- *		 Stéphane Chatty <chatty@cena.dgac.fr>
+ *	Authors: François-Régis Colin <fcolin@cena.fr>
+ *		 Stéphane Chatty <chatty@cena.fr>
  *
  *	$Id$
  * 
@@ -56,12 +56,8 @@ static int channel_initialized = 0;
 
 static XtAppContext    app = NULL;
 
-ChannelInit channel_init = IvyXtChannelInit;
-ChannelSetUp channel_setup = IvyXtChannelSetUp;
-ChannelClose channel_close = IvyXtChannelClose;
 
-
-void IvyXtChannelInit(void)
+void IvyChannelInit(void)
 {
 
 	if ( channel_initialized ) return;
@@ -79,7 +75,7 @@ void IvyXtChannelInit(void)
 	channel_initialized = 1;
 }
 
-void IvyXtChannelClose( Channel channel )
+void IvyChannelClose( Channel channel )
 {
 
 	if ( channel->handle_delete )
@@ -87,7 +83,9 @@ void IvyXtChannelClose( Channel channel )
 	XtRemoveInput( channel->id_read );
 	XtRemoveInput( channel->id_delete );
 }
-
+void IvyChannelStop()
+{
+}
 
 static void IvyXtHandleChannelRead( XtPointer closure, int* source, XtInputId* id )
 {
@@ -113,7 +111,7 @@ void IvyXtChannelAppContext( XtAppContext cntx )
 	app = cntx;
 }
 
-Channel IvyXtChannelSetUp(HANDLE fd, void *data,
+Channel IvyChannelOpen(HANDLE fd, void *data,
 				ChannelHandleDelete handle_delete,
 				ChannelHandleRead handle_read
 				)						
@@ -136,11 +134,7 @@ Channel IvyXtChannelSetUp(HANDLE fd, void *data,
 
 	return channel;
 }
-
-
-void
-IvyStop ()
+void IvyMainLoop(void(*hook)(void))
 {
-  /* To be implemented */
+	XtAppMainLoop (app);
 }
-

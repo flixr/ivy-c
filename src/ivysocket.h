@@ -6,7 +6,7 @@
  *
  *	Sockets
  *
- *	Authors: Francois-Regis Colin <fcolin@cena.dgac.fr>
+ *	Authors: Francois-Regis Colin <fcolin@cena.fr>
  *
  *	$Id$
  *
@@ -77,11 +77,13 @@ extern void SocketBroadcast( char *fmt, ... );
 extern Client SocketConnect( char * host, unsigned short port,
 			void *data, 
 			SocketInterpretation interpretation,
+			char terminator,
 			void (*handle_delete)(Client client, void *data)
  );
 extern Client SocketConnectAddr( struct in_addr * addr, unsigned short port, 
 			void *data, 
 			SocketInterpretation interpretation,
+			char terminator,
 			void (*handle_delete)(Client client, void *data)
 			);
 extern int SocketWaitForReply( Client client, char *buffer, int size, int delai);

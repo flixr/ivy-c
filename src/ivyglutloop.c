@@ -6,8 +6,8 @@
  *
  * 	Main loop based on GLUT ( OpenGL ) Toolkit
  *
- *	Authors: François-Régis Colin <colin@cenatoulouse.dgac.fr>
- *		 Stéphane Chatty <chatty@cenatoulouse.dgac.fr>
+ *	Authors: François-Régis Colin <colin@cena.fr>
+ *		 Stéphane Chatty <chatty@cena.fr>
  *
  *	$Id$
  * 
@@ -53,12 +53,9 @@ struct _channel {
 
 static int channel_initialized = 0;
 
-ChannelInit channel_init = IvyGlutChannelInit;
-ChannelSetUp channel_setup = IvyGlutChannelSetUp;
-ChannelClose channel_close = IvyGlutChannelClose;
 
 
-void IvyGlutChannelInit(void)
+void IvyChannelInit(void)
 {
 
 	if ( channel_initialized ) return;
@@ -69,8 +66,11 @@ void IvyGlutChannelInit(void)
 #endif
 	channel_initialized = 1;
 }
-
-void IvyGlutChannelClose( Channel channel )
+void IvyChannelStop(void)
+{
+	channel_initialized = 0;
+}
+void IvyChannelClose( Channel channel )
 {
 
 	if ( channel->handle_delete )
@@ -98,7 +98,7 @@ static void IvyGlutHandleChannelDelete( int source, GLUTInputId id, void *data )
 	(*channel->handle_delete)(channel->data);
 }
 
-Channel IvyGlutChannelSetUp(HANDLE fd, void *data,
+Channel IvyChannelOpen(HANDLE fd, void *data,
 				ChannelHandleDelete handle_delete,
 				ChannelHandleRead handle_read
 				)						
@@ -122,10 +122,8 @@ Channel IvyGlutChannelSetUp(HANDLE fd, void *data,
 	return channel;
 }
 
-
-void
-IvyStop ()
+extern void IvyMainLoop(void(*hook)(void))
 {
-  /* To be implemented */
+	glutMainLoop();
 }
 

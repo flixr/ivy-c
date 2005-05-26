@@ -4,8 +4,8 @@
  *	Copyright (C) 1997-2004
  *	Centre d'Études de la Navigation Aérienne
  *
- *	Authors: François-Régis Colin <colin@cena.dgac.fr>
- *		Stéphane Chatty <chatty@cena.dgac.fr>
+ *	Authors: François-Régis Colin <colin@cena.fr>
+ *		Stéphane Chatty <chatty@cena.fr>
  *		Yannick Jestin <jestin@cena.fr>
  *
  *	$Id$
@@ -25,5 +25,5 @@
  *	Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  */
-#define IVYMAJOR_VERSION 3
-#define IVYMINOR_VERSION 7
+#define IVYMAJOR_VERSION 4
+#define IVYMINOR_VERSION 0
