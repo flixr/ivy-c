@@ -66,7 +66,7 @@ REGEXP= -DUSE_PCRE_REGEX -DPCRE_OPT=$(PCRE_OPT)
 # on activeTCL , set #define CHANNEL to null, and add ivyloop.o in the ivytcl target,
 # see below
 CHANNEL = -DTCL_CHANNEL_INTEGRATION 
-CFLAGS = -g -Wall
+CFLAGS = -g -Wall #-DDEBUG
 
 OBJ = ivyloop.o timer.o ivysocket.o ivy.o 
 GOBJ = ivyloop.o timer.o ivysocket.o givy.o
