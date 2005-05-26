@@ -217,7 +217,7 @@ MsgCall (const char *message, MsgSndPtr msg,  Client client)
 	// pour eviter la latence ( PB de perfo detecte par ivyperf ping roudtrip )
 	offset += make_message_var( &buffer, &size, offset, "%d %d%c",Msg, msg->id, ARG_START);
 #ifdef DEBUG
-	printf( "Send matching args count %ld\n",msg->regexp.re_nsub);
+	printf( "Send matching args count %ld\n",rc-1);
 #endif
 	index=1;
 	while ( index<rc ) {
