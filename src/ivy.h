@@ -75,6 +75,7 @@ void IvyStop ();
 /* query sur les applications connectees */
 char *IvyGetApplicationName( IvyClientPtr app );
 char *IvyGetApplicationHost( IvyClientPtr app );
+char *IvyGetApplicationId( IvyClientPtr app );
 IvyClientPtr IvyGetApplication( char *name );
 char *IvyGetApplicationList();
 char **IvyGetApplicationMessages( IvyClientPtr app); /* demande de reception d'un message */

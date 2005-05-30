@@ -46,7 +46,6 @@ extern "C" {
 #endif
 
 /* General Init */
-extern void SocketInit();
 
 /* utility fonction do make vsprintf without buffer limit */
 extern int make_message(char ** buffer, int *size,  int offset, const char *fmt, va_list ap);

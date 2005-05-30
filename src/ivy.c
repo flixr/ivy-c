@@ -18,8 +18,10 @@
 
 #include <stdlib.h>
 #ifdef WIN32
+#include <windows.h>
 #else
 #include <arpa/inet.h>
+#include <sys/time.h>
 #endif
 #include <stdio.h>
 #include <string.h>
@@ -42,10 +44,9 @@
 
 #define VERSION 4
 
-#define MAX_MATCHING_ARGS 20
+#define MAX_MSG_FIELDS 200
 
-#define ARG_START '\002'
-#define ARG_END '\003'
+#define MESSAGE_SEPARATOR '\001'
 #define MESSAGE_TERMINATOR '\0'
 
 #define DEFAULT_DOMAIN 127.255.255.255
@@ -56,6 +57,12 @@
 #define str(bus) #bus
 #define GenerateIvyBus(domain,bus) str(domain)":"str(bus)
 static char* DefaultIvyBus = GenerateIvyBus(DEFAULT_DOMAIN,DEFAULT_BUS);
+
+/* syntaxe des messages */
+#define APP_ID	0
+#define MSGTYPE 1
+#define MSGID	2
+#define ARG_0	3
 
 typedef enum {
 
@@ -102,6 +109,7 @@ struct _clnt_lst {
 	Client client;			/* la socket  client */
 	MsgSndPtr msg_send;		/* liste des requetes recues */
 	char *app_name;			/* nom de l'application */
+	char *app_id;			/* identificateur unique de l'application (time-ip-port) */ 
 	unsigned short app_port;	/* port de l'application */
 };
 
@@ -147,28 +155,52 @@ static IvyClientPtr clients = 0;
 
 static const char *ready_message = 0;
 
+static char *applicationUniqueId = 0;
+/* get Current Time in milliseconds */
+static long currentTime()
+{
+        unsigned long current;
+#ifdef WIN32
+        current = GetTickCount();
+#else
+        struct timeval stamp;
+        gettimeofday( &stamp, NULL );
+        current = stamp.tv_sec * 1000 + stamp.tv_usec/1000;
+#endif
+        return  current;
+}
+
 /*
  * function like strok but do not eat consecutive separator
+ //TODO bug when empty args
  * */
 static char * nextArg( char *s, const char separator )
 {
-		static char *start = NULL;
-			static char *end = NULL;
-				if ( s ) 
-							{
-										end = s;
-												}
-					start = end;
-							
-						while ( *end && *end != separator )
-									end++;
-							if ( *end == separator ) *end++ = '\0';  
-								if ( end == start ) return NULL;
-									return start;
+	static char *start = NULL;
+	static char *end = NULL;
+	if ( s ) 
+	{
+	end = s;
+	}
+	start = end;
+					
+	while ( *end && *end != separator )
+		end++;
+	if ( *end == separator )
+	{
+		*end++ = '\0';  
+		return start;
+	}
+	if ( end == start ) return NULL;
+	return start;
 }
 static void MsgSendTo( Client client, MsgType msgtype, int id, const char *message )
 {
-	SocketSend( client, "%d %d%c%s%c", msgtype, id, ARG_START, message, MESSAGE_TERMINATOR);
+	SocketSend( client, "%s%c%d%c%d%c%s%c", 
+		applicationUniqueId, MESSAGE_SEPARATOR,
+		msgtype, MESSAGE_SEPARATOR, 
+		id, MESSAGE_SEPARATOR, 
+		message, MESSAGE_TERMINATOR);
 }
 
 static void IvyCleanup()
@@ -215,16 +247,25 @@ MsgCall (const char *message, MsgSndPtr msg,  Client client)
 	// il faut essayer d'envoyer le message en une seule fois sur la socket
 	// pour eviter au maximun de passer dans le select plusieur fois par message du protocole Ivy
 	// pour eviter la latence ( PB de perfo detecte par ivyperf ping roudtrip )
-	offset += make_message_var( &buffer, &size, offset, "%d %d%c",Msg, msg->id, ARG_START);
+	offset += make_message_var( &buffer, &size, offset, "%s%c%d%c%d",
+		applicationUniqueId, MESSAGE_SEPARATOR,
+		Msg, MESSAGE_SEPARATOR, 
+		msg->id);
 #ifdef DEBUG
-	printf( "Send matching args count %ld\n",rc-1);
+	printf( "Send matching args count %d\n",rc-1);
 #endif
 	index=1;
 	while ( index<rc ) {
-		offset += make_message_var( &buffer, &size, offset, "%.*s%c", 
+
+#ifdef DEBUG
+		printf ("Send matching arg%d '%.*s'\n",index,ovector[2*index+1]- ovector[2*index], 
+				message + ovector[2*index]);
+#endif
+		offset += make_message_var( &buffer, &size, offset, "%c%.*s",
+				MESSAGE_SEPARATOR,
 				ovector[2*index+1]- ovector[2*index],
-			    message + ovector[2*index],
-				ARG_END);
+			    message + ovector[2*index]
+				);
 		++index;
 	}
 	offset += make_message_var( &buffer, &size, offset, "%c", MESSAGE_TERMINATOR);
@@ -239,14 +280,14 @@ MsgCall (const char *message, MsgSndPtr msg,  Client client)
 	static char *buffer = NULL; /* Use satic mem to eliminate multiple call to malloc /free */
 	static int size = 0;		/* donc non reentrant !!!! */
 	int offset = 0;
-  	regmatch_t match[MAX_MATCHING_ARGS+1];
+  	regmatch_t match[MAX_MSG_FIELDS+1];
 #ifdef GNU_REGEXP
 	regmatch_t* p;
 #else
 	unsigned int i;
 #endif
 	memset( match, -1, sizeof(match )); /* work around bug !!!*/
-	if (regexec (&msg->regexp, message, MAX_MATCHING_ARGS, match, 0) != 0)
+	if (regexec (&msg->regexp, message, MAX_MSG_FIELDS, match, 0) != 0)
 		return 0;
 
 #ifdef DEBUG
@@ -255,7 +296,7 @@ MsgCall (const char *message, MsgSndPtr msg,  Client client)
 	// il faut essayer d'envoyer le message en une seule fois sur la socket
 	// pour eviter au maximun de passer dans le select plusieur fois par message du protocole Ivy
 	// pour eviter la latence ( PB detecte par ivyperf ping roudtrip )
-	offset += make_message_var( &buffer, &size, offset, "%d %d%c",Msg, msg->id, ARG_START);
+	offset += make_message_var( &buffer, &size, offset, "%d%c%d",Msg, MESSAGE_SEPARATOR, msg->id);
 	
 #ifdef DEBUG
 	printf( "Send matching args count %ld\n",msg->regexp.re_nsub);
@@ -264,10 +305,10 @@ MsgCall (const char *message, MsgSndPtr msg,  Client client)
 #ifdef GNU_REGEXP
 	p = &match[1];
 	while ( p->rm_so != -1 ) {
-		offset += make_message_var( &buffer, &size, offset, "%.*s%c", 
+		offset += make_message_var( &buffer, &size, offset, "%c%.*s", 
+				MESSAGE_SEPARATOR,
 				p->rm_eo - p->rm_so,
-			    message + p->rm_so,
-				ARG_END);
+			    message + p->rm_so);
 		++p;
 	}
 #else
@@ -352,12 +393,13 @@ static int CheckConnected( IvyClientPtr clnt )
 static void Receive( Client client, void *data, char *line )
 {
 	IvyClientPtr clnt;
-	int err,id;
+	int id;
 	MsgSndPtr snd;
 	MsgRcvPtr rcv;
 	int argc = 0;
-	char *argv[MAX_MATCHING_ARGS];
-	char *arg;
+	char *argv[MAX_MSG_FIELDS];
+	char *argptr;
+	char *appId;
 	int kind_of_msg = Bye;
 #ifndef USE_PCRE_REGEX
 	regex_t regexp;
@@ -368,52 +410,61 @@ static void Receive( Client client, void *data, char *line )
 	int erroffset;
 #endif
 
-	err = sscanf( line ,"%d %d", &kind_of_msg, &id );
-	arg = strchr( line , ARG_START );
-	if ( (err != 2) || (arg == 0)  )
+	argptr = line;
+	argptr = nextArg( argptr, MESSAGE_SEPARATOR);	
+	while ( argptr )
+	{
+		argv[argc++] = argptr;
+		argptr = nextArg( 0, MESSAGE_SEPARATOR );
+	}
+
+	appId = argv[APP_ID];
+	kind_of_msg = atoi( argv[MSGTYPE] );
+	id = atoi( argv[MSGID] );
+	
+	if ( (argc < 3)  )
 		{
 		printf("Quitting bad format  %s\n",  line);
-		MsgSendTo( client, Error, Error, "bad format request expected 'type id ...'" );
+		MsgSendTo( client, Error, Error, "bad format request expected 'appid type id ...'" );
 		MsgSendTo( client, Bye, 0, "" );
 		SocketClose( client );
 		return;
 		}
-	arg++;
 	clnt = (IvyClientPtr)data;
 	switch( kind_of_msg )
 		{
 		case Bye:
 			
 #ifdef DEBUG
-			printf("Quitting  %s\n",  line);
+			printf("Quitting  Bye %s\n",  line);
 #endif //DEBUG
 
 			SocketClose( client );
 			break;
 		case Error:
-			printf ("Received error %d %s\n",  id, arg);
+			printf ("Received error %d %s\n",  id, argv[ARG_0]);
 			break;
 		case AddRegexp:
 
 #ifdef DEBUG
-			printf("Regexp  id=%d exp='%s'\n",  id, arg);
+			printf("Regexp  id=%d exp='%s'\n",  id, argv[ARG_0]);
 #endif //DEBUG
-			if ( !CheckRegexp( arg ) )
+			if ( !CheckRegexp( argv[ARG_0] ) )
 				{
 #ifdef DEBUG
-				printf("Warning: regexp '%s' illegal, removing from %s\n",arg,ApplicationName);
+				printf("Warning: regexp '%s' illegal, removing from %s\n",argv[ARG_0],ApplicationName);
 #endif //DEBUG
 				return;
 				}
 #ifndef USE_PCRE_REGEX
-			reg = regcomp(&regexp, arg, REGCOMP_OPT|REG_EXTENDED);
+			reg = regcomp(&regexp, argv[ARG_0], REGCOMP_OPT|REG_EXTENDED);
 			if ( reg == 0 )
 				{
 				IVY_LIST_ADD( clnt->msg_send, snd )
 				if ( snd )
 					{
 					snd->id = id;
-					snd->str_regexp = strdup( arg );
+					snd->str_regexp = strdup( argv[ARG_0] );
 					snd->regexp = regexp;
 					if ( application_bind_callback )
 					  {
@@ -425,23 +476,23 @@ static void Receive( Client client, void *data, char *line )
 			{
 			char errbuf[4096];
 			regerror (reg, &regexp, errbuf, 4096);
-			printf("Error compiling '%s', %s\n", arg, errbuf);
+			printf("Error compiling '%s', %s\n", argv[ARG_0], errbuf);
 			MsgSendTo( client, Error, reg, errbuf );
 			}
 #else
-			regexp = pcre_compile(arg, PCRE_OPT,&errbuf,&erroffset,NULL);
+			regexp = pcre_compile(argv[ARG_0], PCRE_OPT,&errbuf,&erroffset,NULL);
 			if ( regexp != NULL )
 				{
 				IVY_LIST_ADD( clnt->msg_send, snd )
 				if ( snd )
 					{
 					snd->id = id;
-					snd->str_regexp = strdup( arg );
+					snd->str_regexp = strdup( argv[ARG_0] );
 					snd->regexp = regexp;
 					snd->inspect = pcre_study(regexp,0,&errbuf);
 					if (errbuf!=NULL)
 						{
-						  printf("Error studying %s, message: %s\n",arg,errbuf);
+						  printf("Error studying %s, message: %s\n",argv[ARG_0],errbuf);
 						}
 					
 					if ( application_bind_callback )
@@ -452,7 +503,7 @@ static void Receive( Client client, void *data, char *line )
 				}
 			else
 			{
-			printf("Error compiling '%s', %s\n", arg, errbuf);
+			printf("Error compiling '%s', %s\n", argv[ARG_0], errbuf);
 			MsgSendTo( client, Error, erroffset, errbuf );
 			}
 #endif
@@ -481,9 +532,9 @@ static void Receive( Client client, void *data, char *line )
 			break;
 		case StartRegexp:
 #ifdef DEBUG
-			printf("Regexp Start id=%d Application='%s'\n",  id, arg);
+			printf("Regexp Start id=%d Application='%s'\n",  id, argv[ARG_0]);
 #endif //DEBUG
-			clnt->app_name = strdup( arg );
+			clnt->app_name = strdup( argv[ARG_0] );
 			clnt->app_port = id;
 			if ( CheckConnected( clnt ) )
 			{			
@@ -517,23 +568,17 @@ static void Receive( Client client, void *data, char *line )
 		case Msg:
 			
 #ifdef DEBUG
-		printf("Message id=%d msg='%s'\n", id, arg);
+		printf("Message id=%d msg='%s'\n", id, argv[ARG_0]);
 #endif //DEBUG
 
 			IVY_LIST_EACH( msg_recv, rcv )
 				{
 				if ( id == rcv->id )
 					{
-					arg = nextArg( arg, ARG_END);	
-					while ( arg )
-						{
-						argv[argc++] = arg;
-						arg = nextArg( 0, ARG_END );
-						}
 #ifdef DEBUG
-					printf("Calling  id=%d argc=%d for %s\n", id, argc,rcv->regexp);
+					printf("Calling  id=%d argc=%d for %s\n", id, argc-ARG_0,rcv->regexp);
 #endif
-					if ( rcv->callback ) (*rcv->callback)( clnt, rcv->user_data, argc, argv );
+					if ( rcv->callback ) (*rcv->callback)( clnt, rcv->user_data, argc-ARG_0, &argv[ARG_0] );
 					return;
 					}
 				}
@@ -542,11 +587,11 @@ static void Receive( Client client, void *data, char *line )
 		case DirectMsg:
 			
 #ifdef DEBUG
-			printf("Direct Message id=%d msg='%s'\n", id, arg);
+			printf("Direct Message id=%d msg='%s'\n", id, argv[ARG_0]);
 #endif //DEBUG
 
 			if ( direct_callback)
-				(*direct_callback)( clnt, direct_user_data, id, arg );
+				(*direct_callback)( clnt, direct_user_data, id, argv[ARG_0] );
 			break;
 
 		case Die:
@@ -638,12 +683,14 @@ static void BroadcastReceive( Client client, void *data, char *line )
 	int err;
 	int version;
 	unsigned short serviceport;
+	char appname[1024];
+	char appid[1024];
 #ifdef DEBUG
 	unsigned short remoteport;
 	char *remotehost = 0;
 #endif
 
-	err = sscanf (line,"%d %hu", &version, &serviceport);
+	err = sscanf (line,"%d %hu %s %s", &version, &serviceport, appname, appid );
 	if ( err != 2 ) {
 		/* ignore the message */
 		unsigned short remoteport;
@@ -667,7 +714,7 @@ static void BroadcastReceive( Client client, void *data, char *line )
 	
 #ifdef DEBUG
 	SocketGetRemoteHost (client, &remotehost, &remoteport );
-	printf(" Broadcast de %s:%hu port %hu\n", remotehost, remoteport, serviceport );
+	printf(" Broadcast de %s:%hu port %hu %s %s\n", remotehost, remoteport, serviceport, appname, appid );
 #endif //DEBUG
 
 	/* connect to the service and send the regexp */
@@ -684,7 +731,7 @@ void IvyInit (const char *appname, const char *ready,
 			 IvyDieCallback die_callback, void *die_data
 			 )
 {
-	SocketInit();
+	IvyChannelInit();
 
 	ApplicationName = appname;
 	application_callback = callback;
@@ -830,7 +877,9 @@ void IvyStart (const char* bus)
 #ifdef DEBUG
 	fprintf (stderr,"Listening on TCP:%hu\n",ApplicationPort);
 #endif
-
+	/* generate application UniqueID (timeStamp-Ipaddress-port*/
+	applicationUniqueId = malloc(1024);
+	sprintf( applicationUniqueId , "%lu-%s-%d", currentTime(),"123456" , ApplicationPort);
 }
 
 /* desabonnements */
@@ -940,7 +989,12 @@ char *IvyGetApplicationHost( IvyClientPtr app )
 		return SocketGetPeerHost (app->client );
 	else return 0;
 }
-
+char *IvyGetApplicationId( IvyClientPtr app )
+{
+	if ( app && app->app_id ) 
+		return app->app_id;
+	else return 0;
+}
 void IvyDefaultApplicationCallback( IvyClientPtr app, void *user_data, IvyApplicationEvent event)
 {
 	switch ( event )  {

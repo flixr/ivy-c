@@ -117,10 +117,6 @@ int make_message_var(char ** buffer, int *size,  int offset, const char *fmt, ..
 	return len;
 }
 
-void SocketInit()
-{
-	IvyChannelInit();
-}
 
 static void DeleteSocket(void *data)
 {
