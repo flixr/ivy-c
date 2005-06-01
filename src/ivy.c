@@ -59,10 +59,9 @@
 static char* DefaultIvyBus = GenerateIvyBus(DEFAULT_DOMAIN,DEFAULT_BUS);
 
 /* syntaxe des messages */
-#define APP_ID	0
-#define MSGTYPE 1
-#define MSGID	2
-#define ARG_0	3
+#define MSGTYPE 0
+#define MSGID	1
+#define ARG_0	2
 
 typedef enum {
 
@@ -171,33 +170,31 @@ static long currentTime()
 }
 
 /*
- * function like strok but do not eat consecutive separator
- //TODO bug when empty args
+ * function split string in multiple string using separator
+ * empty args when consecutives separators
+ * the input string is modified separator are replaced with \0
  * */
-static char * nextArg( char *s, const char separator )
+static int SplitArg( char *s, const char separator, char **argv )
 {
-	static char *start = NULL;
-	static char *end = NULL;
-	if ( s ) 
+	char *ptr = s;
+	int argc = 0;
+	while ( *ptr ) 
 	{
-	end = s;
+		argv[argc++] = ptr;
+		while( *ptr && *ptr != separator )
+				ptr++;
+		if ( *ptr == separator )
+		{
+		*ptr++ = '\0';
+		if ( !*ptr ) /* check last arg empty */
+			argv[argc++] = ptr;
+		}
 	}
-	start = end;
-					
-	while ( *end && *end != separator )
-		end++;
-	if ( *end == separator )
-	{
-		*end++ = '\0';  
-		return start;
-	}
-	if ( end == start ) return NULL;
-	return start;
+	return argc;
 }
 static void MsgSendTo( Client client, MsgType msgtype, int id, const char *message )
 {
-	SocketSend( client, "%s%c%d%c%d%c%s%c", 
-		applicationUniqueId, MESSAGE_SEPARATOR,
+	SocketSend( client, "%d%c%d%c%s%c", 
 		msgtype, MESSAGE_SEPARATOR, 
 		id, MESSAGE_SEPARATOR, 
 		message, MESSAGE_TERMINATOR);
@@ -247,8 +244,7 @@ MsgCall (const char *message, MsgSndPtr msg,  Client client)
 	// il faut essayer d'envoyer le message en une seule fois sur la socket
 	// pour eviter au maximun de passer dans le select plusieur fois par message du protocole Ivy
 	// pour eviter la latence ( PB de perfo detecte par ivyperf ping roudtrip )
-	offset += make_message_var( &buffer, &size, offset, "%s%c%d%c%d",
-		applicationUniqueId, MESSAGE_SEPARATOR,
+	offset += make_message_var( &buffer, &size, offset, "%d%c%d",
 		Msg, MESSAGE_SEPARATOR, 
 		msg->id);
 #ifdef DEBUG
@@ -299,7 +295,7 @@ MsgCall (const char *message, MsgSndPtr msg,  Client client)
 	offset += make_message_var( &buffer, &size, offset, "%d%c%d",Msg, MESSAGE_SEPARATOR, msg->id);
 	
 #ifdef DEBUG
-	printf( "Send matching args count %ld\n",msg->regexp.re_nsub);
+	printf( "Send matching args count %d\n",msg->regexp.re_nsub);
 #endif //DEBUG
 
 #ifdef GNU_REGEXP
@@ -319,10 +315,11 @@ MsgCall (const char *message, MsgSndPtr msg,  Client client)
 			printf ("Send matching arg%d %.*s\n",i,(int)(match[i].rm_eo - match[i].rm_so), 
 				message + match[i].rm_so);
 #endif
-			offset += make_message_var( &buffer, &size, offset, "%.*s" ARG_END ,(int)(match[i].rm_eo - match[i].rm_so), 
+			offset += make_message_var( &buffer, &size, offset, "%c%.*s",
+				MESSAGE_SEPARATOR ,
+				(int)(match[i].rm_eo - match[i].rm_so), 
 				message + match[i].rm_so);
 		} else {
-			offset += make_message_var( &buffer, &size, offset, "%c", ARG_END);
 #ifdef DEBUG
 			printf( "Send matching arg%d VIDE\n",i);
 #endif //DEBUG
@@ -398,8 +395,6 @@ static void Receive( Client client, void *data, char *line )
 	MsgRcvPtr rcv;
 	int argc = 0;
 	char *argv[MAX_MSG_FIELDS];
-	char *argptr;
-	char *appId;
 	int kind_of_msg = Bye;
 #ifndef USE_PCRE_REGEX
 	regex_t regexp;
@@ -410,19 +405,12 @@ static void Receive( Client client, void *data, char *line )
 	int erroffset;
 #endif
 
-	argptr = line;
-	argptr = nextArg( argptr, MESSAGE_SEPARATOR);	
-	while ( argptr )
-	{
-		argv[argc++] = argptr;
-		argptr = nextArg( 0, MESSAGE_SEPARATOR );
-	}
+	argc = SplitArg( line, MESSAGE_SEPARATOR, argv);	
 
-	appId = argv[APP_ID];
 	kind_of_msg = atoi( argv[MSGTYPE] );
 	id = atoi( argv[MSGID] );
 	
-	if ( (argc < 3)  )
+	if ( (argc < 2)  )
 		{
 		printf("Quitting bad format  %s\n",  line);
 		MsgSendTo( client, Error, Error, "bad format request expected 'appid type id ...'" );
@@ -690,13 +678,13 @@ static void BroadcastReceive( Client client, void *data, char *line )
 	char *remotehost = 0;
 #endif
 
-	err = sscanf (line,"%d %hu %s %s", &version, &serviceport, appname, appid );
-	if ( err != 2 ) {
+	err = sscanf (line,"%d %hu %s %s\n", &version, &serviceport, appname, appid );
+	if ( err != 4 ) {
 		/* ignore the message */
 		unsigned short remoteport;
 		char *remotehost;
 		SocketGetRemoteHost (client, &remotehost, &remoteport );
-		printf (" Bad supervision message, expected 'version port' from %s:%d\n",
+		printf (" Bad supervision message, expected 'version port appname appid' from %s:%d\n",
 				remotehost, remoteport);
 		return;
 	}
@@ -805,6 +793,10 @@ void IvyStart (const char* bus)
 	else
 		SupervisionPort = DEFAULT_BUS;
 
+	/* generate application UniqueID (timeStamp-Ipaddress-port*/
+	applicationUniqueId = malloc(1024);
+	sprintf( applicationUniqueId , "%lu-%s-%d", currentTime(),"123456" , ApplicationPort);
+
 	/*
 	 * Now we have a port number it's time to initialize the UDP port
 	 */
@@ -844,7 +836,11 @@ void IvyStart (const char* bus)
 				if ( IN_MULTICAST( mask ) )
 					SocketAddMember (broadcast , mask );
 
-				SocketSendBroadcast (broadcast, mask, SupervisionPort, "%d %hu\n", VERSION, ApplicationPort); 
+				SocketSendBroadcast (broadcast, mask, SupervisionPort, "%d %hu %s %s\n", 
+					VERSION, 
+					ApplicationPort,
+					ApplicationName,
+					applicationUniqueId); 
 				numelem = 0;
 				mask = 0xffffffff;
 			}
@@ -877,9 +873,7 @@ void IvyStart (const char* bus)
 #ifdef DEBUG
 	fprintf (stderr,"Listening on TCP:%hu\n",ApplicationPort);
 #endif
-	/* generate application UniqueID (timeStamp-Ipaddress-port*/
-	applicationUniqueId = malloc(1024);
-	sprintf( applicationUniqueId , "%lu-%s-%d", currentTime(),"123456" , ApplicationPort);
+
 }
 
 /* desabonnements */

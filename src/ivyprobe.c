@@ -90,7 +90,7 @@ void BindCallback(IvyClientPtr app, void *user_data, int id, char *regexp, IvyBi
 void Callback (IvyClientPtr app, void *user_data, int argc, char *argv[])
 {
 	int i;
-	printf ("%s sent ",IvyGetApplicationName(app));
+	printf ("%s sent %d args:",IvyGetApplicationName(app),argc);
 	for  (i = 0; i < argc; i++)
 			printf(" '%s'",argv[i]);
 	printf("\n");
