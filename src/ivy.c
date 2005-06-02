@@ -137,11 +137,11 @@ static MsgDirectCallback direct_callback = 0;
 static  void *direct_user_data = 0;
 
 /* callback appele sur changement d'etat d'application */
-static IvyApplicationCallback application_callback;
+static IvyApplicationCallback application_callback = 0;
 static void *application_user_data = 0;
 
 /* callback appele sur ajout suppression de regexp */
-static IvyBindCallback application_bind_callback;
+static IvyBindCallback application_bind_callback = 0;
 static void *application_bind_data = 0;
 
 /* callback appele sur demande de terminaison d'application */
@@ -513,7 +513,7 @@ static void Receive( Client client, void *data, char *line )
 					snd->regexp = regexp;
 					if ( application_bind_callback )
 					  {
-					    (*application_bind_callback)( clnt, application_bind_data, id, snd->str_regexp, IvyAddBind );
+					    (*application_bind_callback)( clnt, application_bind_data, snd->str_regexp, IvyAddBind );
 					  }
 					}
 				}
@@ -542,7 +542,7 @@ static void Receive( Client client, void *data, char *line )
 					
 					if ( application_bind_callback )
 					  {
-					    (*application_bind_callback)( clnt, application_bind_data, id, snd->str_regexp, IvyAddBind );
+					    (*application_bind_callback)( clnt, application_bind_data, IvyAddBind, snd->str_regexp );
 					  }
 					}
 				}
@@ -563,7 +563,7 @@ static void Receive( Client client, void *data, char *line )
 				{
 				  if ( application_bind_callback )
 				    {
-				      (*application_bind_callback)( clnt, application_bind_data, id, snd->str_regexp, IvyRemoveBind );
+				      (*application_bind_callback)( clnt, application_bind_data,  IvyRemoveBind, snd->str_regexp );
 				    }
 #ifndef USE_PCRE_REGEX
 				free( snd->str_regexp );
@@ -813,19 +813,12 @@ void IvySetApplicationPriority( int priority )
 	}
 }
 
-void IvySetBindCallback(IvyBindCallback bind_callback, void *bind_data
-			)
+void IvySetBindCallback(IvyBindCallback bind_callback, void *bind_data)
 {
   application_bind_callback=bind_callback;
   application_bind_data=bind_data;
 }
 
-void IvyDelBindCallback()
-{
-  application_bind_callback=0;
-  free(application_bind_data);
-  application_bind_data=0;
-}
 void IvyClasses( int argc, const char **argv)
 {
 	messages_classes_count = argc;
@@ -1083,14 +1076,14 @@ void IvyDefaultApplicationCallback( IvyClientPtr app, void *user_data, IvyApplic
 		break;
 	}
 }
-void IvyDefaultBindCallback( IvyClientPtr app, void *user_data, int id, char* regexp,  IvyBindEvent event)
+void IvyDefaultBindCallback( IvyClientPtr app, void *user_data, IvyBindEvent event, char* regexp )
 {
 	switch ( event )  {
 	case IvyAddBind:
-		printf("Application: %s on %s add regexp %d : %s\n", IvyGetApplicationName( app ), IvyGetApplicationHost(app), id, regexp);
+		printf("Application: %s on %s add regexp %s\n", IvyGetApplicationName( app ), IvyGetApplicationHost(app), regexp);
 		break;
 	case IvyRemoveBind:
-		printf("Application: %s on %s remove regexp %d :%s\n", IvyGetApplicationName( app ), IvyGetApplicationHost(app), id, regexp);
+		printf("Application: %s on %s remove regexp %s\n", IvyGetApplicationName( app ), IvyGetApplicationHost(app), regexp);
 		break;
 	default:
 		printf("Application: %s unkown event %d\n",IvyGetApplicationName( app ), event);

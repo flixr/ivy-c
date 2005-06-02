@@ -70,21 +70,19 @@ int app_count = 0;
 int wait_count = 0;
 int fbindcallback = 0;
 
-void DirectCallback(IvyClientPtr app, void *user_data, int id, char *msg ) {
+void DirectCallback(IvyClientPtr app, void *user_data, int id, char *msg )
+{
 	printf("%s sent a direct message, id=%d, message=%s\n",
 	    IvyGetApplicationName(app),id,msg);
 }
 
-void BindCallback(IvyClientPtr app, void *user_data, int id, char *regexp, IvyBindEvent event ) {
+void BindCallback(IvyClientPtr app, void *user_data,  IvyBindEvent event, char *regexp  )
+{
   char *sevent;
-  if (event==IvyAddBind){
-    sevent="added";
-  }
-  else{
-    sevent="removed";
-  }
-	printf("%s has modified his binding, id=%d, regexp=%s is %s\n",
-	    IvyGetApplicationName(app),id,regexp,sevent);
+  sevent= event==IvyAddBind ? "added" :"removed";
+  
+  printf("%s has modified his binding, regexp=%s is %s\n",
+	    IvyGetApplicationName(app),regexp,sevent);
 }
 
 void Callback (IvyClientPtr app, void *user_data, int argc, char *argv[])
@@ -195,20 +193,21 @@ void HandleStdin (Channel channel, HANDLE fd, void *data)
 
 		} else if  (strcmp(cmd, "help") == 0) {
 			fprintf(stderr,"Commands list:\n");
-			printf("	.help				- this help\n");
-			printf("	.quit				- terminate this application\n");
-			printf("	.die appname			- send die msg to appname\n");
-			printf("	.dieall-yes-i-am-sure		- send die msg to all applis\n");
-			printf("	.direct appname	id 'arg'	- send direct msg to appname\n");
-			printf("	.where appname			- on which host is appname\n");
-			printf("	.bind 'regexp'			- add a msg to receive\n");
-			printf("	.who				- who is on the bus\n");
+			printf("	.help					 - this help\n");
+			printf("	.quit					 - terminate this application\n");
+			printf("	.die appname			 - send die msg to appname\n");
+			printf("	.dieall-yes-i-am-sure	 - send die msg to all applis\n");
+			printf("	.direct appname	id 'arg' - send direct msg to appname\n");
+			printf("	.where appname			 - on which host is appname\n");
+			printf("	.bind 'regexp'			 - add a msg to receive\n");
+			printf("	.bindcall				 - add callback to binding\n");
+			printf("	.who					 - who is on the bus\n");
 		} else if  (strcmp(cmd, "bindcall") == 0) {
 		  if (!fbindcallback) {
 		    IvySetBindCallback(BindCallback, NULL);
 		    fbindcallback=1;
 		  } else {
-		    IvyDelBindCallback();
+			IvySetBindCallback(NULL, NULL);
 		    fbindcallback=0;
 		  }
 		} else if  (strcmp(cmd, "quit") == 0) {
