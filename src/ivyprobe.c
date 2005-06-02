@@ -327,6 +327,7 @@ int main(int argc, char *argv[])
 	glutDisplayFunc(display);
 #endif
 	IvyInit (agentname, agentready, ApplicationCallback,NULL,NULL,NULL);
+	IvySetApplicationPriority( 0 ); /* lower priority */
 	IvyBindDirectMsg( DirectCallback,NULL);
 	for  (; optind < argc; optind++)
 		IvyBindMsg (Callback, NULL, argv[optind]);

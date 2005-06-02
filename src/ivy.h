@@ -25,6 +25,7 @@ extern "C" {
 /* numero par default du bus */
 
 #define DEFAULT_BUS 2010
+#define DEFAULT_PRIORITY 100;
 
 typedef struct _clnt_lst *IvyClientPtr;
 
@@ -64,7 +65,7 @@ void IvyInit(
 	 IvyDieCallback die_callback,	/* last change callback before die */
 	 void *die_data 		/* user data */
 	 );
-  
+void IvySetApplicationPriority( int priority );
 void IvySetBindCallback(	 
 			  IvyBindCallback bind_callback,
 			  void *bind_data );

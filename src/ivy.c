@@ -78,6 +78,7 @@ typedef enum {
 	Pong = 10,			/* checks the presence of the other */
 	AddBinding = 11,	/* other methods for binding message based on hash table */
 	DelBinding = 12,	/* other methods for binding message based on hash table */
+	ApplicationId = 13,	/* on start send my ID and priority */
 
 } MsgType;	
 
@@ -109,6 +110,7 @@ struct _clnt_lst {
 	MsgSndPtr msg_send;		/* liste des requetes recues */
 	char *app_name;			/* nom de l'application */
 	char *app_id;			/* identificateur unique de l'application (time-ip-port) */ 
+	int priority;			/* client priority */
 	unsigned short app_port;	/* port de l'application */
 };
 
@@ -155,6 +157,8 @@ static IvyClientPtr clients = 0;
 static const char *ready_message = 0;
 
 static char *applicationUniqueId = 0;
+static int applicationPriority = DEFAULT_PRIORITY;
+
 /* get Current Time in milliseconds */
 static long currentTime()
 {
@@ -191,6 +195,59 @@ static int SplitArg( char *s, const char separator, char **argv )
 		}
 	}
 	return argc;
+}
+/* returns < 0 if *p sorts lower than *q */
+static int keycmp (IvyClientPtr p,  IvyClientPtr q)
+{
+      return p->priority - q->priority;
+}
+
+/* merge 2 lists under dummy head item */
+static IvyClientPtr lmerge (IvyClientPtr p, IvyClientPtr q)
+{
+      IvyClientPtr r;
+	   struct _clnt_lst head;
+
+      for ( r = &head; p && q; )
+      {
+            if ( keycmp(p, q) < 0 )
+            {
+                  r = r->next = p;
+                  p = p->next;
+            }
+            else
+            {
+                  r = r->next = q;
+                  q = q->next;
+            }
+      }
+      r->next = (p ? p : q);
+      return head.next;
+}
+
+/* split list into 2 parts, sort each recursively, merge */
+static IvyClientPtr lsort (IvyClientPtr p)
+{
+      IvyClientPtr q, r;
+
+      if ( p )
+      {
+            q = p;
+            for ( r = q->next; r && (r = r->next) != NULL; r = r->next )
+                  q = q->next;
+            r = q->next;
+            q->next = NULL;
+            if ( r )
+                  p = lmerge(lsort(r), lsort(p));
+      }
+      return p;
+}
+
+
+static void SortClients()
+{
+	//TODO sort client list again priority!
+	lsort( clients );
 }
 static void MsgSendTo( Client client, MsgType msgtype, int id, const char *message )
 {
@@ -593,7 +650,17 @@ static void Receive( Client client, void *data, char *line )
 			IvyCleanup();
 			exit(0);
 			break;
-
+		case ApplicationId:
+#ifdef DEBUG
+			printf("ApplicationId  priority=%d appid='%s'\n",  id, argv[ARG_0]);
+#endif //DEBUG
+			clnt->app_id = strdup( argv[ARG_0] );
+			if ( id != clnt->priority )
+			{
+			clnt->priority = id;
+			SortClients();
+			}
+			break;
 		default:
 			printf("Receive unhandled message %s\n",  line);
 			break;
@@ -612,6 +679,8 @@ static IvyClientPtr SendService( Client client )
 		clnt->client = client;
 		clnt->app_name = strdup("Unknown");
 		clnt->app_port = 0;
+		clnt->priority = DEFAULT_PRIORITY;
+		MsgSendTo( client, ApplicationId, applicationPriority, applicationUniqueId );
 		MsgSendTo( client, StartRegexp, ApplicationPort, ApplicationName);
 		IVY_LIST_EACH(msg_recv, msg )
 			{
@@ -678,7 +747,7 @@ static void BroadcastReceive( Client client, void *data, char *line )
 	char *remotehost = 0;
 #endif
 
-	err = sscanf (line,"%d %hu %s %s\n", &version, &serviceport, appname, appid );
+	err = sscanf (line,"%d %hu %s %s\n", &version, &serviceport, appid, appname );
 	if ( err != 4 ) {
 		/* ignore the message */
 		unsigned short remoteport;
@@ -732,6 +801,16 @@ void IvyInit (const char *appname, const char *ready,
 void IvyStop()
 {
 	IvyChannelStop();
+}
+
+void IvySetApplicationPriority( int priority )
+{
+	IvyClientPtr clnt;
+	applicationPriority = priority;
+	/* Send to already connected clients */
+	IVY_LIST_EACH (clients, clnt ) {
+		MsgSendTo( clnt->client, ApplicationId, applicationPriority, applicationUniqueId);
+	}
 }
 
 void IvySetBindCallback(IvyBindCallback bind_callback, void *bind_data
@@ -839,8 +918,9 @@ void IvyStart (const char* bus)
 				SocketSendBroadcast (broadcast, mask, SupervisionPort, "%d %hu %s %s\n", 
 					VERSION, 
 					ApplicationPort,
-					ApplicationName,
-					applicationUniqueId); 
+					applicationUniqueId,
+					ApplicationName
+					); 
 				numelem = 0;
 				mask = 0xffffffff;
 			}
