@@ -43,7 +43,7 @@ TCLLIB = -ltcl$(TCLVERS)
 PCREINC = `pcre-config --cflags`
 PCRELIB = `pcre-config --libs`
 CASESENSITIVE = "yes"
-ifeq ($(CASESENSITIVE), "no")
+ifeq ($(CASESENSITIVE), "yes")
 	PCRE_OPT=PCRE_CASELESS
 	REGCOMP_OPT=REG_ICASE
 else
@@ -68,12 +68,12 @@ REGEXP= -DUSE_PCRE_REGEX -DPCRE_OPT=$(PCRE_OPT)
 CHANNEL = -DTCL_CHANNEL_INTEGRATION 
 CFLAGS = -g -Wall #-DDEBUG
 
-OBJ = ivyloop.o timer.o ivysocket.o ivy.o 
-GOBJ = ivyloop.o timer.o ivysocket.o givy.o
-XTOBJ = ivyxtloop.o ivysocket.o ivy.o
-GLIBOBJ = ivyglibloop.o ivysocket.o ivy.o
-GLUTOBJ = ivyglutloop.o ivysocket.o ivy.o
-TCLOBJ = ivytcl.o  timer.o ivysocket.o givy.o
+OBJ = ivyloop.o timer.o ivysocket.o ivybind.o ivy.o 
+GOBJ = ivyloop.o timer.o ivysocket.o ivybind.o givy.o
+XTOBJ = ivyxtloop.o ivysocket.o ivybind.o  ivy.o
+GLIBOBJ = ivyglibloop.o ivysocket.o ivybind.o ivy.o
+GLUTOBJ = ivyglutloop.o ivysocket.o ivybind.o ivy.o
+TCLOBJ = ivytcl.o  timer.o ivysocket.o ivybind.o givy.o
 # WINDOWS add ivyloop.o if TCL_CHANNEL_INTEGRATION is not set
 TARGETS = ivyprobe ivyperf ivyglibprobe ivyxtprobe 
 TARGETLIBS=libivy.so.$(MAJOR).$(MINOR) libgivy.so.$(MAJOR).$(MINOR) libxtivy.so.$(MAJOR).$(MINOR) libglibivy.so.$(MAJOR).$(MINOR) libtclivy.so.$(MAJOR).$(MINOR)
@@ -96,10 +96,13 @@ ivytcl.o: ivytcl.c
 	$(CC) -c $(CFLAGS) $(TCLINCL) $(CHANNEL) ivytcl.c
 
 ivy.o: ivy.c
-	$(CC) -c $(CFLAGS) $(REGEXP) $(PCREINC) ivy.c
+	$(CC) -c $(CFLAGS) ivy.c
+
+ivybind.o: ivybind.c
+	$(CC) -c $(CFLAGS) $(REGEXP) $(PCREINC) ivybind.c
 
 givy.o: ivy.c
-	$(CC) -c $(CFLAGS) -DGNU_REGEXP -DREGCOMP_OPT=$(REGCOMP_OPT) -o givy.o ivy.c
+	$(CC) -c $(CFLAGS) $(REGEXP) -o givy.o ivy.c
 
 ivyglutloop.o: ivyglutloop.c ivyglutloop.h
 	$(CC) -c $(CFLAGS) $(GLUTINC) ivyglutloop.c

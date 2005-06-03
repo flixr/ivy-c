@@ -28,16 +28,11 @@
 #include <stdarg.h>
 #include <ctype.h>
 
-#ifndef USE_PCRE_REGEX
-#include <regex.h>
-#else
-#define OVECSIZE 60 /* must be multiple of 3, for regexp return */
-#include <pcre.h>
-#endif
 
 #include <fcntl.h>
 
 #include "ivychannel.h"
+#include "ivybind.h"
 #include "ivysocket.h"
 #include "list.h"
 #include "ivy.h"
@@ -96,12 +91,7 @@ struct _msg_snd {			/* requete de reception d'un client */
 	MsgSndPtr next;
 	int id;
 	char *str_regexp;		/* la regexp sous forme inhumaine */
-#ifndef USE_PCRE_REGEX
-	regex_t regexp;			/* la regexp sous forme machine */
-#else
-	pcre *regexp;
-	pcre_extra *inspect;
-#endif
+	IvyBinding bind;
 };
 
 struct _clnt_lst {
@@ -276,24 +266,17 @@ static void IvyCleanup()
 	SocketClose( broadcast );
 }
 
-#ifdef USE_PCRE_REGEX
-static int
-MsgCall (const char *message, MsgSndPtr msg,  Client client)
+static int MsgCall (const char *message, MsgSndPtr msg,  Client client)
 {
 	static char *buffer = NULL; /* Use satic mem to eliminate multiple call to malloc /free */
 	static int size = 0;		/* donc non reentrant !!!! */
 	int offset = 0;
-  	int ovector[OVECSIZE];
+  	int arglen;
+	const char *arg;
 	int index;
-  	int rc=pcre_exec(
-	    msg->regexp,
-	    msg->inspect,
-	    message,
-	    strlen(message),
-	    0, /* debut */
-	    0, /* no other regexp option */
-	    ovector,
-	    OVECSIZE);
+
+	int rc = IvyBindExec( msg->bind, message );
+	
 	if (rc<1) return 0; /* no match */
 #ifdef DEBUG
 	printf( "Sending message id=%d '%s'\n",msg->id,message);
@@ -307,17 +290,16 @@ MsgCall (const char *message, MsgSndPtr msg,  Client client)
 #ifdef DEBUG
 	printf( "Send matching args count %d\n",rc-1);
 #endif
-	index=1;
+	index=0;
 	while ( index<rc ) {
 
+		IvyBindingGetMatch( msg->bind, message, index,  &arg, &arglen );
 #ifdef DEBUG
-		printf ("Send matching arg%d '%.*s'\n",index,ovector[2*index+1]- ovector[2*index], 
-				message + ovector[2*index]);
+		printf ("Send matching arg%d '%.*s'\n",arglen, arg);
 #endif
 		offset += make_message_var( &buffer, &size, offset, "%c%.*s",
 				MESSAGE_SEPARATOR,
-				ovector[2*index+1]- ovector[2*index],
-			    message + ovector[2*index]
+				arglen, arg
 				);
 		++index;
 	}
@@ -326,70 +308,7 @@ MsgCall (const char *message, MsgSndPtr msg,  Client client)
 	return 1;
 }
 
-#else  /* we don't USE_PCRE_REGEX */
-static int
-MsgCall (const char *message, MsgSndPtr msg,  Client client)
-{
-	static char *buffer = NULL; /* Use satic mem to eliminate multiple call to malloc /free */
-	static int size = 0;		/* donc non reentrant !!!! */
-	int offset = 0;
-  	regmatch_t match[MAX_MSG_FIELDS+1];
-#ifdef GNU_REGEXP
-	regmatch_t* p;
-#else
-	unsigned int i;
-#endif
-	memset( match, -1, sizeof(match )); /* work around bug !!!*/
-	if (regexec (&msg->regexp, message, MAX_MSG_FIELDS, match, 0) != 0)
-		return 0;
 
-#ifdef DEBUG
-	printf( "Sending message id=%d '%s'\n",msg->id,message);
-#endif
-	// il faut essayer d'envoyer le message en une seule fois sur la socket
-	// pour eviter au maximun de passer dans le select plusieur fois par message du protocole Ivy
-	// pour eviter la latence ( PB detecte par ivyperf ping roudtrip )
-	offset += make_message_var( &buffer, &size, offset, "%d%c%d",Msg, MESSAGE_SEPARATOR, msg->id);
-	
-#ifdef DEBUG
-	printf( "Send matching args count %d\n",msg->regexp.re_nsub);
-#endif //DEBUG
-
-#ifdef GNU_REGEXP
-	p = &match[1];
-	while ( p->rm_so != -1 ) {
-		offset += make_message_var( &buffer, &size, offset, "%c%.*s", 
-				MESSAGE_SEPARATOR,
-				p->rm_eo - p->rm_so,
-			    message + p->rm_so);
-		++p;
-	}
-#else
-	for ( i = 1; i < msg->regexp.re_nsub+1; i ++ ) {
-		if ( match[i].rm_so != -1 ) {
-#ifdef DEBUG
-			printf ("Send matching arg%d %d %d\n",i,match[i].rm_so , match[i].rm_eo);
-			printf ("Send matching arg%d %.*s\n",i,(int)(match[i].rm_eo - match[i].rm_so), 
-				message + match[i].rm_so);
-#endif
-			offset += make_message_var( &buffer, &size, offset, "%c%.*s",
-				MESSAGE_SEPARATOR ,
-				(int)(match[i].rm_eo - match[i].rm_so), 
-				message + match[i].rm_so);
-		} else {
-#ifdef DEBUG
-			printf( "Send matching arg%d VIDE\n",i);
-#endif //DEBUG
-		}
-	}
-#endif
-
-	offset += make_message_var( &buffer, &size, offset, "%c", MESSAGE_TERMINATOR);
-	SocketSendRaw(client, buffer , offset);
-	return 1;
-}
-#endif /* USE_PCRE_REGEX */
-	
 static int
 ClientCall (IvyClientPtr clnt, const char *message)
 {
@@ -453,14 +372,7 @@ static void Receive( Client client, void *data, char *line )
 	int argc = 0;
 	char *argv[MAX_MSG_FIELDS];
 	int kind_of_msg = Bye;
-#ifndef USE_PCRE_REGEX
-	regex_t regexp;
-	int reg;
-#else
-	pcre *regexp;
-	const char *errbuf;
-	int erroffset;
-#endif
+	IvyBinding bind;
 
 	argc = SplitArg( line, MESSAGE_SEPARATOR, argv);	
 
@@ -501,45 +413,15 @@ static void Receive( Client client, void *data, char *line )
 #endif //DEBUG
 				return;
 				}
-#ifndef USE_PCRE_REGEX
-			reg = regcomp(&regexp, argv[ARG_0], REGCOMP_OPT|REG_EXTENDED);
-			if ( reg == 0 )
+			bind = IvyBindingCompile( argv[ARG_0] );
+			if ( bind != NULL )
 				{
 				IVY_LIST_ADD( clnt->msg_send, snd )
 				if ( snd )
 					{
 					snd->id = id;
 					snd->str_regexp = strdup( argv[ARG_0] );
-					snd->regexp = regexp;
-					if ( application_bind_callback )
-					  {
-					    (*application_bind_callback)( clnt, application_bind_data, snd->str_regexp, IvyAddBind );
-					  }
-					}
-				}
-			else
-			{
-			char errbuf[4096];
-			regerror (reg, &regexp, errbuf, 4096);
-			printf("Error compiling '%s', %s\n", argv[ARG_0], errbuf);
-			MsgSendTo( client, Error, reg, errbuf );
-			}
-#else
-			regexp = pcre_compile(argv[ARG_0], PCRE_OPT,&errbuf,&erroffset,NULL);
-			if ( regexp != NULL )
-				{
-				IVY_LIST_ADD( clnt->msg_send, snd )
-				if ( snd )
-					{
-					snd->id = id;
-					snd->str_regexp = strdup( argv[ARG_0] );
-					snd->regexp = regexp;
-					snd->inspect = pcre_study(regexp,0,&errbuf);
-					if (errbuf!=NULL)
-						{
-						  printf("Error studying %s, message: %s\n",argv[ARG_0],errbuf);
-						}
-					
+					snd->bind = bind;	
 					if ( application_bind_callback )
 					  {
 					    (*application_bind_callback)( clnt, application_bind_data, IvyAddBind, snd->str_regexp );
@@ -548,10 +430,12 @@ static void Receive( Client client, void *data, char *line )
 				}
 			else
 			{
-			printf("Error compiling '%s', %s\n", argv[ARG_0], errbuf);
-			MsgSendTo( client, Error, erroffset, errbuf );
+			int offset;
+			const char *errbuf;
+			IvyBindingGetCompileError( &offset, &errbuf );
+			MsgSendTo( client, Error, offset, errbuf );
 			}
-#endif
+
 			break;
 		case DelRegexp:
 #ifdef DEBUG
@@ -565,13 +449,9 @@ static void Receive( Client client, void *data, char *line )
 				    {
 				      (*application_bind_callback)( clnt, application_bind_data,  IvyRemoveBind, snd->str_regexp );
 				    }
-#ifndef USE_PCRE_REGEX
 				free( snd->str_regexp );
-#else
-				free( snd->str_regexp );
-				if (snd->inspect!=NULL) pcre_free(snd->inspect);
-				pcre_free(snd->regexp);
-#endif
+				IvyBindingFree( snd->bind );
+
 				IVY_LIST_REMOVE( clnt->msg_send, snd  );
 				}
 			break;
