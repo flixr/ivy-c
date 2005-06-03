@@ -42,8 +42,8 @@ TCLLIB = -ltcl$(TCLVERS)
 #TCLLIB = -framework Tcl
 PCREINC = `pcre-config --cflags`
 PCRELIB = `pcre-config --libs`
-CASESENSITIVE = "yes"
-ifeq ($(CASESENSITIVE), "yes")
+CASESENSITIVE = "no"
+ifeq ($(CASESENSITIVE), "no")
 	PCRE_OPT=PCRE_CASELESS
 	REGCOMP_OPT=REG_ICASE
 else
