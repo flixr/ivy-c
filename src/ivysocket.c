@@ -641,7 +641,18 @@ void SocketSendBroadcast (Client client, unsigned long host, unsigned short port
 		perror ("*** send ***");
 	}	va_end (ap );
 }
-
+void SocketKeepAlive( Client client,int keepalive )
+{
+	int alive = keepalive;
+	if (setsockopt(client->fd,SOL_SOCKET,SO_KEEPALIVE,(char*)&alive,sizeof(alive)) < 0)
+		{
+#ifdef WIN32
+		fprintf(stderr," setsockopt %d\n",WSAGetLastError());
+#endif
+		perror ("*** set socket option SO_KEEPALIVE ***");
+		exit(0);
+		} 
+}
 /* Socket Multicast */
 
 int SocketAddMember(Client client, unsigned long host )

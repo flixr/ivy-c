@@ -65,7 +65,7 @@ extern unsigned short SocketServerGetPort( Server server );
 extern void SocketServerClose( Server server );
 
 /* Client Part */
-
+extern void SocketKeepAlive( Client client,int keepalive );
 extern void SocketClose( Client client );
 extern void SocketSend( Client client, char *fmt, ... );
 extern void SocketSendRaw( Client client, char *buffer, int len );

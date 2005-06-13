@@ -309,8 +309,7 @@ static int MsgCall (const char *message, MsgSndPtr msg,  Client client)
 }
 
 
-static int
-ClientCall (IvyClientPtr clnt, const char *message)
+static int ClientCall (IvyClientPtr clnt, const char *message)
 {
 	MsgSndPtr msg;
 	int match_count = 0;
@@ -555,6 +554,7 @@ static IvyClientPtr SendService( Client client )
 	IVY_LIST_ADD( clients, clnt )
 	if ( clnt )
 		{
+		SocketKeepAlive ( client, 1 );
 		clnt->msg_send = 0;
 		clnt->client = client;
 		clnt->app_name = strdup("Unknown");
@@ -610,7 +610,6 @@ static void *ClientCreate( Client client )
 	SocketGetRemoteHost( client, &remotehost, &remoteport );
 	printf("Connexion de %s:%hu\n", remotehost, remoteport );
 #endif //DEBUG
-
 	return SendService (client);
 }
 
