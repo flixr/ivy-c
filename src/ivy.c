@@ -362,7 +362,7 @@ static int CheckConnected( IvyClientPtr clnt )
 	return 0;
 }
 
-static void Receive( Client client, void *data, char *line )
+static char* Receive( Client client, void *data, char *message, unsigned long len )
 {
 	IvyClientPtr clnt;
 	int id;
@@ -372,19 +372,27 @@ static void Receive( Client client, void *data, char *line )
 	char *argv[MAX_MSG_FIELDS];
 	int kind_of_msg = Bye;
 	IvyBinding bind;
+	char *ptr_end;
 
-	argc = SplitArg( line, MESSAGE_SEPARATOR, argv);	
+	ptr_end = memchr (message, MESSAGE_TERMINATOR,  len );
+	if ( !ptr_end )
+	{
+		return ptr_end;
+	}
+	*ptr_end ='\0';
+
+	argc = SplitArg( message, MESSAGE_SEPARATOR, argv);	
 
 	kind_of_msg = atoi( argv[MSGTYPE] );
 	id = atoi( argv[MSGID] );
 	
 	if ( (argc < 2)  )
 		{
-		printf("Quitting bad format  %s\n",  line);
+		printf("Quitting bad format  %s\n",  message);
 		MsgSendTo( client, Error, Error, "bad format request expected 'appid type id ...'" );
 		MsgSendTo( client, Bye, 0, "" );
 		SocketClose( client );
-		return;
+		return ptr_end;
 		}
 	clnt = (IvyClientPtr)data;
 	switch( kind_of_msg )
@@ -410,7 +418,7 @@ static void Receive( Client client, void *data, char *line )
 #ifdef DEBUG
 				printf("Warning: regexp '%s' illegal, removing from %s\n",argv[ARG_0],ApplicationName);
 #endif //DEBUG
-				return;
+				return ptr_end;
 				}
 			bind = IvyBindingCompile( argv[ARG_0] );
 			if ( bind != NULL )
@@ -503,7 +511,7 @@ static void Receive( Client client, void *data, char *line )
 					printf("Calling  id=%d argc=%d for %s\n", id, argc-ARG_0,rcv->regexp);
 #endif
 					if ( rcv->callback ) (*rcv->callback)( clnt, rcv->user_data, argc-ARG_0, &argv[ARG_0] );
-					return;
+					return ptr_end;
 					}
 				}
 			printf("Callback Message id=%d not found!!!'\n", id);
@@ -541,10 +549,10 @@ static void Receive( Client client, void *data, char *line )
 			}
 			break;
 		default:
-			printf("Receive unhandled message %s\n",  line);
+			printf("Receive unhandled message %s\n",  message);
 			break;
 		}
-		
+	return ptr_end;
 }
 
 static IvyClientPtr SendService( Client client )
@@ -613,7 +621,7 @@ static void *ClientCreate( Client client )
 	return SendService (client);
 }
 
-static void BroadcastReceive( Client client, void *data, char *line )
+static char* BroadcastReceive( Client client, void *data, char *message, unsigned long len)
 {	
 	Client app;
 	int err;
@@ -626,7 +634,16 @@ static void BroadcastReceive( Client client, void *data, char *line )
 	char *remotehost = 0;
 #endif
 
-	err = sscanf (line,"%d %hu %s %s\n", &version, &serviceport, appid, appname );
+	char *ptr_end;
+
+	ptr_end = memchr (message, '\n',  len );
+	if ( !ptr_end )
+	{
+		return ptr_end;
+	}
+	*ptr_end ='\0';
+
+	err = sscanf (message,"%d %hu %s %s\n", &version, &serviceport, appid, appname );
 	if ( err != 4 ) {
 		/* ignore the message */
 		unsigned short remoteport;
@@ -634,7 +651,7 @@ static void BroadcastReceive( Client client, void *data, char *line )
 		SocketGetRemoteHost (client, &remotehost, &remoteport );
 		printf (" Bad supervision message, expected 'version port appname appid' from %s:%d\n",
 				remotehost, remoteport);
-		return;
+		return ptr_end;
 	}
 	if ( version != VERSION ) {
 		/* ignore the message */
@@ -643,10 +660,11 @@ static void BroadcastReceive( Client client, void *data, char *line )
 		SocketGetRemoteHost (client, &remotehost, &remoteport );
 		fprintf (stderr, "Bad Ivy version, expected %d and got %d from %s:%d\n",
 			VERSION, version, remotehost, remoteport);
-		return;
+		return ptr_end;
 	}
-	/* check if we received our own message. SHOULD ALSO TEST THE HOST */
-	if (serviceport == ApplicationPort) return;
+	/* check if we received our own message */
+	if (strcmp( appid,applicationUniqueId )== 0) 
+		return ptr_end;
 	
 #ifdef DEBUG
 	SocketGetRemoteHost (client, &remotehost, &remoteport );
@@ -654,12 +672,13 @@ static void BroadcastReceive( Client client, void *data, char *line )
 #endif //DEBUG
 
 	/* connect to the service and send the regexp */
-	app = SocketConnectAddr(SocketGetRemoteAddr(client), serviceport, 0, Receive, MESSAGE_TERMINATOR, ClientDelete );
+	app = SocketConnectAddr(SocketGetRemoteAddr(client), serviceport, 0, Receive, ClientDelete );
 	if (app) {
 		IvyClientPtr clnt;
 		clnt = SendService( app );
 		SocketSetData( app, clnt);
 	}
+	return ptr_end;
 }
 
 void IvyInit (const char *appname, const char *ready, 

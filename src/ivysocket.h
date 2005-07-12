@@ -53,13 +53,15 @@ extern int make_message_var(char ** buffer, int *size,  int offset, const char *
 
 /* Forward def */
 typedef struct _client *Client;
-typedef void (*SocketInterpretation) (Client client, void *data, char *ligne);
+typedef char* (*SocketInterpretation) (Client client, void *data, char *ligne, unsigned long len);
+typedef void* (*SocketCreate) (Client client);
+typedef void (*SocketDelete) (Client client, void *data);
 
 /* Server Part */
 typedef struct _server *Server;
 extern Server SocketServer(unsigned short port, 
-	void*(*create)(Client client),
-	void(*handle_delete)(Client client, void *data),
+	SocketCreate create,
+	SocketDelete handle_delete,
 	SocketInterpretation interpretation);
 extern unsigned short SocketServerGetPort( Server server );
 extern void SocketServerClose( Server server );
@@ -76,17 +78,13 @@ extern void SocketBroadcast( char *fmt, ... );
 extern Client SocketConnect( char * host, unsigned short port,
 			void *data, 
 			SocketInterpretation interpretation,
-			char terminator,
-			void (*handle_delete)(Client client, void *data)
- );
+			SocketDelete handle_delete
+			);
 extern Client SocketConnectAddr( struct in_addr * addr, unsigned short port, 
 			void *data, 
 			SocketInterpretation interpretation,
-			char terminator,
-			void (*handle_delete)(Client client, void *data)
+			SocketDelete handle_delete
 			);
-extern int SocketWaitForReply( Client client, char *buffer, int size, int delai);
-
 /* Socket UDP */
 /* Creation d'une socket en mode non connecte */
 /* et ecoute des messages */

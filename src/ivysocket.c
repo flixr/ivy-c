@@ -48,10 +48,9 @@ struct _server {
 	HANDLE fd;
 	Channel channel;
 	unsigned short port;
-	void *(*create)(Client client);
-	void (*handle_delete)(Client client, void *data);
+	SocketCreate create;
+	SocketDelete handle_delete;
 	SocketInterpretation interpretation;
-	char terminator;	/* character delimiter of the client message */ 
 };
 
 struct _client {
@@ -61,8 +60,7 @@ struct _client {
 	unsigned short port;
 	struct sockaddr_in from;
 	SocketInterpretation interpretation;
-	void (*handle_delete)(Client client, void *data);
-	char terminator;	/* character delimiter of the message */ 
+	SocketDelete handle_delete;
 	long buffer_size;
 	char *buffer;		/* dynamicaly reallocated */
 	char *ptr;
@@ -143,7 +141,7 @@ static void HandleSocket (Channel channel, HANDLE fd, void *data)
 {
 	Client client = (Client)data;
 	char *ptr;
-	char *ptr_nl;
+	char *ptr_end;
 	long nb_to_read = 0;
 	long nb;
 	socklen_t len;
@@ -175,16 +173,18 @@ static void HandleSocket (Channel channel, HANDLE fd, void *data)
 	}
 	client->ptr += nb;
 	ptr = client->buffer;
-	while ((ptr_nl = memchr (ptr, client->terminator,  client->ptr - ptr )))
+	if (! client->interpretation )
+	{
+		client->ptr = client->buffer;
+		fprintf (stderr,"Socket No interpretation function ??? skipping data\n");
+		return;
+	}
+	while ((ptr_end = (*client->interpretation) (client, client->data, ptr, client->ptr - ptr )))
 		{
-		*ptr_nl ='\0';
-		if (client->interpretation )
-			(*client->interpretation) (client, client->data, ptr );
-			else fprintf (stderr,"Socket No interpretation function ???\n");
-		ptr = ++ptr_nl;
+		ptr = ++ptr_end;
 		}
 	if (ptr < client->ptr )
-		{ /* recopie ligne incomplete au debut du buffer */
+		{ /* recopie message incomplet au debut du buffer */
 		len = client->ptr - ptr;
 		memcpy (client->buffer, ptr, len  );
 		client->ptr = client->buffer + len;
@@ -228,7 +228,6 @@ static void HandleServer(Channel channel, HANDLE fd, void *data)
 		fprintf(stderr,"HandleSocket Buffer Memory Alloc Error\n");
 		exit(0);
 		}
-	client->terminator = server->terminator;
 	client->from = remote2;
 	client->fd = ns;
 	client->channel = IvyChannelOpen (ns, client,  DeleteSocket, HandleSocket );
@@ -239,9 +238,9 @@ static void HandleServer(Channel channel, HANDLE fd, void *data)
 }
 
 Server SocketServer(unsigned short port, 
-	void*(*create)(Client client),
-	void(*handle_delete)(Client client, void *data),
-	void(*interpretation) (Client client, void *data, char *ligne))
+	SocketCreate create,
+	SocketDelete handle_delete,
+	SocketInterpretation interpretation )
 {
 	Server server;
 	HANDLE fd;
@@ -427,8 +426,7 @@ Ouverture d'un canal TCP/IP en mode client
 Client SocketConnect (char * host, unsigned short port, 
 			void *data, 
 			SocketInterpretation interpretation,
-			char terminator,
-			void (*handle_delete)(Client client, void *data)
+			SocketDelete handle_delete
 			)
 {
 	struct hostent *rhost;
@@ -437,14 +435,13 @@ Client SocketConnect (char * host, unsigned short port,
 		fprintf(stderr, "Erreur %s Calculateur inconnu !\n",host);
 		 return NULL;
 	}
-	return SocketConnectAddr ((struct in_addr*)(rhost->h_addr), port, data, interpretation, terminator, handle_delete);
+	return SocketConnectAddr ((struct in_addr*)(rhost->h_addr), port, data, interpretation, handle_delete);
 }
 
 Client SocketConnectAddr (struct in_addr * addr, unsigned short port, 
 			  void *data, 
 			  SocketInterpretation interpretation,
-			  char terminator,
-			  void (*handle_delete)(Client client, void *data)
+			  SocketDelete handle_delete
 			  )
 {
 	HANDLE handle;
@@ -479,7 +476,6 @@ Client SocketConnectAddr (struct in_addr * addr, unsigned short port,
 		fprintf(stderr,"HandleSocket Buffer Memory Alloc Error\n");
 		exit(0);
 		}
-	client->terminator = terminator;
 	client->fd = handle;
 	client->channel = IvyChannelOpen (handle, client,  DeleteSocket, HandleSocket );
 	client->interpretation = interpretation;
@@ -490,59 +486,6 @@ Client SocketConnectAddr (struct in_addr * addr, unsigned short port,
 	client->from.sin_addr = *addr;
 	client->from.sin_port = htons (port);
 	return client;
-}
-// TODO factoriser avec HandleRead !!!!
-int SocketWaitForReply (Client client, char *buffer, int size, int delai)
-{
-	fd_set rdset;
-	struct timeval timeout;
-	struct timeval *timeoutptr = &timeout;
-	int ready;
-	char *ptr;
-	char *ptr_nl;
-	long nb_to_read = 0;
-	long nb;
-	HANDLE fd;
-
-	fd = client->fd;
-	ptr = buffer;
-	timeout.tv_sec = delai;
-	timeout.tv_usec = 0;
-   	do {
-		/* limitation taille buffer */
-		nb_to_read = size - (ptr - buffer );
-		if (nb_to_read == 0 )
-			{
-			fprintf(stderr, "Erreur message trop long sans LF\n");
-			ptr  = buffer;
-			return -1;
-			}
-		FD_ZERO (&rdset );
-		FD_SET (fd, &rdset );
-		ready = select(fd+1, &rdset, 0,  0, timeoutptr);
-		if (ready < 0 )
-			{
-			perror("select");
-			return -1;
-			}
-		if (ready == 0 )
-			{
-			return -2;
-			}
-		if ((nb = recv (fd , ptr, nb_to_read, 0 )) < 0)
-			{
-			perror(" Read Socket ");
-			return -1;
-			}
-		if (nb == 0 )
-			return 0;
-
-		ptr += nb;
-		*ptr = '\0';
-		ptr_nl = strchr (buffer, client->terminator );
-	} while (!ptr_nl );
-	*ptr_nl = '\0';
-	return (ptr_nl - buffer);
 }
 
 /* Socket UDP */
@@ -608,7 +551,6 @@ Client SocketBroadcastCreate (
 		fprintf(stderr,"HandleSocket Buffer Memory Alloc Error\n");
 		exit(0);
 		}
-	client->terminator = '\n';
 	client->fd = handle;
 	client->channel = IvyChannelOpen (handle, client,  DeleteSocket, HandleSocket );
 	client->interpretation = interpretation;
