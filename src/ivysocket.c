@@ -61,9 +61,14 @@ struct _client {
 	struct sockaddr_in from;
 	SocketInterpretation interpretation;
 	SocketDelete handle_delete;
-	long buffer_size;
+	/* input buffer */
+	int buffer_size;
 	char *buffer;		/* dynamicaly reallocated */
 	char *ptr;
+	/* output buffer */
+	int out_buffer_size;
+	char *out_buffer;		/* dynamicaly reallocated */
+	
 	void *data;
 };
 
@@ -78,7 +83,7 @@ WSADATA	WsaData;
 int make_message(char ** buffer, int *size,  int offset, const char *fmt, va_list ap)
 {
     /* Guess we need no more than BUFFER_INIT_SIZE bytes. */
-    int n;
+    long n;
 	if ( *size == 0 || *buffer == NULL )
 		{
 		*size = BUFFER_SIZE;
@@ -108,14 +113,12 @@ int make_message(char ** buffer, int *size,  int offset, const char *fmt, va_lis
 int make_message_var(char ** buffer, int *size,  int offset, const char *fmt, ... )
 {
 	va_list ap;
-	int len;
+	long len;
 	va_start (ap, fmt );
 	len = make_message (buffer,size, offset, fmt, ap );
 	va_end (ap );
 	return len;
 }
-
-
 static void DeleteSocket(void *data)
 {
 	Client client = (Client )data;
@@ -156,7 +159,7 @@ static void HandleSocket (Channel channel, HANDLE fd, void *data)
 		fprintf(stderr,"HandleSocket Buffer Memory Alloc Error\n");
 		exit(0);
 		}
-		fprintf(stderr, "Buffer Limit reached realloc new size %ld\n", client->buffer_size );
+		fprintf(stderr, "Buffer Limit reached realloc new size %d\n", client->buffer_size );
 		nb_to_read = client->buffer_size - (client->ptr - client->buffer );
 	}
 	len = sizeof (client->from );
@@ -194,6 +197,36 @@ static void HandleSocket (Channel channel, HANDLE fd, void *data)
 		client->ptr = client->buffer;
 		}
 }
+static Client CreateClient(int handle)
+{
+	Client client;
+	IVY_LIST_ADD (clients_list, client );
+	if (!client )
+		{
+		fprintf(stderr,"NOK Memory Alloc Error\n");
+		close ( handle );
+		exit(0);
+		}
+	client->buffer_size = BUFFER_SIZE;
+	client->buffer = malloc( client->buffer_size );
+	if (!client->buffer )
+		{
+		fprintf(stderr,"HandleSocket Buffer Memory Alloc Error\n");
+		exit(0);
+		}
+	client->ptr = client->buffer;
+	client->out_buffer_size = BUFFER_SIZE;
+	client->out_buffer = malloc( client->out_buffer_size );
+	if (!client->buffer )
+		{
+		fprintf(stderr,"HandleSocket Buffer Memory Alloc Error\n");
+		exit(0);
+		}
+	client->fd = handle;
+	client->channel = IvyChannelOpen (client->fd, client,  DeleteSocket, HandleSocket );
+
+	return client;
+}
 
 static void HandleServer(Channel channel, HANDLE fd, void *data)
 {
@@ -214,28 +247,13 @@ static void HandleServer(Channel channel, HANDLE fd, void *data)
 #ifdef DEBUG
 	printf( "Accepting Connection ret\n");
 #endif //DEBUG
-	IVY_LIST_ADD (clients_list, client );
-	if (!client )
-		{
-		fprintf(stderr,"NOK Memory Alloc Error\n");
-		close (fd );
-		exit(0);
-		}
-	client->buffer_size = BUFFER_SIZE;
-	client->buffer = malloc( client->buffer_size );
-	if (!client->buffer )
-		{
-		fprintf(stderr,"HandleSocket Buffer Memory Alloc Error\n");
-		exit(0);
-		}
+	client = CreateClient(ns);
 	client->from = remote2;
-	client->fd = ns;
-	client->channel = IvyChannelOpen (ns, client,  DeleteSocket, HandleSocket );
 	client->interpretation = server->interpretation;
-	client->ptr = client->buffer;
 	client->handle_delete = server->handle_delete;
 	client->data = (*server->create) (client );
 }
+
 
 Server SocketServer(unsigned short port, 
 	SocketCreate create,
@@ -386,15 +404,13 @@ void SocketSetData (Client client, void *data )
 
 void SocketSend (Client client, char *fmt, ... )
 {
-	static char *buffer = NULL; /* Use satic mem to eliminate multiple call to malloc /free */
-	static int size = 0;		/* donc non reentrant !!!! */
-	va_list ap;
 	int len;
+	va_list ap;
 	if (!client)
 		return;
 	va_start (ap, fmt );
-	len = make_message (&buffer,&size, 0, fmt, ap );
-	SocketSendRaw (client, buffer, len );
+	len = make_message (&client->out_buffer, &client->out_buffer_size, 0, fmt, ap );
+	SocketSendRaw (client, client->out_buffer, len );
 	va_end (ap );
 }
 
@@ -403,20 +419,18 @@ void *SocketGetData (Client client )
 	return client ? client->data : 0;
 }
 
-void SocketBroadcast ( char *fmt, ... )
+void SocketSendToAll ( char *fmt, ... )
 {
 	Client client;
-	static char *buffer = NULL; /* Use satic mem to eliminate multiple call to malloc /free */
-	static int size = 0;		/* donc non reentrant !!!! */
 	va_list ap;
 	int len;
 	
 	va_start (ap, fmt );
-	len = make_message (&buffer, &size, 0, fmt, ap );
+	len = make_message (&client->out_buffer, &client->out_buffer_size, 0, fmt, ap );
 	va_end (ap );
 	IVY_LIST_EACH (clients_list, client )
 		{
-		SocketSendRaw (client, buffer, len );
+		SocketSendRaw (client, client->out_buffer, len );
 		}
 }
 
@@ -462,26 +476,10 @@ Client SocketConnectAddr (struct in_addr * addr, unsigned short port,
 		return NULL;
 	};
 
-	IVY_LIST_ADD (clients_list, client );
-	if (!client ) {
-			fprintf(stderr,"NOK Memory Alloc Error\n");
-			close (handle );
-			exit(0);
-	}
-	
-	client->buffer_size = BUFFER_SIZE;
-	client->buffer = malloc( client->buffer_size );
-	if (!client->buffer )
-		{
-		fprintf(stderr,"HandleSocket Buffer Memory Alloc Error\n");
-		exit(0);
-		}
-	client->fd = handle;
-	client->channel = IvyChannelOpen (handle, client,  DeleteSocket, HandleSocket );
+	client = CreateClient(handle);
 	client->interpretation = interpretation;
-	client->ptr = client->buffer;
-	client->data = data;
 	client->handle_delete = handle_delete;
+	client->data = data;
 	client->from.sin_family = AF_INET;
 	client->from.sin_addr = *addr;
 	client->from.sin_port = htons (port);
@@ -537,41 +535,33 @@ Client SocketBroadcastCreate (
 			return NULL;
 		};
 
-	IVY_LIST_ADD(clients_list, client );
-	if (!client ) {
-		fprintf(stderr,"NOK Memory Alloc Error\n");
-		close (handle );
-		exit(0);
-	}
-	
-	client->buffer_size = BUFFER_SIZE;
-	client->buffer = malloc( client->buffer_size );
-	if (!client->buffer )
-		{
-		fprintf(stderr,"HandleSocket Buffer Memory Alloc Error\n");
-		exit(0);
-		}
-	client->fd = handle;
-	client->channel = IvyChannelOpen (handle, client,  DeleteSocket, HandleSocket );
+	client = CreateClient(handle);
 	client->interpretation = interpretation;
-	client->ptr = client->buffer;
 	client->data = data;
 	return client;
 }
 
 void SocketSendBroadcast (Client client, unsigned long host, unsigned short port, char *fmt, ... )
 {
-	struct sockaddr_in remote;
-	static char *buffer = NULL; /* Use satic mem to eliminate multiple call to malloc /free */
-	static int size = 0;		/* donc non reentrant !!!! */
 	va_list ap;
-	int err,len;
+	int len;
 
 	if (!client)
 		return;
 
 	va_start (ap, fmt );
-	len = make_message (&buffer, &size, 0, fmt, ap );
+	len = make_message (&client->out_buffer, &client->out_buffer_size, 0, fmt, ap );
+	SocketSendBroadcastRaw( client, host, port, client->out_buffer, len );
+	va_end (ap );
+}
+void SocketSendBroadcastRaw (Client client, unsigned long host, unsigned short port, char *buffer, int len )
+{
+	struct sockaddr_in remote;
+	int err;
+
+	if (!client)
+		return;
+
 	/* Send UDP packet to the dest */
 	remote.sin_family = AF_INET;
 	remote.sin_addr.s_addr = htonl (host );
@@ -581,7 +571,7 @@ void SocketSendBroadcast (Client client, unsigned long host, unsigned short port
 			(struct sockaddr *)&remote,sizeof(remote));
 	if (err != len) {
 		perror ("*** send ***");
-	}	va_end (ap );
+	}
 }
 void SocketKeepAlive( Client client,int keepalive )
 {

@@ -53,7 +53,7 @@ extern int make_message_var(char ** buffer, int *size,  int offset, const char *
 
 /* Forward def */
 typedef struct _client *Client;
-typedef char* (*SocketInterpretation) (Client client, void *data, char *ligne, unsigned long len);
+typedef char* (*SocketInterpretation) (Client client, void *data, char *ligne, unsigned int len);
 typedef void* (*SocketCreate) (Client client);
 typedef void (*SocketDelete) (Client client, void *data);
 
@@ -74,7 +74,7 @@ extern void SocketSendRaw( Client client, char *buffer, int len );
 extern char *SocketGetPeerHost( Client client );
 extern void SocketSetData( Client client, void *data );
 extern void *SocketGetData( Client client );
-extern void SocketBroadcast( char *fmt, ... );
+extern void SocketSendToAll( char *fmt, ... );
 extern Client SocketConnect( char * host, unsigned short port,
 			void *data, 
 			SocketInterpretation interpretation,
@@ -101,6 +101,7 @@ extern struct in_addr * SocketGetRemoteAddr( Client client );
 extern void SocketGetRemoteHost (Client client, char **host, unsigned short *port );
 /* emmission d'un broadcast UDP */
 extern void SocketSendBroadcast( Client client, unsigned long host, unsigned short port, char *fmt, ... );
+extern void SocketSendBroadcastRaw( Client client, unsigned long host, unsigned short port, char *buffer, int len );
 
 #ifdef __cplusplus
 }

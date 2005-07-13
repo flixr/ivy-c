@@ -362,7 +362,7 @@ static int CheckConnected( IvyClientPtr clnt )
 	return 0;
 }
 
-static char* Receive( Client client, void *data, char *message, unsigned long len )
+static char* Receive( Client client, void *data, char *message, unsigned int len )
 {
 	IvyClientPtr clnt;
 	int id;
@@ -621,7 +621,7 @@ static void *ClientCreate( Client client )
 	return SendService (client);
 }
 
-static char* BroadcastReceive( Client client, void *data, char *message, unsigned long len)
+static char* BroadcastReceive( Client client, void *data, char *message, unsigned int len)
 {	
 	Client app;
 	int err;
