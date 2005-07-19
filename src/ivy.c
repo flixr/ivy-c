@@ -41,8 +41,7 @@
 
 #define MAX_MSG_FIELDS 200
 
-#define MESSAGE_SEPARATOR '\001'
-#define MESSAGE_TERMINATOR '\0'
+#define MESSAGE_SEPARATOR '\001' /* TODO remove use Bin args tree */
 
 #define DEFAULT_DOMAIN 127.255.255.255
 
@@ -261,12 +260,6 @@ static void MsgSendTo( Client client, MsgType msgtype, int id, const char *messa
 	strncpy( ptr, message , len_arg);
 	}
 	SocketSendRaw( client, packet, len );
-#ifdef OLD
-	SocketSend( client, "%d%c%d%c%s%c", 
-		msgtype, MESSAGE_SEPARATOR, 
-		id, MESSAGE_SEPARATOR, 
-		message, MESSAGE_TERMINATOR);
-#endif
 	free( packet );
 }
 
@@ -307,11 +300,7 @@ static int MsgCall (const char *message, MsgSndPtr msg,  Client client)
 	// il faut essayer d'envoyer le message en une seule fois sur la socket
 	// pour eviter au maximun de passer dans le select plusieur fois par message du protocole Ivy
 	// pour eviter la latence ( PB de perfo detecte par ivyperf ping roudtrip )
-#ifdef OLD
-	offset += make_message_var( &buffer, &size, offset, "%d%c%d",
-		Msg, MESSAGE_SEPARATOR, 
-		msg->id);
-#endif
+
 #ifdef DEBUG
 	printf( "Send matching args count %d\n",rc-1);
 #endif
@@ -329,10 +318,6 @@ static int MsgCall (const char *message, MsgSndPtr msg,  Client client)
 		++index;
 	}
 	buffer[offset-1] = '\0';
-#ifdef OLD
-	offset += make_message_var( &buffer, &size, offset, "%c", MESSAGE_TERMINATOR);
-	SocketSendRaw(client, buffer , offset);
-#endif
 	MsgSendTo( client, Msg, msg->id, buffer );
 	return 1;
 }
@@ -406,41 +391,20 @@ static char* Receive( Client client, void *data, char *message, unsigned int len
 	char *args;
 
 	ptr_end = message;
+
+	if ( len < 6 ) return NULL;  /* incomplete message */
 	kind_of_msg = ntohs( *((ushort *) ptr_end)++ );
 	id = ntohs( *((ushort *) ptr_end)++ ); 
 	len_args = ntohs( *((ushort *) ptr_end)++ );
 
 	if ( len_args )
 	{
+	if ( len < (6 + len_args) ) return NULL; /* incomplete message */
 	args = malloc( len_args ); /* TODO keep the buffer to free it */
 	strncpy( args , ptr_end, len_args );
 	args[ len_args ] = '\0';
 	ptr_end += len_args;
 	}
-#ifdef OLD
-	ptr_end = memchr (message, MESSAGE_TERMINATOR,  len );
-	if ( !ptr_end )
-	{
-		return ptr_end;
-	}
-	*ptr_end ='\0';
-
-	argc = SplitArg( message, MESSAGE_SEPARATOR, argv);	
-
-	kind_of_msg = atoi( argv[MSGTYPE] );
-	id = atoi( argv[MSGID] );
-	args = argv[ARG_0];
-	argc -= ARG_0;
-	
-	if ( (argc < 2)  )
-		{
-		printf("Quitting bad format  %s\n",  message);
-		MsgSendTo( client, Error, Error, "bad format request expected 'appid type id ...'" );
-		MsgSendTo( client, Bye, 0, "" );
-		SocketClose( client );
-		return ptr_end;
-		}
-#endif
 
 #ifdef DEBUG
 	printf("Receive Message type=%d id=%d arg=%s\n",  kind_of_msg, id, args);
@@ -697,21 +661,12 @@ static void IvySendHello(unsigned long mask)
 	
 	SocketSendBroadcastRaw (broadcast, mask, SupervisionPort, packet,len ); 
 	free( packet );
-#ifdef OLD
-	SocketSendBroadcast (broadcast, mask, SupervisionPort, "%d %hu %s %s\n", 
-					VERSION, 
-					ApplicationPort,
-					applicationUniqueId,
-					ApplicationName
-					); */
-#endif
 }
 /* Hello packet Receive */
 static char* BroadcastReceive( Client client, void *data, char *message, unsigned int len)
 {	
 	Client app;
-	int err;
-	unsigned int version;
+	unsigned short version;
 	unsigned short serviceport;
 	char appname[1024];
 	char appid[1024];
@@ -724,36 +679,24 @@ static char* BroadcastReceive( Client client, void *data, char *message, unsigne
 
 	char *ptr_end;
 	ptr_end = message;
+	
+	if ( len < 6 ) return NULL;  /* incomplete message */
+	
 	version = ntohs( *((ushort *) ptr_end)++ );
 	serviceport = ntohs( *((ushort *) ptr_end)++ ); 
 	len_appid = ntohs( *((ushort *) ptr_end)++ );
+	if ( len < (6 +len_appid) ) return NULL;  /* incomplete message */
+	
 	strncpy( appid , ptr_end, len_appid );
 	appid[ len_appid ] = '\0';
 	ptr_end += len_appid;
 	len_appname = ntohs( *((ushort *) ptr_end)++ );
+	if ( len < (6 +len_appid + len_appname) ) return NULL;  /* incomplete message */
+	
 	strncpy( appname , ptr_end, len_appname );
 	appname[ len_appname ] = '\0';
 	ptr_end += len_appname;
 
-#ifdef OLD 
-	ptr_end = memchr (message, '\n',  len );
-	if ( !ptr_end )
-	{
-		return ptr_end;
-	}
-	*ptr_end ='\0';
-
-	err = sscanf (message,"%d %hu %s %s\n", &version, &serviceport, appid, appname );
-	if ( err != 4 ) {
-		/* ignore the message */
-		unsigned short remoteport;
-		char *remotehost;
-		SocketGetRemoteHost (client, &remotehost, &remoteport );
-		printf (" Bad supervision message, expected 'version port appname appid' from %s:%d\n",
-				remotehost, remoteport);
-		return ptr_end;
-	}
-#endif
 	if ( version != VERSION ) {
 		/* ignore the message */
 		unsigned short remoteport;
