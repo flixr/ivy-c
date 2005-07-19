@@ -241,10 +241,33 @@ static void SortClients()
 }
 static void MsgSendTo( Client client, MsgType msgtype, int id, const char *message )
 {
+	char * packet;
+	char * ptr;
+	int len;
+	int len_arg;
+	len_arg = strlen( message );
+	len = 3 * sizeof ( ushort  ) + len_arg;
+	packet = malloc ( len ); /* TODO free packet */
+	
+#ifdef DEBUG
+	printf( "Sending message type=%d id=%d '%s'\n",msgtype,id,message);
+#endif
+	ptr = packet;
+	*((ushort *) ptr)++ = htons( (ushort)msgtype );
+	*((ushort *) ptr)++ = htons( (ushort)id );
+	*((ushort *) ptr)++ = htons( (ushort)len_arg );
+	if ( len_arg )
+	{
+	strncpy( ptr, message , len_arg);
+	}
+	SocketSendRaw( client, packet, len );
+#ifdef OLD
 	SocketSend( client, "%d%c%d%c%s%c", 
 		msgtype, MESSAGE_SEPARATOR, 
 		id, MESSAGE_SEPARATOR, 
 		message, MESSAGE_TERMINATOR);
+#endif
+	free( packet );
 }
 
 static void IvyCleanup()
@@ -284,9 +307,11 @@ static int MsgCall (const char *message, MsgSndPtr msg,  Client client)
 	// il faut essayer d'envoyer le message en une seule fois sur la socket
 	// pour eviter au maximun de passer dans le select plusieur fois par message du protocole Ivy
 	// pour eviter la latence ( PB de perfo detecte par ivyperf ping roudtrip )
+#ifdef OLD
 	offset += make_message_var( &buffer, &size, offset, "%d%c%d",
 		Msg, MESSAGE_SEPARATOR, 
 		msg->id);
+#endif
 #ifdef DEBUG
 	printf( "Send matching args count %d\n",rc-1);
 #endif
@@ -295,16 +320,20 @@ static int MsgCall (const char *message, MsgSndPtr msg,  Client client)
 
 		IvyBindingGetMatch( msg->bind, message, index,  &arg, &arglen );
 #ifdef DEBUG
-		printf ("Send matching arg%d '%.*s'\n",arglen, arg);
+		printf ("Send matching arg%d '%.*s'\n",index,arglen, arg);
 #endif
-		offset += make_message_var( &buffer, &size, offset, "%c%.*s",
-				MESSAGE_SEPARATOR,
-				arglen, arg
+		offset += make_message_var( &buffer, &size, offset, "%.*s%c",
+				arglen, arg,
+				MESSAGE_SEPARATOR
 				);
 		++index;
 	}
+	buffer[offset-1] = '\0';
+#ifdef OLD
 	offset += make_message_var( &buffer, &size, offset, "%c", MESSAGE_TERMINATOR);
 	SocketSendRaw(client, buffer , offset);
+#endif
+	MsgSendTo( client, Msg, msg->id, buffer );
 	return 1;
 }
 
@@ -366,6 +395,7 @@ static char* Receive( Client client, void *data, char *message, unsigned int len
 {
 	IvyClientPtr clnt;
 	int id;
+	ushort len_args;
 	MsgSndPtr snd;
 	MsgRcvPtr rcv;
 	int argc = 0;
@@ -373,7 +403,21 @@ static char* Receive( Client client, void *data, char *message, unsigned int len
 	int kind_of_msg = Bye;
 	IvyBinding bind;
 	char *ptr_end;
+	char *args;
 
+	ptr_end = message;
+	kind_of_msg = ntohs( *((ushort *) ptr_end)++ );
+	id = ntohs( *((ushort *) ptr_end)++ ); 
+	len_args = ntohs( *((ushort *) ptr_end)++ );
+
+	if ( len_args )
+	{
+	args = malloc( len_args ); /* TODO keep the buffer to free it */
+	strncpy( args , ptr_end, len_args );
+	args[ len_args ] = '\0';
+	ptr_end += len_args;
+	}
+#ifdef OLD
 	ptr_end = memchr (message, MESSAGE_TERMINATOR,  len );
 	if ( !ptr_end )
 	{
@@ -385,6 +429,8 @@ static char* Receive( Client client, void *data, char *message, unsigned int len
 
 	kind_of_msg = atoi( argv[MSGTYPE] );
 	id = atoi( argv[MSGID] );
+	args = argv[ARG_0];
+	argc -= ARG_0;
 	
 	if ( (argc < 2)  )
 		{
@@ -394,40 +440,46 @@ static char* Receive( Client client, void *data, char *message, unsigned int len
 		SocketClose( client );
 		return ptr_end;
 		}
+#endif
+
+#ifdef DEBUG
+	printf("Receive Message type=%d id=%d arg=%s\n",  kind_of_msg, id, args);
+#endif //DEBUG
+
 	clnt = (IvyClientPtr)data;
 	switch( kind_of_msg )
 		{
 		case Bye:
 			
 #ifdef DEBUG
-			printf("Quitting  Bye %s\n",  line);
+			printf("Quitting  Bye %s\n",  args);
 #endif //DEBUG
 
 			SocketClose( client );
 			break;
 		case Error:
-			printf ("Received error %d %s\n",  id, argv[ARG_0]);
+			printf ("Received error %d %s\n",  id, args);
 			break;
 		case AddRegexp:
 
 #ifdef DEBUG
-			printf("Regexp  id=%d exp='%s'\n",  id, argv[ARG_0]);
+			printf("Regexp  id=%d exp='%s'\n",  id, args);
 #endif //DEBUG
-			if ( !CheckRegexp( argv[ARG_0] ) )
+			if ( !CheckRegexp( args ) )
 				{
 #ifdef DEBUG
-				printf("Warning: regexp '%s' illegal, removing from %s\n",argv[ARG_0],ApplicationName);
+				printf("Warning: regexp '%s' illegal, removing from %s\n",args,ApplicationName);
 #endif //DEBUG
 				return ptr_end;
 				}
-			bind = IvyBindingCompile( argv[ARG_0] );
+			bind = IvyBindingCompile( args );
 			if ( bind != NULL )
 				{
 				IVY_LIST_ADD( clnt->msg_send, snd )
 				if ( snd )
 					{
 					snd->id = id;
-					snd->str_regexp = strdup( argv[ARG_0] );
+					snd->str_regexp = strdup( args );
 					snd->bind = bind;	
 					if ( application_bind_callback )
 					  {
@@ -464,14 +516,14 @@ static char* Receive( Client client, void *data, char *message, unsigned int len
 			break;
 		case StartRegexp:
 #ifdef DEBUG
-			printf("Regexp Start id=%d Application='%s'\n",  id, argv[ARG_0]);
+			printf("Regexp Start id=%d Application='%s'\n",  id, args);
 #endif //DEBUG
-			clnt->app_name = strdup( argv[ARG_0] );
+			clnt->app_name = strdup( args );
 			clnt->app_port = id;
 			if ( CheckConnected( clnt ) )
 			{			
 #ifdef DEBUG
-			printf("Quitting  already connected %s\n",  line);
+			printf("Quitting  already connected %s\n",  args);
 #endif //DEBUG
 			IvySendError( clnt, 0, "Application already connected" );
 			SocketClose( client );
@@ -500,17 +552,19 @@ static char* Receive( Client client, void *data, char *message, unsigned int len
 		case Msg:
 			
 #ifdef DEBUG
-		printf("Message id=%d msg='%s'\n", id, argv[ARG_0]);
+		printf("Message id=%d msg='%s'\n", id, args);
 #endif //DEBUG
 
+			argc = SplitArg( args, MESSAGE_SEPARATOR, argv);	
+	
 			IVY_LIST_EACH( msg_recv, rcv )
 				{
 				if ( id == rcv->id )
 					{
 #ifdef DEBUG
-					printf("Calling  id=%d argc=%d for %s\n", id, argc-ARG_0,rcv->regexp);
+					printf("Calling  id=%d argc=%d for %s\n", id, argc,rcv->regexp);
 #endif
-					if ( rcv->callback ) (*rcv->callback)( clnt, rcv->user_data, argc-ARG_0, &argv[ARG_0] );
+					if ( rcv->callback ) (*rcv->callback)( clnt, rcv->user_data, argc, argv );
 					return ptr_end;
 					}
 				}
@@ -519,11 +573,11 @@ static char* Receive( Client client, void *data, char *message, unsigned int len
 		case DirectMsg:
 			
 #ifdef DEBUG
-			printf("Direct Message id=%d msg='%s'\n", id, argv[ARG_0]);
+			printf("Direct Message id=%d msg='%s'\n", id, args);
 #endif //DEBUG
 
 			if ( direct_callback)
-				(*direct_callback)( clnt, direct_user_data, id, argv[ARG_0] );
+				(*direct_callback)( clnt, direct_user_data, id, args );
 			break;
 
 		case Die:
@@ -539,9 +593,9 @@ static char* Receive( Client client, void *data, char *message, unsigned int len
 			break;
 		case ApplicationId:
 #ifdef DEBUG
-			printf("ApplicationId  priority=%d appid='%s'\n",  id, argv[ARG_0]);
+			printf("ApplicationId  priority=%d appid='%s'\n",  id, args);
 #endif //DEBUG
-			clnt->app_id = strdup( argv[ARG_0] );
+			clnt->app_id = strdup( args );
 			if ( id != clnt->priority )
 			{
 			clnt->priority = id;
@@ -549,7 +603,7 @@ static char* Receive( Client client, void *data, char *message, unsigned int len
 			}
 			break;
 		default:
-			printf("Receive unhandled message %s\n",  message);
+			printf("Receive unhandled message %d\n",  kind_of_msg);
 			break;
 		}
 	return ptr_end;
@@ -620,22 +674,68 @@ static void *ClientCreate( Client client )
 #endif //DEBUG
 	return SendService (client);
 }
-
+/* Hello packet Send */
+static void IvySendHello(unsigned long mask)
+{
+	char *packet;
+	char *ptr;
+	int lenAppId;
+	int lenAppName;
+	int len;
+	lenAppId = strlen( applicationUniqueId );
+	lenAppName = strlen( ApplicationName );
+	len = 4*sizeof(ushort) +  lenAppId + lenAppName;
+	packet = malloc( len );
+	ptr = packet;
+	*((ushort *) ptr)++ = htons( VERSION );
+	*((ushort *) ptr)++ = htons( ApplicationPort );
+	*((ushort *) ptr)++ = htons( lenAppId );
+	strncpy( ptr, applicationUniqueId , lenAppId);
+	ptr += lenAppId;
+	*((ushort *) ptr)++ = htons( lenAppName );
+	strncpy( ptr, ApplicationName , lenAppName);
+	
+	SocketSendBroadcastRaw (broadcast, mask, SupervisionPort, packet,len ); 
+	free( packet );
+#ifdef OLD
+	SocketSendBroadcast (broadcast, mask, SupervisionPort, "%d %hu %s %s\n", 
+					VERSION, 
+					ApplicationPort,
+					applicationUniqueId,
+					ApplicationName
+					); */
+#endif
+}
+/* Hello packet Receive */
 static char* BroadcastReceive( Client client, void *data, char *message, unsigned int len)
 {	
 	Client app;
 	int err;
-	int version;
+	unsigned int version;
 	unsigned short serviceport;
 	char appname[1024];
 	char appid[1024];
+	unsigned short len_appid;
+	unsigned short len_appname;
 #ifdef DEBUG
 	unsigned short remoteport;
 	char *remotehost = 0;
 #endif
 
 	char *ptr_end;
+	ptr_end = message;
+	version = ntohs( *((ushort *) ptr_end)++ );
+	serviceport = ntohs( *((ushort *) ptr_end)++ ); 
+	len_appid = ntohs( *((ushort *) ptr_end)++ );
+	strncpy( appid , ptr_end, len_appid );
+	appid[ len_appid ] = '\0';
+	ptr_end += len_appid;
+	len_appname = ntohs( *((ushort *) ptr_end)++ );
+	strncpy( appname , ptr_end, len_appname );
+	appname[ len_appname ] = '\0';
+	ptr_end += len_appname;
 
+#ifdef OLD 
 	ptr_end = memchr (message, '\n',  len );
 	if ( !ptr_end )
 	{
@@ -653,6 +753,7 @@ static char* BroadcastReceive( Client client, void *data, char *message, unsigne
 				remotehost, remoteport);
 		return ptr_end;
 	}
+#endif
 	if ( version != VERSION ) {
 		/* ignore the message */
 		unsigned short remoteport;
@@ -806,12 +907,7 @@ void IvyStart (const char* bus)
 				if ( IN_MULTICAST( mask ) )
 					SocketAddMember (broadcast , mask );
 
-				SocketSendBroadcast (broadcast, mask, SupervisionPort, "%d %hu %s %s\n", 
-					VERSION, 
-					ApplicationPort,
-					applicationUniqueId,
-					ApplicationName
-					); 
+				IvySendHello( mask );
 				numelem = 0;
 				mask = 0xffffffff;
 			}

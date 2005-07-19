@@ -175,16 +175,17 @@ static void HandleSocket (Channel channel, HANDLE fd, void *data)
 		return;
 	}
 	client->ptr += nb;
-	ptr = client->buffer;
 	if (! client->interpretation )
 	{
 		client->ptr = client->buffer;
 		fprintf (stderr,"Socket No interpretation function ??? skipping data\n");
 		return;
 	}
-	while ((ptr_end = (*client->interpretation) (client, client->data, ptr, client->ptr - ptr )))
+	ptr = client->buffer;
+	
+	while ( (client->ptr > ptr )&&(ptr_end = (*client->interpretation) (client, client->data, ptr, client->ptr - ptr )))
 		{
-		ptr = ++ptr_end;
+		ptr = ptr_end;
 		}
 	if (ptr < client->ptr )
 		{ /* recopie message incomplet au debut du buffer */
