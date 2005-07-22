@@ -41,7 +41,7 @@
 #endif
 
 struct _binding {
-	struct _timer *next;
+	struct _binding *next;
 #ifndef USE_PCRE_REGEX
 	regex_t regexp;						/* la regexp sous forme machine */
 	regmatch_t match[MAX_MSG_FIELDS+1];	/* resultat du match */

@@ -259,7 +259,8 @@ static void MsgSendTo( Client client, MsgType msgtype, int id, const char *messa
 	{
 	strncpy( ptr, message , len_arg);
 	}
-	SocketSendRaw( client, packet, len );
+	SocketSendBuf( client, packet, len ); //TODO dont do multiple buffer copy
+	SocketFlush( client );
 	free( packet );
 }
 

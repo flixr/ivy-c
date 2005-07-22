@@ -62,12 +62,13 @@ struct _client {
 	SocketInterpretation interpretation;
 	SocketDelete handle_delete;
 	/* input buffer */
-	int buffer_size;
-	char *buffer;		/* dynamicaly reallocated */
-	char *ptr;
+	int in_buffer_size;
+	char *in_buffer;		/* dynamicaly reallocated */
+	char *in_ptr;
 	/* output buffer */
 	int out_buffer_size;
 	char *out_buffer;		/* dynamicaly reallocated */
+	char *out_ptr;
 	
 	void *data;
 };
@@ -150,20 +151,20 @@ static void HandleSocket (Channel channel, HANDLE fd, void *data)
 	socklen_t len;
 	
 	/* limitation taille buffer */
-	nb_to_read = client->buffer_size - (client->ptr - client->buffer );
+	nb_to_read = client->in_buffer_size - (client->in_ptr - client->in_buffer );
 	if (nb_to_read == 0 ) {
-		client->buffer_size *= 2; /* twice old size */
-		client->buffer = realloc( client->buffer, client->buffer_size );
-		if (!client->buffer )
+		client->in_buffer_size *= 2; /* twice old size */
+		client->in_buffer = realloc( client->in_buffer, client->in_buffer_size );
+		if (!client->in_buffer )
 		{
 		fprintf(stderr,"HandleSocket Buffer Memory Alloc Error\n");
 		exit(0);
 		}
-		fprintf(stderr, "Buffer Limit reached realloc new size %d\n", client->buffer_size );
-		nb_to_read = client->buffer_size - (client->ptr - client->buffer );
+		fprintf(stderr, "Buffer Limit reached realloc new size %d\n", client->in_buffer_size );
+		nb_to_read = client->in_buffer_size - (client->in_ptr - client->in_buffer );
 	}
 	len = sizeof (client->from );
-	nb = recvfrom (fd, client->ptr, nb_to_read,0,(struct sockaddr *)&client->from,
+	nb = recvfrom (fd, client->in_ptr, nb_to_read,0,(struct sockaddr *)&client->from,
 		       &len);
 	if (nb  < 0) {
 		perror(" Read Socket ");
@@ -174,28 +175,28 @@ static void HandleSocket (Channel channel, HANDLE fd, void *data)
 		IvyChannelClose(client->channel );
 		return;
 	}
-	client->ptr += nb;
+	client->in_ptr += nb;
 	if (! client->interpretation )
 	{
-		client->ptr = client->buffer;
+		client->in_ptr = client->in_buffer;
 		fprintf (stderr,"Socket No interpretation function ??? skipping data\n");
 		return;
 	}
-	ptr = client->buffer;
+	ptr = client->in_buffer;
 	
-	while ( (client->ptr > ptr )&&(ptr_end = (*client->interpretation) (client, client->data, ptr, client->ptr - ptr )))
+	while ( (client->in_ptr > ptr )&&(ptr_end = (*client->interpretation) (client, client->data, ptr, client->in_ptr - ptr )))
 		{
 		ptr = ptr_end;
 		}
-	if (ptr < client->ptr )
+	if (ptr < client->in_ptr )
 		{ /* recopie message incomplet au debut du buffer */
-		len = client->ptr - ptr;
-		memcpy (client->buffer, ptr, len  );
-		client->ptr = client->buffer + len;
+		len = client->in_ptr - ptr;
+		memcpy (client->in_buffer, ptr, len  );
+		client->in_ptr = client->in_buffer + len;
 		}
 		else
 		{
-		client->ptr = client->buffer;
+		client->in_ptr = client->in_buffer;
 		}
 }
 static Client CreateClient(int handle)
@@ -208,21 +209,22 @@ static Client CreateClient(int handle)
 		close ( handle );
 		exit(0);
 		}
-	client->buffer_size = BUFFER_SIZE;
-	client->buffer = malloc( client->buffer_size );
-	if (!client->buffer )
+	client->in_buffer_size = BUFFER_SIZE;
+	client->in_buffer = malloc( client->in_buffer_size );
+	if (!client->in_buffer )
 		{
 		fprintf(stderr,"HandleSocket Buffer Memory Alloc Error\n");
 		exit(0);
 		}
-	client->ptr = client->buffer;
+	client->in_ptr = client->in_buffer;
 	client->out_buffer_size = BUFFER_SIZE;
 	client->out_buffer = malloc( client->out_buffer_size );
-	if (!client->buffer )
+	if (!client->in_buffer )
 		{
 		fprintf(stderr,"HandleSocket Buffer Memory Alloc Error\n");
 		exit(0);
 		}
+	client->out_ptr = client->out_buffer;
 	client->fd = handle;
 	client->channel = IvyChannelOpen (client->fd, client,  DeleteSocket, HandleSocket );
 
@@ -384,55 +386,54 @@ void SocketClose (Client client )
 	if (client)
 		IvyChannelClose (client->channel );
 }
-
-void SocketSendRaw (Client client, char *buffer, int len )
-{
-	int err;
-
-	if (!client)
-		return;
-
-	err = send (client->fd, buffer, len, 0 );
-	if (err != len )
-		perror ("*** send ***");
-}
-
 void SocketSetData (Client client, void *data )
 {
 	if (client)
 		client->data = data;
 }
 
-void SocketSend (Client client, char *fmt, ... )
-{
-	int len;
-	va_list ap;
-	if (!client)
-		return;
-	va_start (ap, fmt );
-	len = make_message (&client->out_buffer, &client->out_buffer_size, 0, fmt, ap );
-	SocketSendRaw (client, client->out_buffer, len );
-	va_end (ap );
-}
-
 void *SocketGetData (Client client )
 {
 	return client ? client->data : 0;
 }
-
-void SocketSendToAll ( char *fmt, ... )
+void SocketSendBuf (Client client, char *buffer, int len )
 {
-	Client client;
+	unsigned long usedspace;
+	if (!client)
+		return;
+	usedspace = client->out_ptr - client->out_buffer;
+	if ( len >= client->out_buffer_size - usedspace )
+	{
+		/* not enought space */
+		client->out_buffer_size += len - usedspace +1;
+		client->out_buffer = realloc (client->out_buffer, client->out_buffer_size);
+	}
+	memcpy ( client->out_ptr, buffer, len );
+	client->out_ptr += len;
+}
+
+
+void SocketSendFmt (Client client, char *fmt, ... )
+{
 	va_list ap;
-	int len;
-	
+	if (!client)
+		return;
 	va_start (ap, fmt );
-	len = make_message (&client->out_buffer, &client->out_buffer_size, 0, fmt, ap );
+	client->out_ptr += make_message (&client->out_buffer, &client->out_buffer_size, client->out_ptr - client->out_buffer, fmt, ap );
 	va_end (ap );
-	IVY_LIST_EACH (clients_list, client )
-		{
-		SocketSendRaw (client, client->out_buffer, len );
-		}
+}
+void SocketFlush (Client client)
+{
+	int err;
+	unsigned long len;
+
+	if (!client)
+		return;
+	len =  client->out_ptr - client->out_buffer;
+	err = send (client->fd, client->out_buffer, len, 0 );
+	if (err != len )
+		perror ("*** send ***");
+	client->out_ptr = client->out_buffer;
 }
 
 /*

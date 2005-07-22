@@ -69,12 +69,12 @@ extern void SocketServerClose( Server server );
 /* Client Part */
 extern void SocketKeepAlive( Client client,int keepalive );
 extern void SocketClose( Client client );
-extern void SocketSend( Client client, char *fmt, ... );
-extern void SocketSendRaw( Client client, char *buffer, int len );
+extern void SocketSendFmt( Client client, char *fmt, ... );
+extern void SocketSendBuf( Client client, char *buffer, int len );
+extern void SocketFlush (Client client);
 extern char *SocketGetPeerHost( Client client );
 extern void SocketSetData( Client client, void *data );
 extern void *SocketGetData( Client client );
-extern void SocketSendToAll( char *fmt, ... );
 extern Client SocketConnect( char * host, unsigned short port,
 			void *data, 
 			SocketInterpretation interpretation,

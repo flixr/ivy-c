@@ -68,9 +68,9 @@ REGEXP= -DUSE_PCRE_REGEX -DPCRE_OPT=$(PCRE_OPT)
 CHANNEL = -DTCL_CHANNEL_INTEGRATION 
 CFLAGS = -g -Wall #-DDEBUG
 
-OBJ = ivyloop.o timer.o ivysocket.o ivybind.o ivy.o 
-GOBJ = ivyloop.o timer.o ivysocket.o ivybind.o givy.o
-XTOBJ = ivyxtloop.o ivysocket.o ivybind.o  ivy.o
+OBJ = ivyloop.o timer.o ivysocket.o ivybind.o ivyargument.o ivy.o 
+GOBJ = ivyloop.o timer.o ivysocket.o ivybind.o ivyargument.o givy.o
+XTOBJ = ivyxtloop.o ivysocket.o ivybind.o  ivyargument.o ivy.o
 GLIBOBJ = ivyglibloop.o ivysocket.o ivybind.o ivy.o
 GLUTOBJ = ivyglutloop.o ivysocket.o ivybind.o ivy.o
 TCLOBJ = ivytcl.o  timer.o ivysocket.o ivybind.o givy.o
@@ -100,6 +100,9 @@ ivy.o: ivy.c
 
 ivybind.o: ivybind.c
 	$(CC) -c $(CFLAGS) $(REGEXP) $(PCREINC) ivybind.c
+
+ivyargument.o: ivyargument.c
+	$(CC) -c $(CFLAGS) $(REGEXP) $(PCREINC) ivyargument.c
 
 givy.o: ivy.c
 	$(CC) -c $(CFLAGS) $(REGEXP) -o givy.o ivy.c
