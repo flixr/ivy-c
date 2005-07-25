@@ -109,7 +109,7 @@ void IvyBindingFree( IvyBinding bind )
 #endif
 	free ( bind );
 }
-int IvyBindExec( IvyBinding bind, const char * message )
+int IvyBindingExec( IvyBinding bind, const char * message )
 {
 	int nb_match = 0;
 #ifdef USE_PCRE_REGEX
@@ -129,8 +129,14 @@ int IvyBindExec( IvyBinding bind, const char * message )
 #else
 	memset( bind->match, -1, sizeof(bind->match )); /* work around bug !!!*/
 	nb_match = regexec (&bind->regexp, message, MAX_MSG_FIELDS, bind->match, 0) 
-	if (nb_match != 0)
+	if (nb_match == REG_NOMATCH)
 		return 0;
+	/* TODO Possible BUG if empty match in middle of regexp */
+	for ( index = 0; index < MAX_MSG_FIELDS; index++ )
+	{
+		if ( bind->match[i].rm_so != -1 )
+			nb_match++;
+	}
 #endif
 	return nb_match;
 }

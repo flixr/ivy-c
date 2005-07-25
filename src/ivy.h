@@ -49,7 +49,7 @@ typedef void (*IvyDieCallback)( IvyClientPtr app, void *user_data, int id ) ;
 typedef void (*MsgCallback)( IvyClientPtr app, void *user_data, int argc, char **argv ) ;
 
 /* callback appele sur reception de messages directs */
-typedef void (*MsgDirectCallback)( IvyClientPtr app, void *user_data, int id, char *msg ) ;
+typedef void (*MsgDirectCallback)( IvyClientPtr app, void *user_data, int id, int len, void *msg ) ;
 
 /* identifiant d'une expression reguliere ( Bind/Unbind ) */
 typedef struct _msg_rcv *MsgRcvPtr;
@@ -95,7 +95,7 @@ int IvySendMsg( const char *fmt_message, ... );		/* avec sprintf prealable */
 /* Message Direct Inter-application */
 
 void IvyBindDirectMsg( MsgDirectCallback callback, void *user_data);
-void IvySendDirectMsg( IvyClientPtr app, int id, char *msg );
+void IvySendDirectMsg( IvyClientPtr app, int id, int len, void *msg );
 
 /* boucle principale d'Ivy */
 /* use of internal MainLoop or XtMainLoop, or other MainLoop integration */

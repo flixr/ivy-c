@@ -61,8 +61,8 @@ IvyArgument IvyAddChild( IvyArgument arg, const char* childvalue )
 	IVY_LIST_ADD( arg->next, child )
 	if ( child )
 		{
-			arg->value = strdup( childvalue );
-			arg->next = 0;
+			child->value = strdup( childvalue );
+			child->next = 0;
 		}
 	return child;
 }

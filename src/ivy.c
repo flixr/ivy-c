@@ -22,6 +22,8 @@
 #else
 #include <arpa/inet.h>
 #include <sys/time.h>
+#include <unistd.h>
+#include <netdb.h>
 #endif
 #include <stdio.h>
 #include <string.h>
@@ -238,30 +240,22 @@ static void SortClients()
 	//TODO sort client list again priority!
 	lsort( clients );
 }
-static void MsgSendTo( Client client, MsgType msgtype, int id, const char *message )
+static void MsgSendTo( Client client, MsgType msgtype, int id, int len_arg, const void *arg  )
 {
-	char * packet;
-	char * ptr;
-	int len;
-	int len_arg;
-	len_arg = strlen( message );
-	len = 3 * sizeof ( ushort  ) + len_arg;
-	packet = malloc ( len ); /* TODO free packet */
+	ushort header[3];
 	
 #ifdef DEBUG
-	printf( "Sending message type=%d id=%d '%s'\n",msgtype,id,message);
+	printf( "Sending message type=%d id=%d '%.*s'\n",msgtype,id,len_arg,arg);
 #endif
-	ptr = packet;
-	*((ushort *) ptr)++ = htons( (ushort)msgtype );
-	*((ushort *) ptr)++ = htons( (ushort)id );
-	*((ushort *) ptr)++ = htons( (ushort)len_arg );
+	header[0] = htons( (ushort)msgtype );
+	header[1] = htons( (ushort)id );
+	header[2] = htons( (ushort)len_arg );
+	SocketSendBuf( client, (char *)header, sizeof(header) ); 
 	if ( len_arg )
 	{
-	strncpy( ptr, message , len_arg);
+	SocketSendBuf( client, arg, len_arg );
 	}
-	SocketSendBuf( client, packet, len ); //TODO dont do multiple buffer copy
 	SocketFlush( client );
-	free( packet );
 }
 
 static void IvyCleanup()
@@ -272,7 +266,7 @@ static void IvyCleanup()
 	IVY_LIST_EACH_SAFE( clients, clnt, next )
 	{
 		/* on dit au revoir */
-		MsgSendTo( clnt->client, Bye, 0, "" );
+		MsgSendTo( clnt->client, Bye, 0, 0, "" );
 		SocketClose( clnt->client );
 		IVY_LIST_EMPTY( clnt->msg_send );
 	}
@@ -285,6 +279,7 @@ static void IvyCleanup()
 
 static int MsgCall (const char *message, MsgSndPtr msg,  Client client)
 {
+	//TODO remove this buffer 
 	static char *buffer = NULL; /* Use satic mem to eliminate multiple call to malloc /free */
 	static int size = 0;		/* donc non reentrant !!!! */
 	int offset = 0;
@@ -292,7 +287,7 @@ static int MsgCall (const char *message, MsgSndPtr msg,  Client client)
 	const char *arg;
 	int index;
 
-	int rc = IvyBindExec( msg->bind, message );
+	int rc = IvyBindingExec( msg->bind, message );
 	
 	if (rc<1) return 0; /* no match */
 #ifdef DEBUG
@@ -318,8 +313,7 @@ static int MsgCall (const char *message, MsgSndPtr msg,  Client client)
 				);
 		++index;
 	}
-	buffer[offset-1] = '\0';
-	MsgSendTo( client, Msg, msg->id, buffer );
+	MsgSendTo( client, Msg, msg->id, offset, buffer );
 	return 1;
 }
 
@@ -457,7 +451,7 @@ static char* Receive( Client client, void *data, char *message, unsigned int len
 			int offset;
 			const char *errbuf;
 			IvyBindingGetCompileError( &offset, &errbuf );
-			MsgSendTo( client, Error, offset, errbuf );
+			MsgSendTo( client, Error, offset, strlen(errbuf), errbuf );
 			}
 
 			break;
@@ -542,7 +536,7 @@ static char* Receive( Client client, void *data, char *message, unsigned int len
 #endif //DEBUG
 
 			if ( direct_callback)
-				(*direct_callback)( clnt, direct_user_data, id, args );
+				(*direct_callback)( clnt, direct_user_data, id, len_args, args );
 			break;
 
 		case Die:
@@ -587,13 +581,13 @@ static IvyClientPtr SendService( Client client )
 		clnt->app_name = strdup("Unknown");
 		clnt->app_port = 0;
 		clnt->priority = DEFAULT_PRIORITY;
-		MsgSendTo( client, ApplicationId, applicationPriority, applicationUniqueId );
-		MsgSendTo( client, StartRegexp, ApplicationPort, ApplicationName);
+		MsgSendTo( client, ApplicationId, applicationPriority, strlen(applicationUniqueId), applicationUniqueId );
+		MsgSendTo( client, StartRegexp, ApplicationPort, strlen(ApplicationName), ApplicationName );
 		IVY_LIST_EACH(msg_recv, msg )
 			{
-			MsgSendTo( client, AddRegexp,msg->id,msg->regexp);
+			MsgSendTo( client, AddRegexp,msg->id,strlen(msg->regexp), msg->regexp);
 			}
-		MsgSendTo( client, EndRegexp, 0, "");
+		MsgSendTo( client, EndRegexp, 0, 0,"");
 		}
 	return clnt;
 }
@@ -731,6 +725,8 @@ void IvyInit (const char *appname, const char *ready,
 			 IvyDieCallback die_callback, void *die_data
 			 )
 {
+	char hostname[1024];
+	struct hostent *host;
 	IvyChannelInit();
 
 	ApplicationName = appname;
@@ -739,6 +735,34 @@ void IvyInit (const char *appname, const char *ready,
 	application_die_callback = die_callback;
 	application_die_user_data = die_data;
 	ready_message = ready;
+	/*
+	 * Initialize TCP port
+	 */
+	server = SocketServer (ANYPORT, ClientCreate, ClientDelete, Receive);
+	ApplicationPort = SocketServerGetPort (server);
+	/* get Host Ip address */
+	if ( gethostname(hostname,sizeof(hostname)) < 0 )
+	{
+		perror("gethostname");
+		exit(-1);
+	}
+	host = gethostbyname( hostname );
+	if ( ! host )
+	{
+		perror("gethostbyname");
+		exit(-1);
+	}
+	/* generate application UniqueID (timeStamp-Ipaddress-port*/
+	/* TODO bug if multiple interface */
+	applicationUniqueId = malloc(1024);
+	sprintf( applicationUniqueId , "%lu-%u%u%u%u-%d",
+		currentTime(), 
+		(unsigned char)host->h_addr[0],
+		(unsigned char)host->h_addr[1],
+		(unsigned char)host->h_addr[2],
+		(unsigned char)host->h_addr[3],
+		ApplicationPort);
+
 }
 
 void IvyStop()
@@ -748,11 +772,16 @@ void IvyStop()
 
 void IvySetApplicationPriority( int priority )
 {
+	int len;
 	IvyClientPtr clnt;
 	applicationPriority = priority;
-	/* Send to already connected clients */
-	IVY_LIST_EACH (clients, clnt ) {
-		MsgSendTo( clnt->client, ApplicationId, applicationPriority, applicationUniqueId);
+	if ( clients )
+	{
+		/* Send to already connected clients */
+		len = strlen(applicationUniqueId);
+		IVY_LIST_EACH (clients, clnt ) {
+			MsgSendTo( clnt->client, ApplicationId, applicationPriority, len, applicationUniqueId);
+		}
 	}
 }
 
@@ -783,12 +812,6 @@ void IvyStart (const char* bus)
 
 	
 	/*
-	 * Initialize TCP port
-	 */
-	server = SocketServer (ANYPORT, ClientCreate, ClientDelete, Receive);
-	ApplicationPort = SocketServerGetPort (server);
-
-	/*
 	 * Find network list as well as broadcast port
 	 * (we accept things like 123.231,123.123:2000 or 123.231 or :2000),
 	 * Initialize UDP port
@@ -807,10 +830,6 @@ void IvyStart (const char* bus)
 		SupervisionPort = port;
 	else
 		SupervisionPort = DEFAULT_BUS;
-
-	/* generate application UniqueID (timeStamp-Ipaddress-port*/
-	applicationUniqueId = malloc(1024);
-	sprintf( applicationUniqueId , "%lu-%s-%d", currentTime(),"123456" , ApplicationPort);
 
 	/*
 	 * Now we have a port number it's time to initialize the UDP port
@@ -888,21 +907,19 @@ void IvyStart (const char* bus)
 }
 
 /* desabonnements */
-void
-IvyUnbindMsg (MsgRcvPtr msg)
+void IvyUnbindMsg (MsgRcvPtr msg)
 {
 	IvyClientPtr clnt;
 	/* Send to already connected clients */
 	IVY_LIST_EACH (clients, clnt ) {
-		MsgSendTo( clnt->client, DelRegexp,msg->id, "");
+		MsgSendTo( clnt->client, DelRegexp,msg->id, 0, "");
 	}
 	IVY_LIST_REMOVE( msg_recv, msg  );
 }
 
 /* demande de reception d'un message */
 
-MsgRcvPtr
-IvyBindMsg (MsgCallback callback, void *user_data, const char *fmt_regex, ... )
+MsgRcvPtr IvyBindMsg (MsgCallback callback, void *user_data, const char *fmt_regex, ... )
 {
 	static char *buffer = NULL;
 	static int size = 0;
@@ -910,6 +927,7 @@ IvyBindMsg (MsgCallback callback, void *user_data, const char *fmt_regex, ... )
 	static int recv_id = 0;
 	IvyClientPtr clnt;
 	MsgRcvPtr msg;
+	int len;
 
 	va_start (ap, fmt_regex );
 	make_message( &buffer, &size, 0, fmt_regex, ap );
@@ -923,10 +941,11 @@ IvyBindMsg (MsgCallback callback, void *user_data, const char *fmt_regex, ... )
 		msg->callback = callback;
 		msg->user_data = user_data;
 	}
+	len = strlen(msg->regexp);
 	/* Send to already connected clients */
 	/* recherche dans la liste des requetes recues de mes clients */
 	IVY_LIST_EACH( clients, clnt ) {
-		MsgSendTo( clnt->client, AddRegexp,msg->id,msg->regexp);
+		MsgSendTo( clnt->client, AddRegexp,msg->id, len, msg->regexp);
 	}
 	return msg;
 }
@@ -962,7 +981,7 @@ void IvySendError( IvyClientPtr app, int id, const char *fmt, ... )
 	va_start( ap, fmt );
 	make_message( &buffer, &size, 0, fmt, ap );
 	va_end ( ap );
-	MsgSendTo( app->client, Error, id, buffer);
+	MsgSendTo( app->client, Error, id, strlen(buffer), buffer);
 }
 
 void IvyBindDirectMsg( MsgDirectCallback callback, void *user_data)
@@ -971,14 +990,14 @@ void IvyBindDirectMsg( MsgDirectCallback callback, void *user_data)
 	direct_user_data = user_data;
 }
 
-void IvySendDirectMsg( IvyClientPtr app, int id, char *msg )
+void IvySendDirectMsg( IvyClientPtr app, int id, int len, void *msg )
 {
-	MsgSendTo( app->client, DirectMsg, id, msg);
+	MsgSendTo( app->client, DirectMsg, id, len, msg);
 }
 
 void IvySendDieMsg( IvyClientPtr app )
 {
-	MsgSendTo( app->client, Die, 0, "" );
+	MsgSendTo( app->client, Die, 0, 0, "" );
 }
 
 char *IvyGetApplicationName( IvyClientPtr app )

@@ -22,5 +22,5 @@ typedef struct _binding *IvyBinding;
 IvyBinding IvyBindingCompile( const char * expression );
 void IvyBindingGetCompileError( int *erroffset, const char **errmessage );
 void IvyBindingFree( IvyBinding bind );
-int IvyBindExec( IvyBinding bind, const char * message );
+int IvyBindingExec( IvyBinding bind, const char * message );
 void IvyBindingGetMatch( IvyBinding bind, const char *message, int index, const char **arg, int *arglen );

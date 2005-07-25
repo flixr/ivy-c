@@ -396,7 +396,7 @@ void *SocketGetData (Client client )
 {
 	return client ? client->data : 0;
 }
-void SocketSendBuf (Client client, char *buffer, int len )
+void SocketSendBuf (Client client, const char *buffer, int len )
 {
 	unsigned long usedspace;
 	if (!client)
@@ -413,7 +413,7 @@ void SocketSendBuf (Client client, char *buffer, int len )
 }
 
 
-void SocketSendFmt (Client client, char *fmt, ... )
+void SocketSendFmt (Client client, const char *fmt, ... )
 {
 	va_list ap;
 	if (!client)

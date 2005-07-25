@@ -69,8 +69,8 @@ extern void SocketServerClose( Server server );
 /* Client Part */
 extern void SocketKeepAlive( Client client,int keepalive );
 extern void SocketClose( Client client );
-extern void SocketSendFmt( Client client, char *fmt, ... );
-extern void SocketSendBuf( Client client, char *buffer, int len );
+extern void SocketSendFmt( Client client, const char *fmt, ... );
+extern void SocketSendBuf( Client client, const char *buffer, int len );
 extern void SocketFlush (Client client);
 extern char *SocketGetPeerHost( Client client );
 extern void SocketSetData( Client client, void *data );
