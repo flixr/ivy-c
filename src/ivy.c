@@ -242,14 +242,14 @@ static void SortClients()
 }
 static void MsgSendTo( Client client, MsgType msgtype, int id, int len_arg, const void *arg  )
 {
-	ushort header[3];
+	unsigned short header[3];
 	
 #ifdef DEBUG
 	printf( "Sending message type=%d id=%d '%.*s'\n",msgtype,id,len_arg,arg);
 #endif
-	header[0] = htons( (ushort)msgtype );
-	header[1] = htons( (ushort)id );
-	header[2] = htons( (ushort)len_arg );
+	header[0] = htons( (unsigned short)msgtype );
+	header[1] = htons( (unsigned short)id );
+	header[2] = htons( (unsigned short)len_arg );
 	SocketSendBuf( client, (char *)header, sizeof(header) ); 
 	if ( len_arg )
 	{
@@ -375,7 +375,7 @@ static char* Receive( Client client, void *data, char *message, unsigned int len
 {
 	IvyClientPtr clnt;
 	int id;
-	ushort len_args;
+	unsigned short len_args;
 	MsgSndPtr snd;
 	MsgRcvPtr rcv;
 	int argc = 0;
@@ -388,9 +388,9 @@ static char* Receive( Client client, void *data, char *message, unsigned int len
 	ptr_end = message;
 
 	if ( len < 6 ) return NULL;  /* incomplete message */
-	kind_of_msg = ntohs( *((ushort *) ptr_end)++ );
-	id = ntohs( *((ushort *) ptr_end)++ ); 
-	len_args = ntohs( *((ushort *) ptr_end)++ );
+	kind_of_msg = ntohs( *((unsigned short *) ptr_end)++ );
+	id = ntohs( *((unsigned short *) ptr_end)++ ); 
+	len_args = ntohs( *((unsigned short *) ptr_end)++ );
 
 	if ( len_args )
 	{
@@ -643,15 +643,15 @@ static void IvySendHello(unsigned long mask)
 	int len;
 	lenAppId = strlen( applicationUniqueId );
 	lenAppName = strlen( ApplicationName );
-	len = 4*sizeof(ushort) +  lenAppId + lenAppName;
+	len = 4*sizeof(unsigned short) +  lenAppId + lenAppName;
 	packet = malloc( len );
 	ptr = packet;
-	*((ushort *) ptr)++ = htons( VERSION );
-	*((ushort *) ptr)++ = htons( ApplicationPort );
-	*((ushort *) ptr)++ = htons( lenAppId );
+	*((unsigned short *) ptr)++ = htons( VERSION );
+	*((unsigned short *) ptr)++ = htons( ApplicationPort );
+	*((unsigned short *) ptr)++ = htons( lenAppId );
 	strncpy( ptr, applicationUniqueId , lenAppId);
 	ptr += lenAppId;
-	*((ushort *) ptr)++ = htons( lenAppName );
+	*((unsigned short *) ptr)++ = htons( lenAppName );
 	strncpy( ptr, ApplicationName , lenAppName);
 	
 	SocketSendBroadcastRaw (broadcast, mask, SupervisionPort, packet,len ); 
@@ -677,15 +677,15 @@ static char* BroadcastReceive( Client client, void *data, char *message, unsigne
 	
 	if ( len < 6 ) return NULL;  /* incomplete message */
 	
-	version = ntohs( *((ushort *) ptr_end)++ );
-	serviceport = ntohs( *((ushort *) ptr_end)++ ); 
-	len_appid = ntohs( *((ushort *) ptr_end)++ );
+	version = ntohs( *((unsigned short *) ptr_end)++ );
+	serviceport = ntohs( *((unsigned short *) ptr_end)++ ); 
+	len_appid = ntohs( *((unsigned short *) ptr_end)++ );
 	if ( len < (6 +len_appid) ) return NULL;  /* incomplete message */
 	
 	strncpy( appid , ptr_end, len_appid );
 	appid[ len_appid ] = '\0';
 	ptr_end += len_appid;
-	len_appname = ntohs( *((ushort *) ptr_end)++ );
+	len_appname = ntohs( *((unsigned short *) ptr_end)++ );
 	if ( len < (6 +len_appid + len_appname) ) return NULL;  /* incomplete message */
 	
 	strncpy( appname , ptr_end, len_appname );

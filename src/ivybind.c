@@ -22,33 +22,33 @@
 #include <stdlib.h>
 #include <memory.h> 
 
-#ifndef USE_PCRE_REGEX
-#include <regex.h>
-#else
+#ifdef USE_PCRE_REGEX
 #define OVECSIZE 60 /* must be multiple of 3, for regexp return */
 #include <pcre.h>
+#else
+#include <regex.h>
 #endif
 
 #include "list.h"
 #include "ivybind.h"
 
-#ifndef USE_PCRE_REGEX
-	static int erroroffset;
-	static char errbuf[4096];
-#else
+#ifdef USE_PCRE_REGEX
 	static const char *errbuf;
 	static int erroffset;
+#else
+	static int erroroffset;
+	static char errbuf[4096];
 #endif
 
 struct _binding {
 	struct _binding *next;
-#ifndef USE_PCRE_REGEX
-	regex_t regexp;						/* la regexp sous forme machine */
-	regmatch_t match[MAX_MSG_FIELDS+1];	/* resultat du match */
-#else
+#ifdef USE_PCRE_REGEX
 	pcre *regexp;
 	pcre_extra *inspect;
 	int ovector[OVECSIZE];
+#else
+	regex_t regexp;						/* la regexp sous forme machine */
+	regmatch_t match[MAX_MSG_FIELDS+1];	/* resultat du match */
 #endif
 	};
 
@@ -92,19 +92,19 @@ IvyBinding IvyBindingCompile( const char * expression )
 }
 void IvyBindingGetCompileError( int *offset, const char **errmessage )
 {
-#ifndef USE_PCRE_REGEX
-	*offset = erroroffset;
+#ifdef USE_PCRE_REGEX
+	*offset = erroffset;
 	*errmessage = errbuf;
 #else
-	*offset = erroffset;
+	*offset = erroroffset;
 	*errmessage = errbuf;
 #endif
 }
 void IvyBindingFree( IvyBinding bind )
 {
 #ifdef USE_PCRE_REGEX
-				if (bind->inspect!=NULL) pcre_free(bind->inspect);
-				pcre_free(bind->regexp);
+	if (bind->inspect!=NULL) pcre_free(bind->inspect);
+		pcre_free(bind->regexp);
 #else
 #endif
 	free ( bind );

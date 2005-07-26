@@ -37,22 +37,21 @@
 #ifdef __MINGW32__
 #include <regex.h> 
 #include <getopt.h>
-#endif
-#else
+#endif // __MINGW32__
+#else // WIN32
 #include <sys/time.h>
 #include <unistd.h>
 #ifdef __INTERIX
 extern char *optarg;
 extern int optind;
-#endif
-#ifndef USE_PCRE_REGEX
-#include <regex.h> 
-#else
+#endif // __INTERIX
+#endif // WIN32
+
+#ifdef USE_PCRE_REGEX
 #define OVECSIZE 60 /* must be multiple of 3, for regexp return */
 #include <pcre.h>
-#endif
-
-
+#else
+#include <regex.h> 
 #endif
 
 #include "ivychannel.h"
@@ -70,10 +69,10 @@ int app_count = 0;
 int wait_count = 0;
 int fbindcallback = 0;
 
-void DirectCallback(IvyClientPtr app, void *user_data, int id, char *msg )
+void DirectCallback(IvyClientPtr app, void *user_data, int id, int len, void *msg )
 {
 	printf("%s sent a direct message, id=%d, message=%s\n",
-	    IvyGetApplicationName(app),id,msg);
+	    IvyGetApplicationName(app),id,(char*)msg);
 }
 
 void BindCallback(IvyClientPtr app, void *user_data,  IvyBindEvent event, char *regexp  )
@@ -109,6 +108,7 @@ void HandleStdin (Channel channel, HANDLE fd, void *data)
 	char *line;
 	char *cmd;
 	char *arg;
+	char *choparg;
 	int id;
 	IvyClientPtr app;
 	int err;
@@ -145,7 +145,15 @@ void HandleStdin (Channel channel, HANDLE fd, void *data)
 		} else if (strcmp(cmd,  "bind") == 0) {
 		  arg = strtok (NULL, "'");
 		  if  (arg) {
-#ifndef USE_PCRE_REGEX
+#ifdef USE_PCRE_REGEX
+			pcre *regexp;
+		    const char *errbuf;
+		    int erroffset;
+		    Chop(arg);
+		    regexp = pcre_compile(arg, 0,&errbuf,&erroffset,NULL);
+		    if (regexp==NULL) {
+		      printf("Error compiling '%s', %s, not bound\n", arg, errbuf);
+#else
 		    regex_t reg;
 		    int err;
 		    Chop(arg);
@@ -153,14 +161,7 @@ void HandleStdin (Channel channel, HANDLE fd, void *data)
 		      char errbuf[4096];
 		      regerror (err, &reg, errbuf, 4096);
 		      printf("Error compiling '%s', %s, not bound\n", arg, errbuf);
-#else
-		    pcre *regexp;
-		    const char *errbuf;
-		    int erroffset;
-		    Chop(arg);
-		    regexp = pcre_compile(arg, 0,&errbuf,&erroffset,NULL);
-		    if (regexp==NULL) {
-		      printf("Error compiling '%s', %s, not bound\n", arg, errbuf);
+
 #endif
 		    } else {
 		      IvyBindMsg (Callback, NULL, Chop(arg));
@@ -178,12 +179,13 @@ void HandleStdin (Channel channel, HANDLE fd, void *data)
 		} else if  (strcmp(cmd, "direct") == 0) {
 			arg = strtok (NULL, " \n");
 			if  (arg) {
+				choparg = Chop(arg);
 				app = IvyGetApplication (arg);
 				if  (app) {
 					arg = strtok (NULL, " ");
 					id = atoi (arg) ;
 					arg = strtok (NULL, "'");
-					IvySendDirectMsg (app, id, Chop(arg));
+					IvySendDirectMsg (app, id, strlen(choparg), choparg);
 				} else
 					printf ("No Application %s!!!\n",arg);
 			}

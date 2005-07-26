@@ -46,7 +46,7 @@ REGEXP= -DUSE_PCRE_REGEX -DPCRE_OPT=$(PCRE_OPT)
 CHANNEL = -DTCL_CHANNEL_INTEGRATION 
 
 
-OBJ = ivyloop.obj timer.obj ivysocket.obj ivy.obj 
+OBJ = ivyloop.obj timer.obj ivysocket.obj ivy.obj ivybind.obj ivyargument.obj
 
 # WINDOWS add ivyloop.obj if TCL_CHANNEL_INTEGRATION is not set
 TARGETS = ivyprobe ivyperf 
@@ -63,21 +63,21 @@ shared-libs: $(TARGETLIBS)
 
 commands: $(TARGETS)
 
-ivy.obj: ivy.c
-	$(CC) -c $(CFLAGS) $(REGEXP) $(PCREINC) ivy.c
+ivybind.obj: ivybind.c
+	$(CC) -c $(CFLAGS) $(REGEXP) $(PCREINC) ivybind.c
 
 
 ivyprobe: ivyprobe.obj libivy.lib
 	$(CC)  $(CFLAGS) -o $@ ivyprobe.obj libivy.lib wsock32.lib $(PCRELIB)
 
 ivyprobe.obj : ivyprobe.c 
-	$(CC)  $(CFLAGS) $(REGEXP) $(PCREINC) -c ivyprobe.c -o $@ 
+	$(CC) -c $(CFLAGS) $(REGEXP) $(PCREINC) ivyprobe.c
 	
 ivyperf: ivyperf.obj libivy.lib
 	$(CC)  $(CFLAGS) -o $@ ivyperf.obj libivy.lib wsock32.lib $(PCRELIB)
 
 ivyperf.obj : ivyperf.c
-	$(CC)  $(CFLAGS) $(REGEXP) $(PCREINC) -c ivyperf.c -o $@
+	$(CC) -c $(CFLAGS) $(REGEXP) $(PCREINC)  ivyperf.c
 
 
 libivy.lib: $(OBJ)
