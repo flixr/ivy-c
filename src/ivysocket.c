@@ -207,14 +207,14 @@ static Client CreateClient(int handle)
 		{
 		fprintf(stderr,"NOK Memory Alloc Error\n");
 		close ( handle );
-		exit(0);
+		exit(-1);
 		}
 	client->in_buffer_size = BUFFER_SIZE;
 	client->in_buffer = malloc( client->in_buffer_size );
 	if (!client->in_buffer )
 		{
 		fprintf(stderr,"HandleSocket Buffer Memory Alloc Error\n");
-		exit(0);
+		exit(-1);
 		}
 	client->in_ptr = client->in_buffer;
 	client->out_buffer_size = BUFFER_SIZE;
@@ -222,7 +222,7 @@ static Client CreateClient(int handle)
 	if (!client->in_buffer )
 		{
 		fprintf(stderr,"HandleSocket Buffer Memory Alloc Error\n");
-		exit(0);
+		exit(-1);
 		}
 	client->out_ptr = client->out_buffer;
 	client->fd = handle;

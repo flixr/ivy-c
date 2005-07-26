@@ -20,7 +20,7 @@
 #include <time.h>
 #include <stdlib.h>
 #include <memory.h> 
-
+#include <string.h>
 
 #include "list.h"
 #include "ivyargument.h"

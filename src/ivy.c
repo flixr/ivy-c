@@ -163,26 +163,37 @@ static long currentTime()
 #endif
         return  current;
 }
-
+static char *DupArg( int len, void *s)
+{
+	char *ptr;
+	ptr = malloc( len+1 );
+	if (!ptr )
+		{
+		fprintf(stderr,"DupArg Buffer Memory Alloc Error\n");
+		exit(-1);
+		}
+	memcpy( ptr, s, len );
+	ptr[len] = '\0';
+	return ptr;
+}
 /*
  * function split string in multiple string using separator
  * empty args when consecutives separators
  * the input string is modified separator are replaced with \0
  * */
-static int SplitArg( char *s, const char separator, char **argv )
+static int SplitArg( int len, char *s, const char separator, char **argv )
 {
 	char *ptr = s;
+	char *ptr_end = s + len;
 	int argc = 0;
-	while ( *ptr ) 
+	while ( ptr < ptr_end ) 
 	{
 		argv[argc++] = ptr;
-		while( *ptr && *ptr != separator )
+		while( (ptr < ptr_end) && *ptr != separator )
 				ptr++;
 		if ( *ptr == separator )
 		{
 		*ptr++ = '\0';
-		if ( !*ptr ) /* check last arg empty */
-			argv[argc++] = ptr;
 		}
 	}
 	return argc;
@@ -245,7 +256,7 @@ static void MsgSendTo( Client client, MsgType msgtype, int id, int len_arg, cons
 	unsigned short header[3];
 	
 #ifdef DEBUG
-	printf( "Sending message type=%d id=%d '%.*s'\n",msgtype,id,len_arg,arg);
+	printf( "Sending message type=%d id=%d '%.*s'\n",msgtype,id,len_arg,(char*)arg);
 #endif
 	header[0] = htons( (unsigned short)msgtype );
 	header[1] = htons( (unsigned short)id );
@@ -277,7 +288,7 @@ static void IvyCleanup()
 	SocketClose( broadcast );
 }
 
-static int MsgCall (const char *message, MsgSndPtr msg,  Client client)
+static int MsgSendCallTo (Client client, const char *message, MsgSndPtr msg  )
 {
 	//TODO remove this buffer 
 	static char *buffer = NULL; /* Use satic mem to eliminate multiple call to malloc /free */
@@ -298,7 +309,7 @@ static int MsgCall (const char *message, MsgSndPtr msg,  Client client)
 	// pour eviter la latence ( PB de perfo detecte par ivyperf ping roudtrip )
 
 #ifdef DEBUG
-	printf( "Send matching args count %d\n",rc-1);
+	printf( "Send matching args count %d\n",rc);
 #endif
 	index=0;
 	while ( index<rc ) {
@@ -324,7 +335,7 @@ static int ClientCall (IvyClientPtr clnt, const char *message)
 	int match_count = 0;
 	/* recherche dans la liste des requetes recues de ce client */
 	IVY_LIST_EACH (clnt->msg_send, msg) {
-		match_count+= MsgCall (message, msg, clnt->client);
+		match_count+= MsgSendCallTo (clnt->client, message, msg );
 	}
 	return match_count;
 }
@@ -383,7 +394,7 @@ static char* Receive( Client client, void *data, char *message, unsigned int len
 	int kind_of_msg = Bye;
 	IvyBinding bind;
 	char *ptr_end;
-	char *args;
+	char *args =NULL;
 
 	ptr_end = message;
 
@@ -395,14 +406,12 @@ static char* Receive( Client client, void *data, char *message, unsigned int len
 	if ( len_args )
 	{
 	if ( len < (6 + len_args) ) return NULL; /* incomplete message */
-	args = malloc( len_args ); /* TODO keep the buffer to free it */
-	strncpy( args , ptr_end, len_args );
-	args[ len_args ] = '\0';
+	args = ptr_end;
 	ptr_end += len_args;
 	}
 
 #ifdef DEBUG
-	printf("Receive Message type=%d id=%d arg=%s\n",  kind_of_msg, id, args);
+	printf("Receive Message type=%d id=%d arg=%.*s\n",  kind_of_msg, id, len_args, args);
 #endif //DEBUG
 
 	clnt = (IvyClientPtr)data;
@@ -411,23 +420,23 @@ static char* Receive( Client client, void *data, char *message, unsigned int len
 		case Bye:
 			
 #ifdef DEBUG
-			printf("Quitting  Bye %s\n",  args);
+			printf("Quitting  Bye %.*s\n",  len_args, args);
 #endif //DEBUG
 
 			SocketClose( client );
 			break;
 		case Error:
-			printf ("Received error %d %s\n",  id, args);
+			printf ("Received error %d %.*s\n",  id, len_args, args);
 			break;
 		case AddRegexp:
 
 #ifdef DEBUG
-			printf("Regexp  id=%d exp='%s'\n",  id, args);
+			printf("Regexp  id=%d exp='%.*s'\n",  id, len_args, args);
 #endif //DEBUG
 			if ( !CheckRegexp( args ) )
 				{
 #ifdef DEBUG
-				printf("Warning: regexp '%s' illegal, removing from %s\n",args,ApplicationName);
+				printf("Warning: regexp '%.*s' illegal, removing from %s\n",len_args,(char*)args,ApplicationName);
 #endif //DEBUG
 				return ptr_end;
 				}
@@ -438,7 +447,7 @@ static char* Receive( Client client, void *data, char *message, unsigned int len
 				if ( snd )
 					{
 					snd->id = id;
-					snd->str_regexp = strdup( args );
+					snd->str_regexp = DupArg( len_args,  args );
 					snd->bind = bind;	
 					if ( application_bind_callback )
 					  {
@@ -477,7 +486,7 @@ static char* Receive( Client client, void *data, char *message, unsigned int len
 #ifdef DEBUG
 			printf("Regexp Start id=%d Application='%s'\n",  id, args);
 #endif //DEBUG
-			clnt->app_name = strdup( args );
+			clnt->app_name = DupArg( len_args, args );
 			clnt->app_port = id;
 			if ( CheckConnected( clnt ) )
 			{			
@@ -511,10 +520,10 @@ static char* Receive( Client client, void *data, char *message, unsigned int len
 		case Msg:
 			
 #ifdef DEBUG
-		printf("Message id=%d msg='%s'\n", id, args);
+		printf("Message id=%d msg='%.*s'\n", id, len_args, args);
 #endif //DEBUG
 
-			argc = SplitArg( args, MESSAGE_SEPARATOR, argv);	
+			argc = SplitArg( len_args, args, MESSAGE_SEPARATOR, argv);	
 	
 			IVY_LIST_EACH( msg_recv, rcv )
 				{
@@ -554,7 +563,7 @@ static char* Receive( Client client, void *data, char *message, unsigned int len
 #ifdef DEBUG
 			printf("ApplicationId  priority=%d appid='%s'\n",  id, args);
 #endif //DEBUG
-			clnt->app_id = strdup( args );
+			clnt->app_id = DupArg( len_args, args );
 			if ( id != clnt->priority )
 			{
 			clnt->priority = id;

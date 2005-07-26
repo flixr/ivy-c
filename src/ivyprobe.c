@@ -35,8 +35,9 @@
 #ifdef WIN32
 #include <windows.h>
 #ifdef __MINGW32__
-#include <regex.h> 
 #include <getopt.h>
+#else
+#include "getopt.h"
 #endif // __MINGW32__
 #else // WIN32
 #include <sys/time.h>
@@ -71,8 +72,8 @@ int fbindcallback = 0;
 
 void DirectCallback(IvyClientPtr app, void *user_data, int id, int len, void *msg )
 {
-	printf("%s sent a direct message, id=%d, message=%s\n",
-	    IvyGetApplicationName(app),id,(char*)msg);
+	printf("%s sent a direct message, id=%d, message=%.*s\n",
+	    IvyGetApplicationName(app),id,len,(char*)msg);
 }
 
 void BindCallback(IvyClientPtr app, void *user_data,  IvyBindEvent event, char *regexp  )
