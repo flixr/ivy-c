@@ -34,7 +34,7 @@ PCREOBJ =
 
 #CC=gcc
 #CFLAGS = -g -Wall
-CFLAGS = -DWIN32 -nologo -GS -Zi -DDEBUG
+CFLAGS = -DWIN32 -nologo -GS -Zi #-DDEBUG
 #LIBTOOL=ar q # linux and solaris
 #LIBTOOL=libtool -static -o
 LIBTOOL=lib -nologo /out:

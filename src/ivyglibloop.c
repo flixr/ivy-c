@@ -64,7 +64,7 @@ void IvyChannelStop( )
 }
 
 
-Channel IvyChannelOpen(HANDLE fd, void *data,
+Channel IvyChannelOpen(IVY_HANDLE fd, void *data,
 			   ChannelHandleDelete handle_delete,
 			   ChannelHandleRead handle_read
 			   ) {

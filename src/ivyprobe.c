@@ -103,7 +103,8 @@ char * Chop(char *arg)
 	return arg;
 }
 
-void HandleStdin (Channel channel, HANDLE fd, void *data)
+void HandleStdin (Channel channel, IVY_HANDLE fd, void *data)
+
 {
 	char buf[4096];
 	char *line;
@@ -115,9 +116,13 @@ void HandleStdin (Channel channel, HANDLE fd, void *data)
 	int err;
 	line = fgets(buf, 4096, stdin);
 	if  (!line)	{
+#ifdef WIN32
+#else
 		IvyChannelClose (channel);
+#endif
 		IvyStop();
 		return;
+
 	}
 	if  (*line == '.') {
 		cmd = strtok (line, ".: \n");
@@ -225,7 +230,33 @@ void HandleStdin (Channel channel, HANDLE fd, void *data)
 		}
 	}
 }
+#ifdef WIN32
+DWORD WINAPI HandleStdinThread( LPVOID lpParam ) 
+{
+	while( 1 )
+		HandleStdin( 0,0,0);
+}
+void CraeteStdinThread()
+{
+    DWORD dwThreadId, dwThrdParam = 1; 
+    HANDLE hThread; 
 
+    hThread = CreateThread( 
+        NULL,                        // default security attributes 
+        0,                           // use default stack size  
+        HandleStdinThread,                  // thread function 
+        &dwThrdParam,                // argument to thread function 
+        0,                           // use default creation flags 
+        &dwThreadId);                // returns the thread identifier 
+ 
+   // Check the return value for success. 
+ 
+   if (hThread == NULL) 
+   {
+      printf( "CreateThread failed (%d)\n", GetLastError() ); 
+   }
+}
+#endif
 void ApplicationCallback (IvyClientPtr app, void *user_data, IvyApplicationEvent event)
 {
 	char *appname;
@@ -335,8 +366,11 @@ int main(int argc, char *argv[])
 		IvyBindMsg (Callback, NULL, argv[optind]);
 
 	if  (wait_count == 0)
-#ifndef WIN32
-/* Stdin not compatible with select , select only accept socket */
+#ifdef WIN32
+	/* Stdin not compatible with select , select only accept socket */
+	/* use Thread to Read StdIn */
+	CraeteStdinThread();
+#else
 	IvyChannelOpen (0, NULL, NULL, HandleStdin);
 #endif
 

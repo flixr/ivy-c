@@ -45,7 +45,7 @@
 
 struct _server {
 	Server next;
-	HANDLE fd;
+	IVY_HANDLE fd;
 	Channel channel;
 	unsigned short port;
 	SocketCreate create;
@@ -55,7 +55,7 @@ struct _server {
 
 struct _client {
 	Client next;
-	HANDLE fd;
+	IVY_HANDLE fd;
 	Channel channel;
 	unsigned short port;
 	struct sockaddr_in from;
@@ -141,7 +141,7 @@ static void DeleteServerSocket(void *data)
         close (server->fd );
         IVY_LIST_REMOVE (servers_list, server);
 }
-static void HandleSocket (Channel channel, HANDLE fd, void *data)
+static void HandleSocket (Channel channel, IVY_HANDLE fd, void *data)
 {
 	Client client = (Client)data;
 	char *ptr;
@@ -231,11 +231,11 @@ static Client CreateClient(int handle)
 	return client;
 }
 
-static void HandleServer(Channel channel, HANDLE fd, void *data)
+static void HandleServer(Channel channel, IVY_HANDLE fd, void *data)
 {
 	Server server = (Server ) data;
 	Client client;
-	HANDLE ns;
+	IVY_HANDLE ns;
 	socklen_t addrlen;
 	struct sockaddr_in remote2;
 #ifdef DEBUG
@@ -264,7 +264,7 @@ Server SocketServer(unsigned short port,
 	SocketInterpretation interpretation )
 {
 	Server server;
-	HANDLE fd;
+	IVY_HANDLE fd;
 	int one=1;
 	struct sockaddr_in local;
 	socklen_t addrlen;
@@ -460,7 +460,7 @@ Client SocketConnectAddr (struct in_addr * addr, unsigned short port,
 			  SocketDelete handle_delete
 			  )
 {
-	HANDLE handle;
+	IVY_HANDLE handle;
 	Client client;
 	struct sockaddr_in remote;
 
@@ -496,7 +496,7 @@ Client SocketBroadcastCreate (
 				SocketInterpretation interpretation
 			)
 {
-	HANDLE handle;
+	IVY_HANDLE handle;
 	Client client;
 	struct sockaddr_in local;
 	int on = 1;

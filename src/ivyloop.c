@@ -42,7 +42,7 @@
 
 struct _channel {
 	Channel next;
-	HANDLE fd;
+	IVY_HANDLE fd;
 	void *data;
 	int tobedeleted;
 	ChannelHandleDelete handle_delete;
@@ -88,7 +88,7 @@ ChannelDefferedDelete ()
 	}
 }
 
-Channel IvyChannelOpen (HANDLE fd, void *data, 
+Channel IvyChannelOpen (IVY_HANDLE fd, void *data, 
 				ChannelHandleDelete handle_delete,
 				ChannelHandleRead handle_read
 				)						
