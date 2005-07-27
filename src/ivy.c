@@ -82,7 +82,6 @@ typedef enum {
 typedef struct _msg_snd *MsgSndPtr;
 
 struct _msg_rcv {			/* requete d'emission d'un client */
-	MsgRcvPtr next;
 	int id;
 	const char *regexp;		/* regexp du message a recevoir */
 	MsgCallback callback;		/* callback a declanche a la reception */
