@@ -68,15 +68,15 @@ REGEXP= -DUSE_PCRE_REGEX -DPCRE_OPT=$(PCRE_OPT)
 CHANNEL = -DTCL_CHANNEL_INTEGRATION 
 CFLAGS = -g -Wall #-DDEBUG
 
-OBJ = ivyloop.o timer.o ivysocket.o ivybind.o ivyargument.o ivy.o 
-GOBJ = ivyloop.o timer.o ivysocket.o ivybind.o ivyargument.o givy.o
-XTOBJ = ivyxtloop.o ivysocket.o ivybind.o  ivyargument.o ivy.o
-GLIBOBJ = ivyglibloop.o ivysocket.o ivybind.o ivy.o
-GLUTOBJ = ivyglutloop.o ivysocket.o ivybind.o ivy.o
-TCLOBJ = ivytcl.o  timer.o ivysocket.o ivybind.o givy.o
+COMOBJ = hash.o ivysocket.o ivybind.o ivyargument.o ivy.o 
+OBJ     = $(COMOBJ) ivyloop.o timer.o  
+XTOBJ   = $(COMOBJ) ivyxtloop.o 
+GLIBOBJ = $(COMOBJ) ivyglibloop.o 
+GLUTOBJ = $(COMOBJ) ivyglutloop.o 
+TCLOBJ  = $(COMOBJ) ivytcl.o  timer.o 
 # WINDOWS add ivyloop.o if TCL_CHANNEL_INTEGRATION is not set
 TARGETS = ivyprobe ivyperf ivyglibprobe ivyxtprobe 
-TARGETLIBS=libivy.so.$(MAJOR).$(MINOR) libgivy.so.$(MAJOR).$(MINOR) libxtivy.so.$(MAJOR).$(MINOR) libglibivy.so.$(MAJOR).$(MINOR) libtclivy.so.$(MAJOR).$(MINOR)
+TARGETLIBS=libivy.so.$(MAJOR).$(MINOR) libxtivy.so.$(MAJOR).$(MINOR) libglibivy.so.$(MAJOR).$(MINOR) libtclivy.so.$(MAJOR).$(MINOR)
 # not yet need Modified Glut ivyglutprobe
 
 .c.o:
@@ -84,7 +84,7 @@ TARGETLIBS=libivy.so.$(MAJOR).$(MINOR) libgivy.so.$(MAJOR).$(MINOR) libxtivy.so.
 
 all: static-libs commands shared-libs
 
-static-libs: libivy.a libgivy.a libxtivy.a libglibivy.a libtclivy.a 
+static-libs: libivy.a libxtivy.a libglibivy.a libtclivy.a 
 # not yet need Modified Glut libglutivy.a
 
 shared-libs: $(TARGETLIBS)
@@ -103,9 +103,6 @@ ivybind.o: ivybind.c
 
 ivyargument.o: ivyargument.c
 	$(CC) -c $(CFLAGS) $(REGEXP) $(PCREINC) ivyargument.c
-
-givy.o: ivy.c
-	$(CC) -c $(CFLAGS) $(REGEXP) -o givy.o ivy.c
 
 ivyglutloop.o: ivyglutloop.c ivyglutloop.h
 	$(CC) -c $(CFLAGS) $(GLUTINC) ivyglutloop.c
@@ -147,10 +144,6 @@ libivy.a: $(OBJ)
 	rm -f $@
 	$(LIBTOOL) $@ $(OBJ)
 
-libgivy.a: $(GOBJ)
-	rm -f $@
-	$(LIBTOOL) $@ $(GOBJ)
-
 libxtivy.a: $(XTOBJ)
 	rm -f $@
 	$(LIBTOOL) $@ $(XTOBJ)
@@ -172,11 +165,6 @@ libivy.so.$(MAJOR).$(MINOR): $(OBJ)
 	$(CC) -shared -Wl,-soname,libivy.so.$(MAJOR) -o $@ $(OBJ) $(PCRELIB)
 #	$(CC) -G -Wl,-h,libivy.so.$(MAJOR) -o $@ $(OBJ)		#solaris
 #	libtool -dynamic -o $@ $(OBJ) $(PCRELIB) -lc
-
-libgivy.so.$(MAJOR).$(MINOR): $(GOBJ)
-	$(CC) -shared -Wl,-soname,libgivy.so.$(MAJOR) -o $@ $(GOBJ) $(PCRELIB)
-#	$(CC) -G -Wl,-h,libgivy.so.$(MAJOR) -o $@ $(GOBJ) #solaris
-#	libtool -dynamic -o $@ $(GOBJ) $(PCRELIB) -lc
 
 libxtivy.so.$(MAJOR).$(MINOR): $(XTOBJ)
 	$(CC) -shared -Wl,-soname,libxtivy.so.$(MAJOR) -o $@ $(XTOBJ) $(XTLIB) $(PCRELIB)
@@ -206,13 +194,11 @@ installlibs: static-libs shared-libs
 	test -d $(PREFIX)/usr/X11R6/lib || mkdirhier $(PREFIX)/usr/X11R6/lib
 	test -d $(PREFIX)/usr/include || mkdirhier $(PREFIX)/usr/include
 	install -m644 libivy.a $(PREFIX)/usr/lib
-	install -m644 libgivy.a $(PREFIX)/usr/lib
 	install -m644 libxtivy.a $(PREFIX)/usr/X11R6/lib
 	install -m644 libtclivy.a $(PREFIX)/usr/lib
 	install -m644 libglibivy.a $(PREFIX)/usr/lib
 
 	install -m644 libivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/lib
-	install -m644 libgivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/lib
 	install -m644 libxtivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/X11R6/lib
 	install -m644 libtclivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/lib
 	install -m644 libglibivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/lib
@@ -222,8 +208,6 @@ installlibs: static-libs shared-libs
 installliblinks: installlibs
 	ln -fs /usr/lib/libivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/lib/libivy.so
 	ln -fs /usr/lib/libivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/lib/libivy.so.$(MAJOR)
-	ln -fs /usr/lib/libgivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/lib/libgivy.so
-	ln -fs /usr/lib/libgivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/lib/libgivy.so.$(MAJOR)
 	ln -fs /usr/X11R6/lib/libxtivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/X11R6/lib/libxtivy.so
 	ln -fs /usr/X11R6/lib/libxtivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/X11R6/lib/libxtivy.so.$(MAJOR)
 	ln -fs /usr/lib/libtclivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/lib/libtclivy.so

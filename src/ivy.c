@@ -37,6 +37,7 @@
 #include "ivybind.h"
 #include "ivysocket.h"
 #include "list.h"
+#include "hash.h"
 #include "ivy.h"
 
 #define VERSION 4
@@ -140,7 +141,9 @@ static IvyDieCallback application_die_callback;
 static void *application_die_user_data = 0;
 
 /* liste des messages a recevoir */
-static MsgRcvPtr msg_recv = 0;
+//static MsgRcvPtr msg_recv = 0;
+static HASHTABLE msg_recv= NULL;
+
 
 /* liste des clients connectes */
 static IvyClientPtr clients = 0;
@@ -394,7 +397,8 @@ static char* Receive( Client client, void *data, char *message, unsigned int len
 	int kind_of_msg = Bye;
 	IvyBinding bind;
 	char *ptr_end;
-	char *args =NULL;
+	void *args =NULL;
+	char *str_regexp;
 
 	ptr_end = message;
 
@@ -411,7 +415,7 @@ static char* Receive( Client client, void *data, char *message, unsigned int len
 	}
 
 #ifdef DEBUG
-	printf("Receive Message type=%d id=%d arg=%.*s\n",  kind_of_msg, id, len_args, args);
+	printf("Receive Message type=%d id=%d arg=%.*s\n",  kind_of_msg, id, len_args, (char*)args);
 #endif //DEBUG
 
 	clnt = (IvyClientPtr)data;
@@ -420,34 +424,36 @@ static char* Receive( Client client, void *data, char *message, unsigned int len
 		case Bye:
 			
 #ifdef DEBUG
-			printf("Quitting  Bye %.*s\n",  len_args, args);
+			printf("Quitting  Bye %.*s\n",  len_args, (char*)args);
 #endif //DEBUG
 
 			SocketClose( client );
 			break;
 		case Error:
-			printf ("Received error %d %.*s\n",  id, len_args, args);
+			printf ("Received error %d %.*s\n",  id, len_args, (char*)args);
 			break;
 		case AddRegexp:
 
 #ifdef DEBUG
-			printf("Regexp  id=%d exp='%.*s'\n",  id, len_args, args);
+			printf("Regexp  id=%d exp='%.*s'\n",  id, len_args, (char*)args);
 #endif //DEBUG
-			if ( !CheckRegexp( args ) )
+			if ( !CheckRegexp( args ) ) /* TODO check args limits !!!*/
 				{
 #ifdef DEBUG
 				printf("Warning: regexp '%.*s' illegal, removing from %s\n",len_args,(char*)args,ApplicationName);
 #endif //DEBUG
 				return ptr_end;
 				}
-			bind = IvyBindingCompile( args );
+			str_regexp = DupArg( len_args,  args );
+			
+			bind = IvyBindingCompile( str_regexp );
 			if ( bind != NULL )
 				{
 				IVY_LIST_ADD( clnt->msg_send, snd )
 				if ( snd )
 					{
 					snd->id = id;
-					snd->str_regexp = DupArg( len_args,  args );
+					snd->str_regexp = str_regexp;
 					snd->bind = bind;	
 					if ( application_bind_callback )
 					  {
@@ -461,8 +467,8 @@ static char* Receive( Client client, void *data, char *message, unsigned int len
 			const char *errbuf;
 			IvyBindingGetCompileError( &offset, &errbuf );
 			MsgSendTo( client, Error, offset, strlen(errbuf), errbuf );
+			free( str_regexp );
 			}
-
 			break;
 		case DelRegexp:
 #ifdef DEBUG
@@ -484,14 +490,14 @@ static char* Receive( Client client, void *data, char *message, unsigned int len
 			break;
 		case StartRegexp:
 #ifdef DEBUG
-			printf("Regexp Start id=%d Application='%s'\n",  id, args);
+			printf("Regexp Start id=%d Application='%.*s'\n",  id, len_args, (char*)args);
 #endif //DEBUG
 			clnt->app_name = DupArg( len_args, args );
 			clnt->app_port = id;
 			if ( CheckConnected( clnt ) )
 			{			
 #ifdef DEBUG
-			printf("Quitting  already connected %s\n",  args);
+			printf("Quitting  already connected %.*s\n",  len_args, (char*)args);
 #endif //DEBUG
 			IvySendError( clnt, 0, "Application already connected" );
 			SocketClose( client );
@@ -520,28 +526,26 @@ static char* Receive( Client client, void *data, char *message, unsigned int len
 		case Msg:
 			
 #ifdef DEBUG
-		printf("Message id=%d msg='%.*s'\n", id, len_args, args);
+		printf("Message id=%d msg='%.*s'\n", id, len_args, (char*)args);
 #endif //DEBUG
-
-			argc = SplitArg( len_args, args, MESSAGE_SEPARATOR, argv);	
-	
-			IVY_LIST_EACH( msg_recv, rcv )
-				{
-				if ( id == rcv->id )
+			rcv = hash_lookup( msg_recv, id );
+			if ( rcv )
 					{
+					argc = SplitArg( len_args, args, MESSAGE_SEPARATOR, argv);	
+	
 #ifdef DEBUG
 					printf("Calling  id=%d argc=%d for %s\n", id, argc,rcv->regexp);
 #endif
 					if ( rcv->callback ) (*rcv->callback)( clnt, rcv->user_data, argc, argv );
 					return ptr_end;
 					}
-				}
-			printf("Callback Message id=%d not found!!!'\n", id);
+			else 
+				printf("Callback Message id=%d not found!!!'\n", id);
 			break;
 		case DirectMsg:
 			
 #ifdef DEBUG
-			printf("Direct Message id=%d msg='%s'\n", id, args);
+			printf("Direct Message id=%d msg='%.*s'\n", id, len_args, (char*)args);
 #endif //DEBUG
 
 			if ( direct_callback)
@@ -561,7 +565,7 @@ static char* Receive( Client client, void *data, char *message, unsigned int len
 			break;
 		case ApplicationId:
 #ifdef DEBUG
-			printf("ApplicationId  priority=%d appid='%s'\n",  id, args);
+			printf("ApplicationId  priority=%d appid='%.*s'\n",  id, len_args, (char*)args);
 #endif //DEBUG
 			clnt->app_id = DupArg( len_args, args );
 			if ( id != clnt->priority )
@@ -576,11 +580,16 @@ static char* Receive( Client client, void *data, char *message, unsigned int len
 		}
 	return ptr_end;
 }
-
+BOOL SendRegexp(HASHKEYTYPE key, void *data, va_list args)
+{
+	Client client =  va_arg( args, Client);
+	MsgRcvPtr msg = (MsgRcvPtr)data;
+	MsgSendTo( client, AddRegexp,msg->id,strlen(msg->regexp), msg->regexp);
+	return FALSE; /* iter throught all hash table */ 
+}
 static IvyClientPtr SendService( Client client )
 {
 	IvyClientPtr clnt;
-	MsgRcvPtr msg;
 	IVY_LIST_ADD( clients, clnt )
 	if ( clnt )
 		{
@@ -592,10 +601,7 @@ static IvyClientPtr SendService( Client client )
 		clnt->priority = DEFAULT_PRIORITY;
 		MsgSendTo( client, ApplicationId, applicationPriority, strlen(applicationUniqueId), applicationUniqueId );
 		MsgSendTo( client, StartRegexp, ApplicationPort, strlen(ApplicationName), ApplicationName );
-		IVY_LIST_EACH(msg_recv, msg )
-			{
-			MsgSendTo( client, AddRegexp,msg->id,strlen(msg->regexp), msg->regexp);
-			}
+		hash_search( msg_recv, SendRegexp, client);
 		MsgSendTo( client, EndRegexp, 0, 0,"");
 		}
 	return clnt;
@@ -738,6 +744,12 @@ void IvyInit (const char *appname, const char *ready,
 	struct hostent *host;
 	IvyChannelInit();
 
+	msg_recv = hash_create( 1024, FALSE );
+	if ( ! msg_recv )
+	{
+		fprintf(stderr,"IvyInit can't create Binding hash Table\n");
+		exit(-1);
+	}
 	ApplicationName = appname;
 	application_callback = callback;
 	application_user_data = data;
@@ -923,7 +935,7 @@ void IvyUnbindMsg (MsgRcvPtr msg)
 	IVY_LIST_EACH (clients, clnt ) {
 		MsgSendTo( clnt->client, DelRegexp,msg->id, 0, "");
 	}
-	IVY_LIST_REMOVE( msg_recv, msg  );
+	hash_remove( msg_recv, msg->id );
 }
 
 /* demande de reception d'un message */
@@ -943,12 +955,18 @@ MsgRcvPtr IvyBindMsg (MsgCallback callback, void *user_data, const char *fmt_reg
 	va_end  (ap );
 
 	/* add Msg to the query list */
-	IVY_LIST_ADD( msg_recv, msg );
+	msg = malloc(sizeof(struct _msg_rcv));
 	if (msg)	{
 		msg->id = recv_id++;
 		msg->regexp = strdup(buffer);
 		msg->callback = callback;
 		msg->user_data = user_data;
+		hash_add(msg_recv, msg->id, msg);
+	}
+	else
+	{
+		perror("IvyBindMsg can't allocate Binding");
+		exit(-1);
 	}
 	len = strlen(msg->regexp);
 	/* Send to already connected clients */

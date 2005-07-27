@@ -208,7 +208,7 @@ void HandleStdin (Channel channel, IVY_HANDLE fd, void *data)
 			printf("	.direct appname	id 'arg' - send direct msg to appname\n");
 			printf("	.where appname			 - on which host is appname\n");
 			printf("	.bind 'regexp'			 - add a msg to receive\n");
-			printf("	.bindcall				 - add callback to binding\n");
+			printf("	.bindcall				 - toogle callback to binding\n");
 			printf("	.who					 - who is on the bus\n");
 		} else if  (strcmp(cmd, "bindcall") == 0) {
 		  if (!fbindcallback) {

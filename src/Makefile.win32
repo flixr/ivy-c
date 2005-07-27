@@ -46,7 +46,7 @@ REGEXP= -DUSE_PCRE_REGEX -DPCRE_OPT=$(PCRE_OPT)
 CHANNEL = -DTCL_CHANNEL_INTEGRATION 
 
 
-OBJ = ivyloop.obj timer.obj ivysocket.obj ivy.obj ivybind.obj ivyargument.obj getopt.obj
+OBJ = hash.obj ivyloop.obj timer.obj ivysocket.obj ivy.obj ivybind.obj ivyargument.obj getopt.obj
 
 # WINDOWS add ivyloop.obj if TCL_CHANNEL_INTEGRATION is not set
 TARGETS = ivyprobe.exe ivyperf.exe 
@@ -88,7 +88,7 @@ libivy.dll: $(OBJ)
 	$(CC) -nologo /LD -o $@ $(OBJ) wsock32.lib $(PCRELIB)
 
 clean:
-	-del /f $(TARGETS) $(TARGETLIBS) *.obj *.a *.dll *~
+	-del /f $(TARGETS) $(TARGETLIBS) *.obj *.a *.dll *.pdb *~
 
 
 
