@@ -85,12 +85,19 @@ void BindCallback(IvyClientPtr app, void *user_data,  IvyBindEvent event, char *
 	    IvyGetApplicationName(app),regexp,sevent);
 }
 
-void Callback (IvyClientPtr app, void *user_data, int argc, char *argv[])
+void Callback (IvyClientPtr app, void *user_data, IvyArgument args)
 {
-	int i;
-	printf ("%s sent %d args:",IvyGetApplicationName(app),argc);
-	for  (i = 0; i < argc; i++)
-			printf(" '%s'",argv[i]);
+	IvyArgument arg;
+	int len;
+	const void* value;
+	printf ("%s sent:",IvyGetApplicationName(app));
+	arg =  IvyArgumentGetChildrens ( args ) ;
+	while( arg )
+	{
+		IvyArgumentGetValue( arg, &len, &value );
+		printf(" '%.*s'",len, (char*)value );
+		arg = IvyArgumentGetNextChild( arg );
+	}
 	printf("\n");
 }
 
@@ -118,7 +125,7 @@ void HandleStdin (Channel channel, IVY_HANDLE fd, void *data)
 	if  (!line)	{
 #ifdef WIN32
 #else
-		IvyChannelClose (channel);
+		IvyChannelRemove (channel);
 #endif
 		IvyStop();
 		return;
@@ -276,7 +283,7 @@ void ApplicationCallback (IvyClientPtr app, void *user_data, IvyApplicationEvent
 /*		printf("Application(%s): End Messages\n",appname);*/
 		if  (app_count == wait_count)
 
-		IvyChannelOpen (0, NULL, NULL, HandleStdin);
+		IvyChannelAdd (0, NULL, NULL, HandleStdin);
 		break;
 
 	case IvyApplicationDisconnected:
@@ -371,7 +378,7 @@ int main(int argc, char *argv[])
 	/* use Thread to Read StdIn */
 	CraeteStdinThread();
 #else
-	IvyChannelOpen (0, NULL, NULL, HandleStdin);
+	IvyChannelAdd (0, NULL, NULL, HandleStdin);
 #endif
 
 

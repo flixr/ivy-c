@@ -3,7 +3,7 @@ LIBRARY	Ivy
 EXPORTS
 
 IvyDefaultApplicationCallback
-IvyClasses
+IvySetMyMessagesStart
 IvyInit
 IvyStart
 IvyStop
@@ -19,13 +19,27 @@ IvyUnbindMsg
 IvySendError
 IvySendDieMsg
 IvySendMsg
-
+IvySetApplicationPriority
+IvySetBindCallback
 
 IvyBindDirectMsg
 IvySendDirectMsg
 
 
+IvyArgumentNew
+IvyArgumentFree
+IvyArgumentGetValue
+IvyArgumentGetChildrens
+IvyArgumentGetNextChild
+IvyAddChild
+IvyAddChildValue
+
+
 IvyMainLoop
 IvyChannelInit
-IvyChannelClose
-IvyChannelSetUp
+IvyChannelRemove
+IvyChannelAdd
+
+TimerRepeatAfter
+TimerModify
+TimerRemove

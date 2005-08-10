@@ -42,7 +42,7 @@ extern void IvyChannelInit(void);
 extern void IvyChannelStop(void);
 						
 /* fonction appele par le bus pour mise en place des callback sur le canal */
-extern Channel IvyChannelOpen(
+extern Channel IvyChannelAdd(
 	IVY_HANDLE fd,
 	void *data,
 	ChannelHandleDelete handle_delete,
@@ -50,7 +50,7 @@ extern Channel IvyChannelOpen(
 );
 
 /* fonction appele par le bus pour fermeture du canal */
-extern void IvyChannelClose( Channel channel );
+extern void IvyChannelRemove( Channel channel );
 
 #ifdef __cplusplus
 }

@@ -52,18 +52,33 @@ static double currentTime()
         return  current;
 }
 
-void Reply (IvyClientPtr app, void *user_data, int argc, char *argv[])
+void Reply (IvyClientPtr app, void *user_data, IvyArgument args)
 {
-	IvySendMsg ("pong ts=%s tr=%f", *argv, currentTime());
+	IvyArgument arg;
+	int len;
+	void* val;
+	arg = IvyArgumentGetChildrens( args );
+	IvyArgumentGetValue( args , &len, &val);
+	IvySendMsg ("pong ts=%.*s tr=%f", len, val, currentTime());
 }
-void Pong (IvyClientPtr app, void *user_data, int argc, char *argv[])
+void Pong (IvyClientPtr app, void *user_data, IvyArgument args)
 {
-	double current = currentTime();
-	double ts = atof( *argv++ );
-	double tr = atof( *argv++ );
-	double roundtrip1 = tr-ts;
-	double roundtrip2 = current - tr;
-	double roundtrip3 = current - ts;
+	double current, ts, tr, roundtrip1, roundtrip2, roundtrip3;
+	IvyArgument arg;
+	int len;
+	void* val;
+	/* TODO  bug atof non limite a la longeur de la valeur !!!*/
+	
+	current = currentTime();
+	arg = IvyArgumentGetChildrens( args );
+	IvyArgumentGetValue( args , &len, &val);
+	ts = atof( val );
+	arg = IvyArgumentGetNextChild( arg );
+	IvyArgumentGetValue( args , &len, &val);
+	tr = atof( val );
+	roundtrip1 = tr-ts;
+	roundtrip2 = current - tr;
+	roundtrip3 = current - ts;
 	fprintf(stderr,"roundtrip %f %f %f \n", roundtrip1, roundtrip2, roundtrip3 );
 }
 

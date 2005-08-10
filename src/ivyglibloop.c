@@ -64,7 +64,7 @@ void IvyChannelStop( )
 }
 
 
-Channel IvyChannelOpen(IVY_HANDLE fd, void *data,
+Channel IvyChannelAdd(IVY_HANDLE fd, void *data,
 			   ChannelHandleDelete handle_delete,
 			   ChannelHandleRead handle_read
 			   ) {
@@ -89,7 +89,7 @@ Channel IvyChannelOpen(IVY_HANDLE fd, void *data,
 
 
 
-void IvyChannelClose( Channel channel ) {
+void IvyChannelRemove( Channel channel ) {
   if ( channel->handle_delete )
     (*channel->handle_delete)( channel->data );
   g_source_remove( channel->id_read );

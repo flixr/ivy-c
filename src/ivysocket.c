@@ -80,46 +80,6 @@ static Client clients_list = NULL;
 WSADATA	WsaData;
 #endif
 
-// fonction de formtage a la printf d'un buffer avec reallocation dynamique  
-int make_message(char ** buffer, int *size,  int offset, const char *fmt, va_list ap)
-{
-    /* Guess we need no more than BUFFER_INIT_SIZE bytes. */
-    long n;
-	if ( *size == 0 || *buffer == NULL )
-		{
-		*size = BUFFER_SIZE;
-		*buffer = malloc (BUFFER_SIZE);
-		if ( *buffer == NULL )
-		    return -1;
-		}
-    while (1) {
-    /* Try to print in the allocated space. */
-#ifdef WIN32
-	n = _vsnprintf (*buffer + offset, *size - offset, fmt, ap);
-#else
-    n = vsnprintf (*buffer + offset, *size - offset, fmt, ap);
-#endif
-    /* If that worked, return the string size. */
-    if (n > -1 && n < *size)
-        return n;
-    /* Else try again with more space. */
-    if (n > -1)    /* glibc 2.1 */
-        *size = n+1; /* precisely what is needed */
-    else           /* glibc 2.0 */
-        *size *= 2;  /* twice the old size */
-    if ((*buffer = realloc (*buffer, *size)) == NULL)
-        return -1;
-    }
-}
-int make_message_var(char ** buffer, int *size,  int offset, const char *fmt, ... )
-{
-	va_list ap;
-	long len;
-	va_start (ap, fmt );
-	len = make_message (buffer,size, offset, fmt, ap );
-	va_end (ap );
-	return len;
-}
 static void DeleteSocket(void *data)
 {
 	Client client = (Client )data;
@@ -168,11 +128,11 @@ static void HandleSocket (Channel channel, IVY_HANDLE fd, void *data)
 		       &len);
 	if (nb  < 0) {
 		perror(" Read Socket ");
-		IvyChannelClose(client->channel );
+		IvyChannelRemove(client->channel );
 		return;
 	}
 	if (nb == 0 ) {
-		IvyChannelClose(client->channel );
+		IvyChannelRemove(client->channel );
 		return;
 	}
 	client->in_ptr += nb;
@@ -226,7 +186,7 @@ static Client CreateClient(int handle)
 		}
 	client->out_ptr = client->out_buffer;
 	client->fd = handle;
-	client->channel = IvyChannelOpen (client->fd, client,  DeleteSocket, HandleSocket );
+	client->channel = IvyChannelAdd (client->fd, client,  DeleteSocket, HandleSocket );
 
 	return client;
 }
@@ -324,7 +284,7 @@ Server SocketServer(unsigned short port,
 		exit(0);
 		}
 	server->fd = fd;
-	server->channel = IvyChannelOpen(fd, server, DeleteServerSocket, HandleServer );
+	server->channel = IvyChannelAdd(fd, server, DeleteServerSocket, HandleServer );
 	server->create = create;
 	server->handle_delete = handle_delete;
 	server->interpretation = interpretation;
@@ -341,7 +301,7 @@ void SocketServerClose (Server server )
 {
 	if (!server)
 		return;
-	IvyChannelClose (server->channel );
+	IvyChannelRemove (server->channel );
 }
 
 char *SocketGetPeerHost (Client client )
@@ -384,7 +344,7 @@ void SocketGetRemoteHost (Client client, char **host, unsigned short *port )
 void SocketClose (Client client )
 {
 	if (client)
-		IvyChannelClose (client->channel );
+		IvyChannelRemove (client->channel );
 }
 void SocketSetData (Client client, void *data )
 {
@@ -396,7 +356,7 @@ void *SocketGetData (Client client )
 {
 	return client ? client->data : 0;
 }
-void SocketSendBuf (Client client, const char *buffer, int len )
+void SocketSend(Client client, const char *buffer, int len )
 {
 	unsigned long usedspace;
 	if (!client)
@@ -412,16 +372,6 @@ void SocketSendBuf (Client client, const char *buffer, int len )
 	client->out_ptr += len;
 }
 
-
-void SocketSendFmt (Client client, const char *fmt, ... )
-{
-	va_list ap;
-	if (!client)
-		return;
-	va_start (ap, fmt );
-	client->out_ptr += make_message (&client->out_buffer, &client->out_buffer_size, client->out_ptr - client->out_buffer, fmt, ap );
-	va_end (ap );
-}
 void SocketFlush (Client client)
 {
 	int err;
@@ -543,20 +493,7 @@ Client SocketBroadcastCreate (
 	return client;
 }
 
-void SocketSendBroadcast (Client client, unsigned long host, unsigned short port, char *fmt, ... )
-{
-	va_list ap;
-	int len;
-
-	if (!client)
-		return;
-
-	va_start (ap, fmt );
-	len = make_message (&client->out_buffer, &client->out_buffer_size, 0, fmt, ap );
-	SocketSendBroadcastRaw( client, host, port, client->out_buffer, len );
-	va_end (ap );
-}
-void SocketSendBroadcastRaw (Client client, unsigned long host, unsigned short port, char *buffer, int len )
+void SocketSendBroadcast(Client client, unsigned long host, unsigned short port, char *buffer, int len )
 {
 	struct sockaddr_in remote;
 	int err;

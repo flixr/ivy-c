@@ -99,7 +99,7 @@ IvyHandleFd(ClientData	cd,
   }
 }
 
-void IvyChannelClose( Channel channel )
+void IvyChannelRemove( Channel channel )
 {
 
 	if ( channel->handle_delete )
@@ -109,7 +109,7 @@ void IvyChannelClose( Channel channel )
 }
 
 
-Channel IvyChannelOpen(HANDLE fd, void *data,
+Channel IvyChannelAdd(HANDLE fd, void *data,
 				ChannelHandleDelete handle_delete,
 				ChannelHandleRead handle_read
 				)						

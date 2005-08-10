@@ -132,6 +132,7 @@ HASHTABLE hash_create(unsigned long InitialSize, BOOL KeyIsString)
 
 	// Allocate space for the hash table.
 	table = malloc(sizeof(*table));
+	memset( table, 0,  sizeof(*table) );
 
 	// Minimum size of hash table is 8.
 	if (InitialSize < 8 )
@@ -146,6 +147,8 @@ HASHTABLE hash_create(unsigned long InitialSize, BOOL KeyIsString)
 	table->MaxRows	   = InitialSize;
 	table->Rows 	   = malloc(InitialSize * sizeof(struct ROW));
 	table->KeyIsString = KeyIsString;
+
+	memset( table->Rows, 0,  InitialSize * sizeof(struct ROW) );
 
 
 	return table;
@@ -465,6 +468,7 @@ extern void hash_usage(void)
 	
 	// Create some data to store
 	p		= malloc(sizeof(*p));
+	memset ( p, 0 ,sizeof( *p));
 	p->ID	= NumberKey;
 	p->Age	= 20;
 	sprintf(p->Name, StringKey);
@@ -608,6 +612,8 @@ extern BOOL hash_test(void)
 	printf("HASH strings Tests for %d items\n", max);
 	table = hash_create(max, TRUE);
 	s = malloc(sizeof(*s) * max);
+	memset ( s, 0 ,sizeof( *s)*max);
+	
 	for (i = 0; i < max; i++)
 	{
 		sprintf(temp, "Item %d", i);

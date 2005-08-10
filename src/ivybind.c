@@ -26,6 +26,7 @@
 #define OVECSIZE 60 /* must be multiple of 3, for regexp return */
 #include <pcre.h>
 #else
+#define MAX_MSG_FIELDS 200
 #include <regex.h>
 #endif
 
@@ -42,9 +43,11 @@
 
 struct _binding {
 	struct _binding *next;
+	IvyBindingType type;
 #ifdef USE_PCRE_REGEX
 	pcre *regexp;
 	pcre_extra *inspect;
+	int nb_match;
 	int ovector[OVECSIZE];
 #else
 	regex_t regexp;						/* la regexp sous forme machine */
@@ -52,7 +55,17 @@ struct _binding {
 #endif
 	};
 
-IvyBinding IvyBindingCompile( const char * expression )
+
+/* classes de messages emis par l'application utilise pour le filtrage */
+static int	messages_classes_count = 0;
+static const char **messages_classes = 0;
+
+static IvyBinding IvyBindingCompileSimple( IvyBindingType typ, const char * expression )
+{
+	//TODO return NULL
+	return NULL;
+}
+static IvyBinding IvyBindingCompileRegexp( IvyBindingType typ, const char * expression )
 {
 	IvyBinding bind=0;
 #ifdef USE_PCRE_REGEX
@@ -62,6 +75,8 @@ IvyBinding IvyBindingCompile( const char * expression )
 		{
 			bind = (IvyBinding)malloc( sizeof( struct _binding ));
 			bind->regexp = regexp;
+			bind->next = NULL;
+			bind->type = IvyBindRegexp;
 			bind->inspect = pcre_study(regexp,0,&errbuf);
 			if (errbuf!=NULL)
 				{
@@ -80,6 +95,7 @@ IvyBinding IvyBindingCompile( const char * expression )
 		{
 			bind = (IvyBinding)malloc( sizeof( struct _binding ));
 			bind->regexp = regexp;
+			bind->next = NULL;
 		}
 		else
 		{
@@ -89,6 +105,13 @@ IvyBinding IvyBindingCompile( const char * expression )
 		}
 #endif
 	return bind;
+}
+IvyBinding IvyBindingCompile( IvyBindingType typ, const char * expression )
+{
+	if ( typ == IvyBindRegexp )
+		return IvyBindingCompileRegexp( typ, expression);
+	else
+		return IvyBindingCompileSimple( typ, expression);
 }
 void IvyBindingGetCompileError( int *offset, const char **errmessage )
 {
@@ -109,7 +132,7 @@ void IvyBindingFree( IvyBinding bind )
 #endif
 	free ( bind );
 }
-int IvyBindingExec( IvyBinding bind, const char * message )
+int IvyBindingExecRegexp( IvyBinding bind, const char * message )
 {
 	int nb_match = 0;
 #ifdef USE_PCRE_REGEX
@@ -124,6 +147,7 @@ int IvyBindingExec( IvyBinding bind, const char * message )
 					bind->ovector,
 					OVECSIZE);
 	if (nb_match<1) return 0; /* no match */
+	bind->nb_match = nb_match;
 	nb_match--; // firts arg wall string ???
 
 #else
@@ -131,8 +155,7 @@ int IvyBindingExec( IvyBinding bind, const char * message )
 	nb_match = regexec (&bind->regexp, message, MAX_MSG_FIELDS, bind->match, 0) 
 	if (nb_match == REG_NOMATCH)
 		return 0;
-	/* TODO Possible BUG if empty match in middle of regexp */
-	for ( index = 0; index < MAX_MSG_FIELDS; index++ )
+	for ( index = 1; index < MAX_MSG_FIELDS; index++ )
 	{
 		if ( bind->match[i].rm_so != -1 )
 			nb_match++;
@@ -140,24 +163,97 @@ int IvyBindingExec( IvyBinding bind, const char * message )
 #endif
 	return nb_match;
 }
-void IvyBindingGetMatch( IvyBinding bind, const char *message, int index, const char **arg, int *arglen )
+int IvyBindingExecSimple( IvyBinding bind, const char * message )
 {
-	index++; // firts arg wall string ???
+	return 0;
+}
+int IvyBindingExec( IvyBinding bind, const char * message )
+{
+	if ( bind->type == IvyBindRegexp )
+		return IvyBindingExecRegexp( bind, message);
+	else
+		return IvyBindingExecSimple( bind, message);
+}
+static IvyArgument IvyBindingMatchSimple( IvyBinding bind, const char *message)
+{
+	//TODO
+	return NULL;
+}
+static IvyArgument IvyBindingMatchRegexp( IvyBinding bind, const char *message)
+{
+	int index=1;// firts arg wall string ???
+	int arglen;
+	const void* arg;
+	IvyArgument args;
+	args = IvyArgumentNew( 0,NULL ); 
+	
 #ifdef USE_PCRE_REGEX
-		*arglen = bind->ovector[2*index+1]- bind->ovector[2*index];
-		*arg =   message + bind->ovector[2*index];
+	while ( index<bind->nb_match ) {
+		arglen = bind->ovector[2*index+1]- bind->ovector[2*index];
+		arg =   message + bind->ovector[2*index];
+		index++;
 #else  /* we don't USE_PCRE_REGEX */
-
+	for ( index = 1; index < MAX_MSG_FIELDS; index++ )
+	{
 	regmatch_t* p;
 
 	p = &bind->match[index];
 	if ( p->rm_so != -1 ) {
-			*arglen = p->rm_eo - p->rm_so;
-			*arg = message + p->rm_so;
+			arglen = p->rm_eo - p->rm_so;
+			arg = message + p->rm_so;
 	} else { // ARG VIDE
-			*arglen = 0;
-			*arg = message;
+			arglen = 0;
+			arg = NULL;
 	}
+#endif // USE_PCRE_REGEX
+	IvyAddChildValue( args, arglen, arg );
+	}
+	return args;
+}
+IvyArgument IvyBindingMatch( IvyBinding bind, const char *message)
+{
+	if ( bind->type == IvyBindRegexp )
+		return IvyBindingMatchRegexp( bind, message);
+	else 
+		return IvyBindingMatchSimple( bind, message);
+}
 
-#endif
+//filter Expression Bind 
+void IvyBindingSetFilter( int argc, const char **argv)
+{
+	messages_classes_count = argc;
+	messages_classes = argv;
+}
+int IvyBindingFilter(IvyBindingType typ, int len, const char *exp)
+{
+	 /* TODO check args limits !!!*/
+	int i;
+	/* accepte tout par default */
+	int regexp_ok = 1;
+	// TODO simplify test 3 conditions
+	if ( typ == IvyBindRegexp )
+	{
+	if ( *exp =='^' && messages_classes_count !=0 )
+	{
+		regexp_ok = 0;
+		for ( i = 0 ; i < messages_classes_count; i++ )
+		{
+			if (strncmp( messages_classes[i], exp+1, strlen( messages_classes[i] )) == 0)
+				return 1;
+		}
+ 	}
+	}
+	else
+	{
+	if ( messages_classes_count !=0 )
+	{
+		regexp_ok = 0;
+		for ( i = 0 ; i < messages_classes_count; i++ )
+		{
+			if (strncmp( messages_classes[i], exp, strlen( messages_classes[i] )) == 0)
+				return 1;
+		}
+ 	}
+	}
+	return regexp_ok;
 }

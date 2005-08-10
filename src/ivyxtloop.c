@@ -75,7 +75,7 @@ void IvyChannelInit(void)
 	channel_initialized = 1;
 }
 
-void IvyChannelClose( Channel channel )
+void IvyChannelRemove( Channel channel )
 {
 
 	if ( channel->handle_delete )
@@ -111,7 +111,7 @@ void IvyXtChannelAppContext( XtAppContext cntx )
 	app = cntx;
 }
 
-Channel IvyChannelOpen(IVY_HANDLE fd, void *data,
+Channel IvyChannelAdd(IVY_HANDLE fd, void *data,
 				ChannelHandleDelete handle_delete,
 				ChannelHandleRead handle_read
 				)						

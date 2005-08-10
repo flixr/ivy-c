@@ -42,10 +42,6 @@
 
 #define VERSION 4
 
-#define MAX_MSG_FIELDS 200
-
-#define MESSAGE_SEPARATOR '\001' /* TODO remove use Bin args tree */
-
 #define DEFAULT_DOMAIN 127.255.255.255
 
 /* stringification et concatenation du domaine et du port en 2 temps :
@@ -82,6 +78,7 @@ typedef enum {
 typedef struct _msg_snd *MsgSndPtr;
 
 struct _msg_rcv {			/* requete d'emission d'un client */
+	IvyBindingType type;
 	int id;
 	const char *regexp;		/* regexp du message a recevoir */
 	MsgCallback callback;		/* callback a declanche a la reception */
@@ -118,10 +115,6 @@ static unsigned short SupervisionPort;
 static Client broadcast;
 
 static const char *ApplicationName = 0;
-
-/* classes de messages emis par l'application utilise pour le filtrage */
-static int	messages_classes_count = 0;
-static const char **messages_classes = 0;
 
 /* callback appele sur reception d'un message direct */
 static MsgDirectCallback direct_callback = 0;
@@ -165,6 +158,42 @@ static long currentTime()
 #endif
         return  current;
 }
+
+
+// fonction de formtage a la printf d'un buffer avec reallocation dynamique  
+#define MESSAGE_SIZE 4096	/* taille buffer initiale on multiple pas deux a chaque realloc */
+
+static int make_message(char ** buffer, int *size,  int offset, const char *fmt, va_list ap)
+{
+    /* Guess we need no more than BUFFER_INIT_SIZE bytes. */
+    long n;
+	if ( *size == 0 || *buffer == NULL )
+		{
+		*size = MESSAGE_SIZE;
+		*buffer = malloc (MESSAGE_SIZE);
+		if ( *buffer == NULL )
+		    return -1;
+		}
+    while (1) {
+    /* Try to print in the allocated space. */
+#ifdef WIN32
+	n = _vsnprintf (*buffer + offset, *size - offset, fmt, ap);
+#else
+    n = vsnprintf (*buffer + offset, *size - offset, fmt, ap);
+#endif
+    /* If that worked, return the string size. */
+    if (n > -1 && n < *size)
+        return n;
+    /* Else try again with more space. */
+    if (n > -1)    /* glibc 2.1 */
+        *size = n+1; /* precisely what is needed */
+    else           /* glibc 2.0 */
+        *size *= 2;  /* twice the old size */
+    if ((*buffer = realloc (*buffer, *size)) == NULL)
+        return -1;
+    }
+}
+
 static char *DupArg( int len, void *s)
 {
 	char *ptr;
@@ -177,28 +206,6 @@ static char *DupArg( int len, void *s)
 	memcpy( ptr, s, len );
 	ptr[len] = '\0';
 	return ptr;
-}
-/*
- * function split string in multiple string using separator
- * empty args when consecutives separators
- * the input string is modified separator are replaced with \0
- * */
-static int SplitArg( int len, char *s, const char separator, char **argv )
-{
-	char *ptr = s;
-	char *ptr_end = s + len;
-	int argc = 0;
-	while ( ptr < ptr_end ) 
-	{
-		argv[argc++] = ptr;
-		while( (ptr < ptr_end) && *ptr != separator )
-				ptr++;
-		if ( *ptr == separator )
-		{
-		*ptr++ = '\0';
-		}
-	}
-	return argc;
 }
 /* returns < 0 if *p sorts lower than *q */
 static int keycmp (IvyClientPtr p,  IvyClientPtr q)
@@ -250,7 +257,7 @@ static IvyClientPtr lsort (IvyClientPtr p)
 
 static void SortClients()
 {
-	//TODO sort client list again priority!
+	// sort client list again priority!
 	lsort( clients );
 }
 static void MsgSendTo( Client client, MsgType msgtype, int id, int len_arg, const void *arg  )
@@ -263,14 +270,42 @@ static void MsgSendTo( Client client, MsgType msgtype, int id, int len_arg, cons
 	header[0] = htons( (unsigned short)msgtype );
 	header[1] = htons( (unsigned short)id );
 	header[2] = htons( (unsigned short)len_arg );
-	SocketSendBuf( client, (char *)header, sizeof(header) ); 
+	SocketSend( client, (char *)header, sizeof(header) ); 
 	if ( len_arg )
 	{
-	SocketSendBuf( client, arg, len_arg );
+	SocketSend( client, arg, len_arg );
 	}
 	SocketFlush( client );
 }
 
+static int MsgSendCallTo (Client client, const char *message, MsgSndPtr msg  )
+{	
+	static void * buffer = NULL;
+	static int buf_len = 0;
+	int len;
+	IvyArgument args;
+
+
+	int rc = IvyBindingExec( msg->bind, message );
+	
+	if (rc<1) return 0; /* no match */
+#ifdef DEBUG
+	printf( "Sending message id=%d '%s'\n",msg->id,message);
+#endif
+	// il faut essayer d'envoyer le message en une seule fois sur la socket
+	// pour eviter au maximun de passer dans le select plusieur fois par message du protocole Ivy
+	// pour eviter la latence ( PB de perfo detecte par ivyperf ping roudtrip )
+
+#ifdef DEBUG
+	printf( "Send matching args count %d\n",rc);
+#endif
+	args = IvyBindingMatch( msg->bind, message );
+	/* serialize into buffer */
+	len = IvyArgumentSerialize(args, &buf_len, &buffer, 0);
+
+	MsgSendTo( client, Msg, msg->id, len, buffer );
+	return 1;
+}
 static void IvyCleanup()
 {
 	IvyClientPtr clnt,next;
@@ -290,47 +325,6 @@ static void IvyCleanup()
 	SocketClose( broadcast );
 }
 
-static int MsgSendCallTo (Client client, const char *message, MsgSndPtr msg  )
-{
-	//TODO remove this buffer 
-	static char *buffer = NULL; /* Use satic mem to eliminate multiple call to malloc /free */
-	static int size = 0;		/* donc non reentrant !!!! */
-	int offset = 0;
-  	int arglen;
-	const char *arg;
-	int index;
-
-	int rc = IvyBindingExec( msg->bind, message );
-	
-	if (rc<1) return 0; /* no match */
-#ifdef DEBUG
-	printf( "Sending message id=%d '%s'\n",msg->id,message);
-#endif
-	// il faut essayer d'envoyer le message en une seule fois sur la socket
-	// pour eviter au maximun de passer dans le select plusieur fois par message du protocole Ivy
-	// pour eviter la latence ( PB de perfo detecte par ivyperf ping roudtrip )
-
-#ifdef DEBUG
-	printf( "Send matching args count %d\n",rc);
-#endif
-	index=0;
-	while ( index<rc ) {
-
-		IvyBindingGetMatch( msg->bind, message, index,  &arg, &arglen );
-#ifdef DEBUG
-		printf ("Send matching arg%d '%.*s'\n",index,arglen, arg);
-#endif
-		offset += make_message_var( &buffer, &size, offset, "%.*s%c",
-				arglen, arg,
-				MESSAGE_SEPARATOR
-				);
-		++index;
-	}
-	MsgSendTo( client, Msg, msg->id, offset, buffer );
-	return 1;
-}
-
-
 static int ClientCall (IvyClientPtr clnt, const char *message)
 {
 	MsgSndPtr msg;
@@ -342,22 +336,6 @@ static int ClientCall (IvyClientPtr clnt, const char *message)
 	return match_count;
 }
 
-static int CheckRegexp(char *exp)
-{
-	/* accepte tout par default */
-	int i;
-	int regexp_ok = 1;
-	if ( *exp =='^' && messages_classes_count !=0 )
-	{
-		regexp_ok = 0;
-		for ( i = 0 ; i < messages_classes_count; i++ )
-		{
-			if (strncmp( messages_classes[i], exp+1, strlen( messages_classes[i] )) == 0)
-				return 1;
-		}
- 	}
-	return regexp_ok;
-}
 
 static int CheckConnected( IvyClientPtr clnt )
 {
@@ -391,13 +369,13 @@ static char* Receive( Client client, void *data, char *message, unsigned int len
 	unsigned short len_args;
 	MsgSndPtr snd;
 	MsgRcvPtr rcv;
-	int argc = 0;
-	char *argv[MAX_MSG_FIELDS];
+	IvyArgument arguments;
 	int kind_of_msg = Bye;
 	IvyBinding bind;
 	char *ptr_end;
 	void *args =NULL;
 	char *str_regexp;
+	int adv_buffer;
 
 	ptr_end = message;
 
@@ -434,9 +412,9 @@ static char* Receive( Client client, void *data, char *message, unsigned int len
 		case AddRegexp:
 
 #ifdef DEBUG
-			printf("Regexp  id=%d exp='%.*s'\n",  id, len_args, (char*)args);
+			printf("AddRegexp  id=%d exp='%.*s'\n",  id, len_args, (char*)args);
 #endif //DEBUG
-			if ( !CheckRegexp( args ) ) /* TODO check args limits !!!*/
+			if ( !IvyBindingFilter( IvyBindRegexp, len_args, args ) )
 				{
 #ifdef DEBUG
 				printf("Warning: regexp '%.*s' illegal, removing from %s\n",len_args,(char*)args,ApplicationName);
@@ -445,7 +423,64 @@ static char* Receive( Client client, void *data, char *message, unsigned int len
 				}
 			str_regexp = DupArg( len_args,  args );
 			
-			bind = IvyBindingCompile( str_regexp );
+			bind = IvyBindingCompile( IvyBindRegexp, str_regexp );
+			if ( bind != NULL )
+				{
+				IVY_LIST_ADD( clnt->msg_send, snd )
+				if ( snd )
+					{
+					snd->id = id;
+					snd->str_regexp = str_regexp; /* should be Freeed on remove */
+					snd->bind = bind;	
+					if ( application_bind_callback )
+					  {
+					    (*application_bind_callback)( clnt, application_bind_data, IvyAddBind, snd->str_regexp );
+					  }
+					}
+				}
+			else
+				{
+				int offset;
+				const char *errbuf;
+				IvyBindingGetCompileError( &offset, &errbuf );
+				MsgSendTo( client, Error, offset, strlen(errbuf), errbuf );
+				free( str_regexp ); /* not used so Free it */
+				}
+			
+			break;
+		case DelRegexp:
+#ifdef DEBUG
+			printf("DelRegexp id=%d\n",  id);
+#endif //DEBUG
+
+			IVY_LIST_ITER( clnt->msg_send, snd, ( id != snd->id ));
+			if ( snd )
+				{
+				  if ( application_bind_callback )
+				    {
+				      (*application_bind_callback)( clnt, application_bind_data,  IvyRemoveBind, snd->str_regexp );
+				    }
+				free( snd->str_regexp );
+				IvyBindingFree( snd->bind );
+
+				IVY_LIST_REMOVE( clnt->msg_send, snd  );
+				}
+			break;
+		case AddBinding:
+
+#ifdef DEBUG
+			printf("AddBinding  id=%d exp='%.*s'\n",  id, len_args, (char*)args);
+#endif //DEBUG
+			if ( !IvyBindingFilter( IvyBindSimple, len_args, args ) )
+				{
+#ifdef DEBUG
+				printf("Warning: regexp '%.*s' illegal, removing from %s\n",len_args,(char*)args,ApplicationName);
+#endif //DEBUG
+				return ptr_end;
+				}
+			str_regexp = DupArg( len_args,  args );
+			
+			bind = IvyBindingCompile( IvyBindSimple, str_regexp );
 			if ( bind != NULL )
 				{
 				IVY_LIST_ADD( clnt->msg_send, snd )
@@ -461,17 +496,18 @@ static char* Receive( Client client, void *data, char *message, unsigned int len
 					}
 				}
 			else
-			{
-			int offset;
-			const char *errbuf;
-			IvyBindingGetCompileError( &offset, &errbuf );
-			MsgSendTo( client, Error, offset, strlen(errbuf), errbuf );
+				{
+				int offset;
+				const char *errbuf;
+				IvyBindingGetCompileError( &offset, &errbuf );
+				MsgSendTo( client, Error, offset, strlen(errbuf), errbuf );
+				}
 			free( str_regexp );
-			}
+			
 			break;
-		case DelRegexp:
+		case DelBinding:
 #ifdef DEBUG
-			printf("Regexp Delete id=%d\n",  id);
+			printf("DelBinding id=%d\n",  id);
 #endif //DEBUG
 
 			IVY_LIST_ITER( clnt->msg_send, snd, ( id != snd->id ));
@@ -528,14 +564,14 @@ static char* Receive( Client client, void *data, char *message, unsigned int len
 		printf("Message id=%d msg='%.*s'\n", id, len_args, (char*)args);
 #endif //DEBUG
 			rcv = hash_lookup( msg_recv, id );
-			if ( rcv )
+			if ( rcv &&  rcv->callback )
 					{
-					argc = SplitArg( len_args, args, MESSAGE_SEPARATOR, argv);	
+					arguments = IvyArgumentDeserialize( len_args, args, &adv_buffer );
 	
 #ifdef DEBUG
-					printf("Calling  id=%d argc=%d for %s\n", id, argc,rcv->regexp);
+					printf("Calling  id=%d for %s\n", id, rcv->regexp);
 #endif
-					if ( rcv->callback ) (*rcv->callback)( clnt, rcv->user_data, argc, argv );
+					(*rcv->callback)( clnt, rcv->user_data, arguments );
 					return ptr_end;
 					}
 			else 
@@ -668,7 +704,7 @@ static void IvySendHello(unsigned long mask)
 	*((unsigned short *) ptr)++ = htons( lenAppName );
 	strncpy( ptr, ApplicationName , lenAppName);
 	
-	SocketSendBroadcastRaw (broadcast, mask, SupervisionPort, packet,len ); 
+	SocketSendBroadcast(broadcast, mask, SupervisionPort, packet,len ); 
 	free( packet );
 }
 /* Hello packet Receive */
@@ -811,10 +847,9 @@ void IvySetBindCallback(IvyBindCallback bind_callback, void *bind_data)
   application_bind_data=bind_data;
 }
 
-void IvyClasses( int argc, const char **argv)
+void IvySetMyMessagesStart( int argc, const char **argv)
 {
-	messages_classes_count = argc;
-	messages_classes = argv;
+	IvyBindingSetFilter( argc, argv );
 }
 
 void IvyStart (const char* bus)
@@ -938,29 +973,31 @@ void IvyUnbindMsg (MsgRcvPtr msg)
 }
 
 /* demande de reception d'un message */
-
-MsgRcvPtr IvyBindMsg (MsgCallback callback, void *user_data, const char *fmt_regex, ... )
+static MsgRcvPtr IvyBind ( IvyBindingType typ, MsgCallback callback, void *user_data, const char *fmt_regex, va_list ap )
 {
 	static char *buffer = NULL;
 	static int size = 0;
-	va_list ap;
 	static int recv_id = 0;
 	IvyClientPtr clnt;
 	MsgRcvPtr msg;
 	int len;
+	int MsgType = typ == IvyBindRegexp ? AddRegexp : AddBinding;
 
-	va_start (ap, fmt_regex );
 	make_message( &buffer, &size, 0, fmt_regex, ap );
-	va_end  (ap );
-
+	
 	/* add Msg to the query list */
 	msg = malloc(sizeof(struct _msg_rcv));
 	if (msg)	{
+		msg->type = typ;
 		msg->id = recv_id++;
 		msg->regexp = strdup(buffer);
 		msg->callback = callback;
 		msg->user_data = user_data;
-		hash_add(msg_recv, msg->id, msg);
+		if ( !hash_add(msg_recv, msg->id, msg) )
+		{
+		perror("IvyBindMsg can't hash_add Entry already exists!");
+		exit(-1);
+		}
 	}
 	else
 	{
@@ -971,11 +1008,35 @@ MsgRcvPtr IvyBindMsg (MsgCallback callback, void *user_data, const char *fmt_reg
 	/* Send to already connected clients */
 	/* recherche dans la liste des requetes recues de mes clients */
 	IVY_LIST_EACH( clients, clnt ) {
-		MsgSendTo( clnt->client, AddRegexp,msg->id, len, msg->regexp);
+		MsgSendTo( clnt->client, MsgType,msg->id, len, msg->regexp);
 	}
 	return msg;
 }
 
+
+MsgRcvPtr IvyBindMsg (MsgCallback callback, void *user_data, const char *fmt_regex, ... )
+{
+	va_list ap;
+	MsgRcvPtr msg;
+
+	va_start (ap, fmt_regex );
+	msg = IvyBind ( IvyBindRegexp, callback, user_data, fmt_regex, ap );
+	va_end  (ap );
+	return msg;
+	
+}
+
+MsgRcvPtr IvyBindSimpleMsg( MsgCallback callback, void *user_data, const char *fmt_regex, ... ) 
+{
+	va_list ap;
+	MsgRcvPtr msg;
+
+	va_start (ap, fmt_regex );
+	msg = IvyBind ( IvyBindSimple, callback, user_data, fmt_regex, ap );
+	va_end  (ap );
+	return msg;
+	
+}
 int IvySendMsg(const char *fmt, ...)
 {
 	IvyClientPtr clnt;

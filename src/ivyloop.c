@@ -62,7 +62,7 @@ WSADATA WsaData;
 #endif
 
 void
-IvyChannelClose (Channel channel)
+IvyChannelRemove (Channel channel)
 {
 	channel->tobedeleted = 1;
 }
@@ -88,7 +88,7 @@ ChannelDefferedDelete ()
 	}
 }
 
-Channel IvyChannelOpen (IVY_HANDLE fd, void *data, 
+Channel IvyChannelAdd (IVY_HANDLE fd, void *data, 
 				ChannelHandleDelete handle_delete,
 				ChannelHandleRead handle_read
 				)						
@@ -131,7 +131,7 @@ IvyChannelHandleExcpt (fd_set *current)
 		if (FD_ISSET (channel->fd, current)) {
 			if (channel->handle_delete)
 				(*channel->handle_delete)(channel->data);
-/*			IvyChannelClose (channel); */
+/*			IvyChannelRemove (channel); */
 		}
 	}
 }

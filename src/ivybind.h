@@ -14,13 +14,17 @@
  *	Please refer to file version.h for the
  *	copyright notice regarding this software
  */
+#include "IvyArgument.h"
 
 /* Module de gestion de la syntaxe des messages Ivy */
 
 typedef struct _binding *IvyBinding;
 
-IvyBinding IvyBindingCompile( const char * expression );
+typedef enum  { IvyBindRegexp, IvyBindSimple } IvyBindingType;
+void IvyBindingSetFilter( int argc, const char ** argv );
+int IvyBindingFilter( IvyBindingType typ, int len, const char *exp );
+IvyBinding IvyBindingCompile( IvyBindingType typ, const char * expression );
 void IvyBindingGetCompileError( int *erroffset, const char **errmessage );
 void IvyBindingFree( IvyBinding bind );
 int IvyBindingExec( IvyBinding bind, const char * message );
-void IvyBindingGetMatch( IvyBinding bind, const char *message, int index, const char **arg, int *arglen );
+IvyArgument IvyBindingMatch( IvyBinding bind, const char *message );

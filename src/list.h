@@ -13,10 +13,14 @@
  *	Please refer to file version.h for the
  *	copyright notice regarding this software
  */
-#if (__GNUC__ >= 3)
+#ifdef WIN32
+#define TYPEOF(p) void*
+#else
+#if (__GNUC__ >= 2)
 #define TYPEOF(p) typeof (p)
 #else
 #define  TYPEOF(p) void *
+#endif
 #endif
 
 #define IVY_LIST_ITER( list, p, cond ) \
@@ -57,7 +61,23 @@
 		memset( p, 0 , sizeof( *p ));\
 		p->next = list; \
 		list = p; \
-		} 
+		}
+
+#define IVY_LIST_ADD_END(list, p ) \
+        if ((p = (TYPEOF(p)) (malloc( sizeof( *p ))))) \
+		{ \
+		TYPEOF(p) list_end; \
+		memset( p, 0 , sizeof( *p ));\
+		p->next = 0; \
+		if ( list ) \
+		{\
+		list_end = list; \
+		while ( list_end && list_end->next ) \
+			list_end = list_end->next;\
+		list_end->next = p; \
+		} \
+		else list = p; \
+		}
 
 #define IVY_LIST_EACH( list, p ) \
 	for ( p = list ; p ; p = p -> next )

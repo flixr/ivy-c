@@ -45,10 +45,6 @@ extern "C" {
 
 /* General Init */
 
-/* utility fonction do make vsprintf without buffer limit */
-extern int make_message(char ** buffer, int *size,  int offset, const char *fmt, va_list ap);
-extern int make_message_var(char ** buffer, int *size,  int offset, const char *fmt, ...);
-
 /* Forward def */
 typedef struct _client *Client;
 typedef char* (*SocketInterpretation) (Client client, void *data, char *ligne, unsigned int len);
@@ -67,8 +63,7 @@ extern void SocketServerClose( Server server );
 /* Client Part */
 extern void SocketKeepAlive( Client client,int keepalive );
 extern void SocketClose( Client client );
-extern void SocketSendFmt( Client client, const char *fmt, ... );
-extern void SocketSendBuf( Client client, const char *buffer, int len );
+extern void SocketSend( Client client, const char *buffer, int len );
 extern void SocketFlush (Client client);
 extern char *SocketGetPeerHost( Client client );
 extern void SocketSetData( Client client, void *data );
@@ -98,8 +93,7 @@ extern int SocketAddMember( Client client, unsigned long host );
 extern struct in_addr * SocketGetRemoteAddr( Client client );
 extern void SocketGetRemoteHost (Client client, char **host, unsigned short *port );
 /* emmission d'un broadcast UDP */
-extern void SocketSendBroadcast( Client client, unsigned long host, unsigned short port, char *fmt, ... );
-extern void SocketSendBroadcastRaw( Client client, unsigned long host, unsigned short port, char *buffer, int len );
+extern void SocketSendBroadcast( Client client, unsigned long host, unsigned short port, char *buffer, int len );
 
 #ifdef __cplusplus
 }
