@@ -33,12 +33,12 @@
 #include "list.h"
 #include "ivybind.h"
 
+static int err_offset;
+
 #ifdef USE_PCRE_REGEX
-	static const char *errbuf;
-	static int erroffset;
+	static const char *err_buf;
 #else
-	static int erroroffset;
-	static char errbuf[4096];
+	static char err_buf[4096];
 #endif
 
 struct _binding {
@@ -63,6 +63,12 @@ static const char **messages_classes = 0;
 static IvyBinding IvyBindingCompileSimple( IvyBindingType typ, const char * expression )
 {
 	//TODO return NULL
+	err_offset = 0;
+#ifdef USE_PCRE_REGEX
+	err_buf = "Not Yiet Implemented";
+#else
+	strcpy( err_buf, "Not Yiet Implemented" );
+#endif
 	return NULL;
 }
 static IvyBinding IvyBindingCompileRegexp( IvyBindingType typ, const char * expression )
@@ -70,22 +76,22 @@ static IvyBinding IvyBindingCompileRegexp( IvyBindingType typ, const char * expr
 	IvyBinding bind=0;
 #ifdef USE_PCRE_REGEX
 	pcre *regexp;
-	regexp = pcre_compile(expression, PCRE_OPT,&errbuf,&erroffset,NULL);
+	regexp = pcre_compile(expression, PCRE_OPT,&err_buf,&err_offset,NULL);
 	if ( regexp != NULL )
 		{
 			bind = (IvyBinding)malloc( sizeof( struct _binding ));
 			bind->regexp = regexp;
 			bind->next = NULL;
 			bind->type = IvyBindRegexp;
-			bind->inspect = pcre_study(regexp,0,&errbuf);
-			if (errbuf!=NULL)
+			bind->inspect = pcre_study(regexp,0,&err_buf);
+			if (err_buf!=NULL)
 				{
-					printf("Error studying %s, message: %s\n",expression,errbuf);
+					printf("Error studying %s, message: %s\n",expression,err_buf);
 				}
 		}
 		else
 		{
-		printf("Error compiling '%s', %s\n", expression, errbuf);
+		printf("Error compiling '%s', %s\n", expression, err_buf);
 		}
 #else
 	regex_t regexp;
@@ -99,9 +105,9 @@ static IvyBinding IvyBindingCompileRegexp( IvyBindingType typ, const char * expr
 		}
 		else
 		{
-		regerror (reg, &regexp, errbuf, sizeof(errbuf) );
-		erroroffset = 0; // TODO unkown offset error
-		printf("Error compiling '%s', %s\n", expression, errbuf);
+		regerror (reg, &regexp, err_buf, sizeof(err_buf) );
+		err_offset = 0; // TODO unkown offset error
+		printf("Error compiling '%s', %s\n", expression, err_buf);
 		}
 #endif
 	return bind;
@@ -115,13 +121,8 @@ IvyBinding IvyBindingCompile( IvyBindingType typ, const char * expression )
 }
 void IvyBindingGetCompileError( int *offset, const char **errmessage )
 {
-#ifdef USE_PCRE_REGEX
-	*offset = erroffset;
-	*errmessage = errbuf;
-#else
-	*offset = erroroffset;
-	*errmessage = errbuf;
-#endif
+	*offset = err_offset;
+	*errmessage = err_buf;
 }
 void IvyBindingFree( IvyBinding bind )
 {
