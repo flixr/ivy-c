@@ -58,7 +58,7 @@ void Reply (IvyClientPtr app, void *user_data, IvyArgument args)
 	int len;
 	void* val;
 	arg = IvyArgumentGetChildrens( args );
-	IvyArgumentGetValue( args , &len, &val);
+	IvyArgumentGetValue( arg , &len, &val);
 	IvySendMsg ("pong ts=%.*s tr=%f", len, val, currentTime());
 }
 void Pong (IvyClientPtr app, void *user_data, IvyArgument args)
@@ -71,10 +71,10 @@ void Pong (IvyClientPtr app, void *user_data, IvyArgument args)
 	
 	current = currentTime();
 	arg = IvyArgumentGetChildrens( args );
-	IvyArgumentGetValue( args , &len, &val);
+	IvyArgumentGetValue( arg , &len, &val);
 	ts = atof( val );
 	arg = IvyArgumentGetNextChild( arg );
-	IvyArgumentGetValue( args , &len, &val);
+	IvyArgumentGetValue( arg , &len, &val);
 	tr = atof( val );
 	roundtrip1 = tr-ts;
 	roundtrip2 = current - tr;
