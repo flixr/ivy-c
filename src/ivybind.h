@@ -21,6 +21,7 @@
 typedef struct _binding *IvyBinding;
 
 typedef enum  { IvyBindRegexp, IvyBindSimple } IvyBindingType;
+void IvyBindingParseMessage( const char *msg );
 void IvyBindingSetFilter( int argc, const char ** argv );
 int IvyBindingFilter( IvyBindingType typ, int len, const char *exp );
 IvyBinding IvyBindingCompile( IvyBindingType typ, const char * expression );

@@ -15,6 +15,7 @@ IvyGetApplication
 IvyGetApplicationList
 IvyGetApplicationMessages
 IvyBindMsg
+IvyBindSimpleMsg
 IvyUnbindMsg
 IvySendError
 IvySendDieMsg

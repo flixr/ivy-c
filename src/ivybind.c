@@ -21,6 +21,8 @@
 #include <time.h>
 #include <stdlib.h>
 #include <memory.h> 
+#include <string.h>
+#include <stdarg.h>
 
 #ifdef USE_PCRE_REGEX
 #define OVECSIZE 60 /* must be multiple of 3, for regexp return */
@@ -31,6 +33,7 @@
 #endif
 
 #include "list.h"
+#include "hash.h"
 #include "ivybind.h"
 
 static int err_offset;
@@ -44,6 +47,9 @@ static int err_offset;
 struct _binding {
 	struct _binding *next;
 	IvyBindingType type;
+	const char *msgname;			/* msg tag name first word of message */
+	char **msgargs;					/* list of msg argument name */
+	IvyArgument args;				/* result */
 #ifdef USE_PCRE_REGEX
 	pcre *regexp;
 	pcre_extra *inspect;
@@ -60,16 +66,36 @@ struct _binding {
 static int	messages_classes_count = 0;
 static const char **messages_classes = 0;
 
+
+/* stokage du message parse avant l'execution des regles de binding simple */
+static char *current_msg = NULL;
+static char *msgtag;
+static HASHTABLE msg_args_values = NULL;
+
 static IvyBinding IvyBindingCompileSimple( IvyBindingType typ, const char * expression )
 {
-	//TODO return NULL
-	err_offset = 0;
-#ifdef USE_PCRE_REGEX
-	err_buf = "Not Yiet Implemented";
-#else
-	strcpy( err_buf, "Not Yiet Implemented" );
-#endif
-	return NULL;
+	int nb_arg= 0;
+	char *argname;
+	char **argv;
+	char *expr;
+	IvyBinding bind=0;
+	
+	expr = strdup( expression ); //Allocate a new buffer of separated token
+	/* count nb args */
+	argname = expr;
+	while ( *argname ) 
+	{ 
+	if ( *argname++ == ' ' ) nb_arg++;
+	}
+
+	bind = (IvyBinding)malloc( sizeof( struct _binding ));
+	bind->msgname = strtok( expr, " ");
+	bind->msgargs = malloc ( sizeof( char* ) * ( nb_arg + 1) );
+	argv = bind->msgargs;
+	while ( (argname = strtok( NULL, " ")) )
+		*argv++ = argname;
+	*argv++ = argname; /* end with NULL */
+	return bind;
 }
 static IvyBinding IvyBindingCompileRegexp( IvyBindingType typ, const char * expression )
 {
@@ -166,7 +192,19 @@ int IvyBindingExecRegexp( IvyBinding bind, const char * message )
 }
 int IvyBindingExecSimple( IvyBinding bind, const char * message )
 {
-	return 0;
+	char **msg_args;
+	if ( strcmp( bind->msgname, msgtag ) != 0 )
+		return 0;
+	msg_args = bind->msgargs;
+	bind->args = IvyArgumentNew( 0,NULL ); 
+	while(  *msg_args )
+	{
+		char *value;
+		value = hash_lookup(msg_args_values,  (HASHKEYTYPE)*msg_args++);
+		if ( !value ) value = ""; /* TODO should we report matching ??? */
+		IvyAddChildValue( bind->args,  strlen( value ), value);
+	}
+	return 1;
 }
 int IvyBindingExec( IvyBinding bind, const char * message )
 {
@@ -177,8 +215,7 @@ int IvyBindingExec( IvyBinding bind, const char * message )
 }
 static IvyArgument IvyBindingMatchSimple( IvyBinding bind, const char *message)
 {
-	//TODO
-	return NULL;
+	return bind->args;
 }
 static IvyArgument IvyBindingMatchRegexp( IvyBinding bind, const char *message)
 {
@@ -224,6 +261,21 @@ void IvyBindingSetFilter( int argc, const char **argv)
 {
 	messages_classes_count = argc;
 	messages_classes = argv;
+}
+void IvyBindingParseMessage( const char *msg )
+{
+	char *arg;
+	if ( current_msg ) free( current_msg );
+	if ( msg_args_values ) hash_destroy( msg_args_values );
+	current_msg = strdup( msg );
+	msg_args_values = hash_create( 256, TRUE );
+	msgtag = strtok( current_msg, " " );
+	while( (arg = strtok( NULL, " =" )) )
+	{
+		char *val = strtok( NULL, " =");
+		if ( arg && val )
+			hash_add( msg_args_values, (HASHKEYTYPE)arg, val );
+	}
 }
 int IvyBindingFilter(IvyBindingType typ, int len, const char *exp)
 {

@@ -101,7 +101,7 @@ char *IvyGetApplicationName( IvyClientPtr app );
 char *IvyGetApplicationHost( IvyClientPtr app );
 char *IvyGetApplicationId( IvyClientPtr app );
 IvyClientPtr IvyGetApplication( char *name );
-char *IvyGetApplicationList();
+char ** IvyGetApplicationList();
 char **IvyGetApplicationMessages( IvyClientPtr app); /* demande de reception d'un message */
 
 MsgRcvPtr IvyBindMsg( MsgCallback callback, void *user_data, const char *fmt_regexp, ... ); /* avec sprintf prealable */

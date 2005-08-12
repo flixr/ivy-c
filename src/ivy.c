@@ -329,6 +329,8 @@ static int ClientCall (IvyClientPtr clnt, const char *message)
 {
 	MsgSndPtr msg;
 	int match_count = 0;
+	/* for simple binding message syntax msg arg1=val1 arg2=val2 ... argn=valn */
+	IvyBindingParseMessage( message );
 	/* recherche dans la liste des requetes recues de ce client */
 	IVY_LIST_EACH (clnt->msg_send, msg) {
 		match_count+= MsgSendCallTo (clnt->client, message, msg );
@@ -343,9 +345,12 @@ static int CheckConnected( IvyClientPtr clnt )
 	struct in_addr *addr1;
 	struct in_addr *addr2;
 
+	/* TODO check multiple instance of the same application name */
+			
 	if ( clnt->app_port == 0 ) /* Old Ivy Protocol Dont check */
 		return 0;
 	/* recherche dans la liste des clients de la presence de clnt */
+	/* TODO check based on appid not on the copule host:port */
 	IVY_LIST_EACH( clients, client )
 	{
 		/* client different mais port identique */
@@ -407,7 +412,8 @@ static char* Receive( Client client, void *data, char *message, unsigned int len
 			SocketClose( client );
 			break;
 		case Error:
-			printf ("Received error %d %.*s\n",  id, len_args, (char*)args);
+			/*TODO Callback */
+			fprintf (stderr, "Received error %d %.*s from %s\n",  id, len_args, (char*)args, clnt->app_name);
 			break;
 		case AddRegexp:
 
@@ -619,7 +625,7 @@ BOOL SendRegexp(HASHKEYTYPE key, void *data, va_list args)
 {
 	Client client =  va_arg( args, Client);
 	MsgRcvPtr msg = (MsgRcvPtr)data;
-	MsgSendTo( client, AddRegexp,msg->id,strlen(msg->regexp), msg->regexp);
+	MsgSendTo( client, msg->type == IvyBindRegexp ? AddRegexp : AddBinding, msg->id, strlen(msg->regexp), msg->regexp);
 	return FALSE; /* iter throught all hash table */ 
 }
 static IvyClientPtr SendService( Client client )
@@ -759,6 +765,12 @@ static char* BroadcastReceive( Client client, void *data, char *message, unsigne
 	SocketGetRemoteHost (client, &remotehost, &remoteport );
 	printf(" Broadcast de %s:%hu port %hu %s %s\n", remotehost, remoteport, serviceport, appname, appid );
 #endif //DEBUG
+	/* check if already the same name on the bus */
+	if ( strcmp( appname,ApplicationName )== 0) 
+	{
+		/* TODO rize some callback ? */
+		fprintf(stderr,"!!! Warning a another instance of %s is arriving on the Bus !!!\n", ApplicationName );
+	}
 
 	/* connect to the service and send the regexp */
 	app = SocketConnectAddr(SocketGetRemoteAddr(client), serviceport, 0, Receive, ClientDelete );
@@ -1142,15 +1154,15 @@ IvyClientPtr IvyGetApplication( char *name )
 	return app;
 }
 
-char *IvyGetApplicationList()
+char **IvyGetApplicationList()
 {
-	static char applist[4096];
+	static char* applist[500];
 	IvyClientPtr app;
-	applist[0] = '\0';
+	int appCount= 0;
+	memset( applist, 0 , sizeof( applist ));
 	IVY_LIST_EACH( clients, app )
 		{
-		strcat( applist, app->app_name );
-		strcat( applist, " " );
+		applist[appCount++]= app->app_name;
 		}
 	return applist;
 }

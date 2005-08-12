@@ -118,6 +118,7 @@ void HandleStdin (Channel channel, IVY_HANDLE fd, void *data)
 	char *cmd;
 	char *arg;
 	char *choparg;
+	char **applist;
 	int id;
 	IvyClientPtr app;
 	int err;
@@ -135,7 +136,7 @@ void HandleStdin (Channel channel, IVY_HANDLE fd, void *data)
 		cmd = strtok (line, ".: \n");
 
 		if  (strcmp (cmd, "die") == 0) {
-			arg = strtok (NULL, " \n");
+			arg = strtok (NULL, "\n"); /* no space separator appname can containt space*/
 			if  (arg) {
 				app = IvyGetApplication (arg);
 				if  (app)
@@ -144,15 +145,14 @@ void HandleStdin (Channel channel, IVY_HANDLE fd, void *data)
 			}
 
 		} else if (strcmp(cmd, "dieall-yes-i-am-sure") == 0) {
-			arg = IvyGetApplicationList();
-			arg = strtok (arg, " \n");
-			while  (arg) {
-				app = IvyGetApplication (arg);
+			applist = IvyGetApplicationList();
+			while  (*applist) {
+				app = IvyGetApplication (*applist);
 				if  (app)
 					IvySendDieMsg (app);
 				else
-					printf ("No Application %s!!!\n",arg);
-				arg = strtok (NULL, " ");
+					printf ("No Application %s!!!\n",*applist);
+				applist++;
 			}
 			
 		} else if (strcmp(cmd,  "bind") == 0) {
@@ -181,7 +181,14 @@ void HandleStdin (Channel channel, IVY_HANDLE fd, void *data)
 		    }
 		  }
 
-		} else if  (strcmp(cmd,  "where") == 0) {
+		}
+		else if (strcmp(cmd,  "bindsimple") == 0) {
+		  arg = strtok (NULL, "'");
+		  if  (arg) {
+		      IvyBindSimpleMsg (Callback, NULL, Chop(arg));
+		  }
+		}
+		else if  (strcmp(cmd,  "where") == 0) {
 			arg = strtok (NULL, " \n");
 			if  (arg) {
 				app = IvyGetApplication (arg);
@@ -204,7 +211,11 @@ void HandleStdin (Channel channel, IVY_HANDLE fd, void *data)
 			}
 			
 		} else if  (strcmp(cmd, "who") == 0) {
-			printf("Apps: %s\n", IvyGetApplicationList());
+			applist = IvyGetApplicationList();
+			while  (*applist) {
+					printf ("Application '%s'\n",*applist);
+				applist++;
+			}
 
 		} else if  (strcmp(cmd, "help") == 0) {
 			fprintf(stderr,"Commands list:\n");
@@ -214,7 +225,8 @@ void HandleStdin (Channel channel, IVY_HANDLE fd, void *data)
 			printf("	.dieall-yes-i-am-sure	 - send die msg to all applis\n");
 			printf("	.direct appname	id 'arg' - send direct msg to appname\n");
 			printf("	.where appname			 - on which host is appname\n");
-			printf("	.bind 'regexp'			 - add a msg to receive\n");
+			printf("	.bind 'regexp'			 - add a msg to receive using regexp\n");
+			printf("	.bindsimple 'expr'		 - add a msg to receive using simple msg format tag param param\n");
 			printf("	.bindcall				 - toogle callback to binding\n");
 			printf("	.who					 - who is on the bus\n");
 		} else if  (strcmp(cmd, "bindcall") == 0) {
