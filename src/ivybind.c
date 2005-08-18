@@ -15,7 +15,6 @@
  *	copyright notice regarding this software
  */
 /* Module de gestion de la syntaxe des messages Ivy */
-
 #include <stdio.h>
 #include <sys/types.h>
 #include <time.h>
@@ -23,6 +22,11 @@
 #include <memory.h> 
 #include <string.h>
 #include <stdarg.h>
+
+#ifdef WIN32
+#include <crtdbg.h>
+#endif
+
 
 #ifdef USE_PCRE_REGEX
 #define OVECSIZE 60 /* must be multiple of 3, for regexp return */
@@ -274,7 +278,7 @@ void IvyBindingParseMessage( const char *msg )
 	{
 		char *val = strtok( NULL, " =");
 		if ( arg && val )
-			hash_add( msg_args_values, (HASHKEYTYPE)arg, val );
+			hash_addstring( msg_args_values, arg, val );
 	}
 }
 int IvyBindingFilter(IvyBindingType typ, int len, const char *exp)

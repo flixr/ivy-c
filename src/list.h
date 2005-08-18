@@ -82,8 +82,8 @@
 #define IVY_LIST_EACH( list, p ) \
 	for ( p = list ; p ; p = p -> next )
 
-#define IVY_LIST_EACH_SAFE( list, p, next )\
-for ( p = list ; (next = p ? p->next: p ),p ; p = next )
+#define IVY_LIST_EACH_SAFE( list, p, p_next )\
+for ( p = list ; (p_next = p ? p->next: p ),p ; p = p_next )
 
 #define IVY_LIST_EMPTY( list ) \
 	{ \

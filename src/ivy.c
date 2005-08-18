@@ -17,7 +17,14 @@
  */
 
 #include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdarg.h>
+#include <ctype.h>
+#include <fcntl.h>
+
 #ifdef WIN32
+#include <crtdbg.h>
 #include <windows.h>
 #else
 #include <arpa/inet.h>
@@ -25,13 +32,6 @@
 #include <unistd.h>
 #include <netdb.h>
 #endif
-#include <stdio.h>
-#include <string.h>
-#include <stdarg.h>
-#include <ctype.h>
-
-
-#include <fcntl.h>
 
 #include "ivychannel.h"
 #include "ivybind.h"
@@ -80,8 +80,8 @@ typedef struct _msg_snd *MsgSndPtr;
 struct _msg_rcv {			/* requete d'emission d'un client */
 	IvyBindingType type;
 	int id;
-	const char *regexp;		/* regexp du message a recevoir */
-	MsgCallback callback;		/* callback a declanche a la reception */
+	char *regexp;			/* regexp du message a recevoir */
+	MsgCallback callback;	/* callback a declanche a la reception */
 	void *user_data;		/* stokage d'info client */
 };
 
@@ -280,8 +280,8 @@ static void MsgSendTo( Client client, MsgType msgtype, int id, int len_arg, cons
 
 static int MsgSendCallTo (Client client, const char *message, MsgSndPtr msg  )
 {	
-	static void * buffer = NULL;
-	static int buf_len = 0;
+	void * buffer = NULL;
+	int buf_len = 0;
 	int len;
 	IvyArgument args;
 
@@ -304,22 +304,39 @@ static int MsgSendCallTo (Client client, const char *message, MsgSndPtr msg  )
 	len = IvyArgumentSerialize(args, &buf_len, &buffer, 0);
 
 	MsgSendTo( client, Msg, msg->id, len, buffer );
+	IvyArgumentFree( args ); /* TODO supress malloc /free */
+	free( buffer );
 	return 1;
+}
+static BOOL RemoveBinding(HASHKEYTYPE key, void *data, va_list args)
+{
+	MsgRcvPtr msg = (MsgRcvPtr)data;
+	free( msg->regexp );
+	free ( msg );
+	return FALSE; /* iter throught all hash table */ 
 }
 static void IvyCleanup()
 {
 	IvyClientPtr clnt,next;
-
+	MsgSndPtr msg,msg_next;
 	/* destruction des connexions clients */
 	IVY_LIST_EACH_SAFE( clients, clnt, next )
 	{
 		/* on dit au revoir */
 		MsgSendTo( clnt->client, Bye, 0, 0, "" );
 		SocketClose( clnt->client );
+		IVY_LIST_EACH_SAFE( clnt->msg_send, msg, msg_next )
+		{
+			free( msg->str_regexp );
+			IvyBindingFree( msg->bind );
+		}
 		IVY_LIST_EMPTY( clnt->msg_send );
 	}
 	IVY_LIST_EMPTY( clients );
-
+	/* destruction de mes bindings */
+	hash_search( msg_recv, RemoveBinding);
+	hash_destroy( msg_recv );
+	free( applicationUniqueId );
 	/* destruction des sockets serveur et supervision */
 	SocketServerClose( server );
 	SocketClose( broadcast );
@@ -578,6 +595,7 @@ static char* Receive( Client client, void *data, char *message, unsigned int len
 					printf("Calling  id=%d for %s\n", id, rcv->regexp);
 #endif
 					(*rcv->callback)( clnt, rcv->user_data, arguments );
+					IvyArgumentFree( arguments ); /* TODO evy , suppress malloc/free on each callback */
 					return ptr_end;
 					}
 			else 
@@ -621,7 +639,7 @@ static char* Receive( Client client, void *data, char *message, unsigned int len
 		}
 	return ptr_end;
 }
-BOOL SendRegexp(HASHKEYTYPE key, void *data, va_list args)
+static BOOL SendRegexp(HASHKEYTYPE key, void *data, va_list args)
 {
 	Client client =  va_arg( args, Client);
 	MsgRcvPtr msg = (MsgRcvPtr)data;
@@ -669,9 +687,10 @@ static void ClientDelete( Client client, void *data )
 #endif //DEBUG
 
 	if ( clnt->app_name ) free( clnt->app_name );
+	if ( clnt->app_id ) free( clnt->app_id );
 	IVY_LIST_EACH( clnt->msg_send, msg)
 	{
-		/*regfree(msg->regexp);*/
+		IvyBindingFree( msg->bind );
 		free( msg->str_regexp);
 	}
 	IVY_LIST_EMPTY( clnt->msg_send );
@@ -835,6 +854,7 @@ void IvyInit (const char *appname, const char *ready,
 
 void IvyStop()
 {
+	IvyCleanup();
 	IvyChannelStop();
 }
 
@@ -987,8 +1007,8 @@ void IvyUnbindMsg (MsgRcvPtr msg)
 /* demande de reception d'un message */
 static MsgRcvPtr IvyBind ( IvyBindingType typ, MsgCallback callback, void *user_data, const char *fmt_regex, va_list ap )
 {
-	static char *buffer = NULL;
-	static int size = 0;
+	char *buffer = NULL;
+	int size = 0;
 	static int recv_id = 0;
 	IvyClientPtr clnt;
 	MsgRcvPtr msg;
@@ -1002,7 +1022,7 @@ static MsgRcvPtr IvyBind ( IvyBindingType typ, MsgCallback callback, void *user_
 	if (msg)	{
 		msg->type = typ;
 		msg->id = recv_id++;
-		msg->regexp = strdup(buffer);
+		msg->regexp = buffer;
 		msg->callback = callback;
 		msg->user_data = user_data;
 		if ( !hash_add(msg_recv, msg->id, msg) )
@@ -1014,6 +1034,7 @@ static MsgRcvPtr IvyBind ( IvyBindingType typ, MsgCallback callback, void *user_
 	else
 	{
 		perror("IvyBindMsg can't allocate Binding");
+		free ( buffer );
 		exit(-1);
 	}
 	len = strlen(msg->regexp);

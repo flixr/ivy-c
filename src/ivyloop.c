@@ -15,16 +15,17 @@
  *	copyright notice regarding this software
  */
 
-#ifdef WIN32
-#include <windows.h>
-#endif
+
 #include <stdlib.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
 
-#ifndef WIN32
+#ifdef WIN32
+#include <crtdbg.h>
+#include <windows.h>
+#else
 #include <unistd.h>
 #include <sys/time.h>
 #include <sys/types.h>
@@ -160,6 +161,7 @@ void IvyChannelInit (void)
 void IvyChannelStop (void)
 {
 	MainLoop = 0;
+	ChannelDefferedDelete(); /* this will force select to exit on multithread */
 }
 
 void IvyMainLoop(void(*hook)(void))
@@ -181,12 +183,12 @@ void IvyMainLoop(void(*hook)(void))
 			return;
 		}
 		TimerScan();
-		if (ready > 0) {
+		if ( MainLoop && ready > 0) {
 			IvyChannelHandleExcpt(&exset);
 			IvyChannelHandleRead(&rdset);
 			continue;
 		}
-	}
+	}	
 }
 
 void IvyIdle()

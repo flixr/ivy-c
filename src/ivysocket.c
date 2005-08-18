@@ -14,16 +14,15 @@
  *	copyright notice regarding this software
  */
 
-#ifdef WIN32
-#include <windows.h>
-#endif
+
 #include <stdlib.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
-
 #ifdef WIN32
+#include <crtdbg.h>
+#include <windows.h>
 #define close closesocket
 /*#define perror (a ) printf(a" error=%d\n",WSAGetLastError());*/
 #else
@@ -87,6 +86,8 @@ static void DeleteSocket(void *data)
 		(*client->handle_delete) (client, client->data );
 	shutdown (client->fd, 2 );
 	close (client->fd );
+	free( client->in_buffer );
+	free( client->out_buffer );
 	IVY_LIST_REMOVE (clients_list, client );
 }
 
@@ -95,7 +96,7 @@ static void DeleteServerSocket(void *data)
         Server server = (Server )data;
 #ifdef BUGGY_END
         if (server->handle_delete )
-                (*server->handle_delete) (server, NULL );
+                (*server->handle_delete) (server->channel, NULL );
 #endif
         shutdown (server->fd, 2 );
         close (server->fd );
@@ -301,7 +302,7 @@ void SocketServerClose (Server server )
 {
 	if (!server)
 		return;
-	IvyChannelRemove (server->channel );
+	IvyChannelRemove( server->channel );
 }
 
 char *SocketGetPeerHost (Client client )

@@ -238,7 +238,11 @@ void HandleStdin (Channel channel, IVY_HANDLE fd, void *data)
 		    fbindcallback=0;
 		  }
 		} else if  (strcmp(cmd, "quit") == 0) {
-			exit(0);
+			IvyStop(); /* this wil exit MainLoop */
+			//exit(0);
+#ifdef WIN32
+			ExitThread( 0 ); /* exit STDin handle thread */
+#endif
 		}
 	} else {
 		cmd = strtok (buf, "\n");
@@ -255,7 +259,7 @@ DWORD WINAPI HandleStdinThread( LPVOID lpParam )
 	while( 1 )
 		HandleStdin( 0,0,0);
 }
-void CraeteStdinThread()
+void CreateStdinThread()
 {
     DWORD dwThreadId, dwThrdParam = 1; 
     HANDLE hThread; 
@@ -276,6 +280,17 @@ void CraeteStdinThread()
    }
 }
 #endif
+
+void StartHandleStdin()
+{
+#ifdef WIN32
+	/* Stdin not compatible with select , select only accept socket */
+	/* use Thread to Read StdIn */
+	CreateStdinThread();
+#else
+	IvyChannelAdd (0, NULL, NULL, HandleStdin);
+#endif
+}
 void ApplicationCallback (IvyClientPtr app, void *user_data, IvyApplicationEvent event)
 {
 	char *appname;
@@ -294,8 +309,7 @@ void ApplicationCallback (IvyClientPtr app, void *user_data, IvyApplicationEvent
 			printf("%s subscribes to '%s'\n",appname,*msgList++);
 /*		printf("Application(%s): End Messages\n",appname);*/
 		if  (app_count == wait_count)
-
-		IvyChannelAdd (0, NULL, NULL, HandleStdin);
+			StartHandleStdin();
 		break;
 
 	case IvyApplicationDisconnected:
@@ -385,14 +399,7 @@ int main(int argc, char *argv[])
 		IvyBindMsg (Callback, NULL, argv[optind]);
 
 	if  (wait_count == 0)
-#ifdef WIN32
-	/* Stdin not compatible with select , select only accept socket */
-	/* use Thread to Read StdIn */
-	CraeteStdinThread();
-#else
-	IvyChannelAdd (0, NULL, NULL, HandleStdin);
-#endif
-
+		StartHandleStdin();
 
 	IvyStart (bus);
 
@@ -408,6 +415,9 @@ int main(int argc, char *argv[])
 #endif
 
 	IvyMainLoop (0);
+	#ifdef _CRTDBG_MAP_ALLOC
+	_CrtDumpMemoryLeaks();
+	#endif
 
 	return 0;
 }

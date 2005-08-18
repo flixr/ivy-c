@@ -21,7 +21,9 @@
 #include <stdlib.h>
 #include <memory.h> 
 #include <string.h>
+
 #ifdef WIN32
+#include <crtdbg.h>
 #include <windows.h>
 #else
 #include <arpa/inet.h>
@@ -29,6 +31,8 @@
 #include <unistd.h>
 #include <netdb.h>
 #endif
+
+
 #include "list.h"
 #include "ivyargument.h"
 
@@ -54,6 +58,12 @@ IvyArgument IvyArgumentNew( int len, const void * value )
 }
 void IvyArgumentFree( IvyArgument arg )
 {
+	IvyArgument p;
+	IvyArgument psuiv;
+	IVY_LIST_EACH_SAFE( arg->childrens, p, psuiv )
+	{
+		IvyArgumentFree(p);
+	}
 	free( arg );
 }
 void IvyArgumentGetValue( IvyArgument arg, int * len, const void **val )

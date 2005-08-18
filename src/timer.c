@@ -15,16 +15,20 @@
  */
 
 /* Module de gestion des timers autour d'un select */
+
 #include <stdio.h>
 #include <sys/types.h>
 #include <time.h>
 #include <stdlib.h>
 #include <memory.h> 
+
 #ifdef WIN32
+#include <crtdbg.h>
 #include <windows.h>
 #else
 #include <sys/time.h>
 #endif
+
 #include "list.h"
 #include "timer.h"
 

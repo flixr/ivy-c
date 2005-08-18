@@ -56,26 +56,26 @@ void Reply (IvyClientPtr app, void *user_data, IvyArgument args)
 {
 	IvyArgument arg;
 	int len;
-	void* val;
+	const void* val;
 	arg = IvyArgumentGetChildrens( args );
 	IvyArgumentGetValue( arg , &len, &val);
-	IvySendMsg ("pong ts=%.*s tr=%f", len, val, currentTime());
+	IvySendMsg ("pong ts=%.*s tr=%f", len, (char*)val, currentTime());
 }
 void Pong (IvyClientPtr app, void *user_data, IvyArgument args)
 {
 	double current, ts, tr, roundtrip1, roundtrip2, roundtrip3;
 	IvyArgument arg;
 	int len;
-	void* val;
+	const void* val;
 	/* TODO  bug atof non limite a la longeur de la valeur !!!*/
 	
 	current = currentTime();
 	arg = IvyArgumentGetChildrens( args );
 	IvyArgumentGetValue( arg , &len, &val);
-	ts = atof( val );
+	ts = atof( (char*)val );
 	arg = IvyArgumentGetNextChild( arg );
 	IvyArgumentGetValue( arg , &len, &val);
-	tr = atof( val );
+	tr = atof( (char*)val );
 	roundtrip1 = tr-ts;
 	roundtrip2 = current - tr;
 	roundtrip3 = current - ts;
@@ -96,9 +96,14 @@ int main(int argc, char *argv[])
 	/* Mainloop management */
 
 	IvyInit ("IvyPerf", "IvyPerf ready", NULL,NULL,NULL,NULL);
-	
+
+#ifdef USE_REGEXP
 	IvyBindMsg (Reply, NULL, "^ping ts=(.*)");
 	IvyBindMsg (Pong, NULL, "^pong ts=(.*) tr=(.*)");
+#else
+	IvyBindSimpleMsg (Reply, NULL, "ping ts");
+	IvyBindSimpleMsg (Pong, NULL, "pong ts tr");
+#endif
 
 	IvyStart (0);
 
