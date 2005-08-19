@@ -524,8 +524,8 @@ static char* Receive( Client client, void *data, char *message, unsigned int len
 				const char *errbuf;
 				IvyBindingGetCompileError( &offset, &errbuf );
 				MsgSendTo( client, Error, offset, strlen(errbuf), errbuf );
+				free( str_regexp );
 				}
-			free( str_regexp );
 			
 			break;
 		case DelBinding:
@@ -1074,8 +1074,8 @@ int IvySendMsg(const char *fmt, ...)
 {
 	IvyClientPtr clnt;
 	int match_count = 0;
-	static char *buffer = NULL; /* Use satic mem to eliminate multiple call to malloc /free */
-	static int size = 0;		/* donc non reentrant !!!! */
+	char *buffer = NULL; /* Use satic mem to eliminate multiple call to malloc /free */
+	int size = 0;		/* donc non reentrant !!!! */
 	va_list ap;
 	
 	va_start( ap, fmt );
@@ -1089,19 +1089,21 @@ int IvySendMsg(const char *fmt, ...)
 #ifdef DEBUG
 	if ( match_count == 0 ) printf( "Warning no recipient for %s\n",buffer);
 #endif
+	free(buffer);
 	return match_count;
 }
 
 void IvySendError( IvyClientPtr app, int id, const char *fmt, ... )
 {
-	static char *buffer = NULL; /* Use satic mem to eliminate multiple call to malloc /free */
-	static int size = 0;		/* donc non reentrant !!!! */
+	char *buffer = NULL; /* Use satic mem to eliminate multiple call to malloc /free */
+	int size = 0;		/* donc non reentrant !!!! */
 	va_list ap;
 	
 	va_start( ap, fmt );
 	make_message( &buffer, &size, 0, fmt, ap );
 	va_end ( ap );
 	MsgSendTo( app->client, Error, id, strlen(buffer), buffer);
+	free(buffer);
 }
 
 void IvyBindDirectMsg( MsgDirectCallback callback, void *user_data)

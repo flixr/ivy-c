@@ -303,6 +303,7 @@ void SocketServerClose (Server server )
 	if (!server)
 		return;
 	IvyChannelRemove( server->channel );
+	IVY_LIST_REMOVE (servers_list, server );
 }
 
 char *SocketGetPeerHost (Client client )

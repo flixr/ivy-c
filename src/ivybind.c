@@ -49,7 +49,6 @@ static int err_offset;
 #endif
 
 struct _binding {
-	struct _binding *next;
 	IvyBindingType type;
 	const char *msgname;			/* msg tag name first word of message */
 	char **msgargs;					/* list of msg argument name */
@@ -93,6 +92,8 @@ static IvyBinding IvyBindingCompileSimple( IvyBindingType typ, const char * expr
 	}
 
 	bind = (IvyBinding)malloc( sizeof( struct _binding ));
+	memset( bind, 0, sizeof(*bind ) );
+	bind->type = IvyBindSimple;
 	bind->msgname = strtok( expr, " ");
 	bind->msgargs = malloc ( sizeof( char* ) * ( nb_arg + 1) );
 	argv = bind->msgargs;
@@ -110,8 +111,8 @@ static IvyBinding IvyBindingCompileRegexp( IvyBindingType typ, const char * expr
 	if ( regexp != NULL )
 		{
 			bind = (IvyBinding)malloc( sizeof( struct _binding ));
+			memset( bind, 0, sizeof(*bind ) );
 			bind->regexp = regexp;
-			bind->next = NULL;
 			bind->type = IvyBindRegexp;
 			bind->inspect = pcre_study(regexp,0,&err_buf);
 			if (err_buf!=NULL)
@@ -130,6 +131,7 @@ static IvyBinding IvyBindingCompileRegexp( IvyBindingType typ, const char * expr
 	if ( reg == 0 )
 		{
 			bind = (IvyBinding)malloc( sizeof( struct _binding ));
+			memset( bind, 0, sizeof(*bind ) );
 			bind->regexp = regexp;
 			bind->next = NULL;
 		}
@@ -161,6 +163,10 @@ void IvyBindingFree( IvyBinding bind )
 		pcre_free(bind->regexp);
 #else
 #endif
+	if (bind->msgname)
+		free ( bind->msgname );
+	if (bind->msgargs)
+		free ( bind->msgargs );
 	free ( bind );
 }
 int IvyBindingExecRegexp( IvyBinding bind, const char * message )
