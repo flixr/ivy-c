@@ -14,7 +14,7 @@
  *	Please refer to file version.h for the
  *	copyright notice regarding this software
  */
-#include "IvyArgument.h"
+#include "ivyargument.h"
 
 /* Module de gestion de la syntaxe des messages Ivy */
 

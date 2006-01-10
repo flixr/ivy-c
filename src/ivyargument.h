@@ -32,3 +32,4 @@ IvyArgument IvyArgumentDeserialize( int buf_len, void* buffer, int * buf_adv);
 int IvyArgumentSerialize(IvyArgument arg, int *buf_len, void **buffer, int offset);
 
 #endif
+
