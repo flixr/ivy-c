@@ -17,7 +17,7 @@
 
 # change this in version.h too !!!!
 MAJOR=3
-MINOR=7
+MINOR=8
 
 XTINC = -I/usr/X11R6/include
 XTLIB = -L/usr/X11R6/lib -lXt -lX11 -lSM -lICE
@@ -68,12 +68,14 @@ REGEXP= -DUSE_PCRE_REGEX -DPCRE_OPT=$(PCRE_OPT)
 CHANNEL = -DTCL_CHANNEL_INTEGRATION 
 CFLAGS = -g -Wall
 
+
 OBJ = ivyloop.o timer.o ivysocket.o ivy.o 
 GOBJ = ivyloop.o timer.o ivysocket.o givy.o
 XTOBJ = ivyxtloop.o ivysocket.o ivy.o
 GLIBOBJ = ivyglibloop.o ivysocket.o ivy.o
 GLUTOBJ = ivyglutloop.o ivysocket.o ivy.o
 TCLOBJ = ivytcl.o  timer.o ivysocket.o givy.o
+
 # WINDOWS add ivyloop.o if TCL_CHANNEL_INTEGRATION is not set
 TARGETS = ivyprobe ivyperf ivyglibprobe ivyxtprobe 
 TARGETLIBS=libivy.so.$(MAJOR).$(MINOR) libgivy.so.$(MAJOR).$(MINOR) libxtivy.so.$(MAJOR).$(MINOR) libglibivy.so.$(MAJOR).$(MINOR) libtclivy.so.$(MAJOR).$(MINOR)
@@ -99,7 +101,7 @@ ivy.o: ivy.c
 	$(CC) -c $(CFLAGS) $(REGEXP) $(PCREINC) ivy.c
 
 givy.o: ivy.c
-	$(CC) -c $(CFLAGS) -DGNU_REGEXP -DREGCOMP_OPT=$(REGCOMP_OPT) -o givy.o ivy.c
+	$(CC) -c $(CFLAGS) $(REGEXP) -DREGCOMP_OPT=$(REGCOMP_OPT) -o givy.o ivy.c
 
 ivyglutloop.o: ivyglutloop.c ivyglutloop.h
 	$(CC) -c $(CFLAGS) $(GLUTINC) ivyglutloop.c

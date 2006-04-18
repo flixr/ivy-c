@@ -229,6 +229,10 @@ MsgCall (const char *message, MsgSndPtr msg,  Client client)
 static int
 MsgCall (const char *message, MsgSndPtr msg,  Client client)
 {
+	static char *buffer = NULL; /* Use satic mem to eliminate multiple call to malloc /free */
+	static int size = 0;		/* donc non reentrant !!!! */
+	int offset = 0;
+  	
 	regmatch_t match[MAX_MATCHING_ARGS+1];
 #ifdef GNU_REGEXP
 	regmatch_t* p;
@@ -245,7 +249,7 @@ MsgCall (const char *message, MsgSndPtr msg,  Client client)
 	// il faut essayer d'envoyer le message en une seule fois sur la socket
 	// pour eviter au maximun de passer dans le select plusieur fois par message du protocole Ivy
 	// pour eviter la latence ( PB detecte par ivyperf ping roudtrip )
-	SocketSendBuffered( client, "%d %d" ARG_START ,Msg, msg->id);
+	offset += make_message_var( &buffer, &size, offset, "%d %d" ARG_START ,Msg, msg->id);
 
 #ifdef DEBUG
 	printf( "Send matching args count %ld\n",msg->regexp.re_nsub);
@@ -254,7 +258,7 @@ MsgCall (const char *message, MsgSndPtr msg,  Client client)
 #ifdef GNU_REGEXP
 	p = &match[1];
 	while ( p->rm_so != -1 ) {
-		SocketSendBuffered( client, "%.*s" ARG_END , p->rm_eo - p->rm_so, 
+		offset += make_message_var( &buffer, &size, offset, "%.*s" ARG_END , p->rm_eo - p->rm_so, 
 			    message + p->rm_so); 
 		++p;
 	}
@@ -266,10 +270,10 @@ MsgCall (const char *message, MsgSndPtr msg,  Client client)
 			printf ("Send matching arg%d %.*s\n",i,(int)(match[i].rm_eo - match[i].rm_so), 
 				message + match[i].rm_so);
 #endif
-			SocketSendBuffered (client, "%.*s" ARG_END ,(int)(match[i].rm_eo - match[i].rm_so), 
+			offset += make_message_var( &buffer, &size, offset, "%.*s" ARG_END ,(int)(match[i].rm_eo - match[i].rm_so), 
 				message + match[i].rm_so);
 		} else {
-			SocketSendBuffered (client, ARG_END);
+			offset += make_message_var( &buffer, &size, offset, ARG_END );
 #ifdef DEBUG
 			printf( "Send matching arg%d VIDE\n",i);
 #endif //DEBUG
@@ -277,8 +281,8 @@ MsgCall (const char *message, MsgSndPtr msg,  Client client)
 	}
 #endif
 
-	SocketSendBuffered (client, "\n");
-	SocketFlush(client);
+	offset += make_message_var( &buffer, &size, offset, "\n");
+	SocketSendRaw(client, buffer , offset);
 	return 1;
 }
 #endif /* USE_PCRE_REGEX */

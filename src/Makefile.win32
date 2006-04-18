@@ -17,7 +17,7 @@
 
 # change this in version.h too !!!!
 MAJOR=3
-MINOR=7
+MINOR=8
 
 PCREINC = -I "C:\Program Files\GnuWin32\include" #`pcre-config --cflags`
 PCRELIB = "C:\Program Files\GnuWin32\lib\libpcre.lib" #`pcre-config --libs`
@@ -44,7 +44,6 @@ REGEXP= -DUSE_PCRE_REGEX -DPCRE_OPT=$(PCRE_OPT)
 # on activeTCL , set #define CHANNEL to null, and add ivyloop.obj in the ivytcl target,
 # see below
 CHANNEL = -DTCL_CHANNEL_INTEGRATION 
-
 
 OBJ = ivyloop.obj timer.obj ivysocket.obj ivy.obj 
 
