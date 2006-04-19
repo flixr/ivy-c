@@ -76,9 +76,10 @@ void TimerCall(TimerId id, void *user_data, unsigned long delta)
 
 int main(int argc, char *argv[])
 {
-	
+	long time=200;
 
 	/* Mainloop management */
+	if ( argc > 1 ) time = atol( argv[1] );
 
 	IvyInit ("IvyPerf", "IvyPerf ready", NULL,NULL,NULL,NULL);
 	
@@ -87,9 +88,9 @@ int main(int argc, char *argv[])
 
 	IvyStart (0);
 
-	TimerRepeatAfter (TIMER_LOOP, 200, TimerCall, (void*)1);
+	TimerRepeatAfter (TIMER_LOOP, time, TimerCall, (void*)1);
 	
 
-	IvyMainLoop (0);
+	IvyMainLoop (0,0);
 	return 0;
 }

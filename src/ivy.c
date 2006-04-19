@@ -38,11 +38,12 @@
 #include "ivychannel.h"
 #include "ivysocket.h"
 #include "list.h"
+#include "ivybuffer.h"
 #include "ivy.h"
 
 #define VERSION 3
 
-#define MAX_MATCHING_ARGS 20
+#define MAX_MATCHING_ARGS 40
 
 #define ARG_START "\002"
 #define ARG_END "\003"
@@ -161,9 +162,9 @@ static char * nextArg( char *s, const char *separator )
 								if ( end == start ) return NULL;
 									return start;
 }
-static void MsgSendTo( Client client, MsgType msgtype, int id, const char *message )
+static int MsgSendTo( Client client, MsgType msgtype, int id, const char *message )
 {
-	SocketSend( client, "%d %d" ARG_START "%s\n", msgtype, id, message);
+	return SocketSend( client, "%d %d" ARG_START "%s\n", msgtype, id, message);
 }
 
 static void IvyCleanup()
@@ -187,11 +188,11 @@ static void IvyCleanup()
 
 #ifdef USE_PCRE_REGEX
 static int
-MsgCall (const char *message, MsgSndPtr msg,  Client client)
+MsgCall (const char *message, MsgSndPtr msg,  IvyClientPtr client)
 {
-	static char *buffer = NULL; /* Use satic mem to eliminate multiple call to malloc /free */
-	static int size = 0;		/* donc non reentrant !!!! */
-	int offset = 0;
+	int waiting = 0;
+	static IvyBuffer buffer = { NULL, 0, 0 }; /* Use satic mem to eliminate multiple call to malloc /free */
+	int err;
   	int ovector[OVECSIZE];
 	int index;
   	int rc=pcre_exec(
@@ -207,32 +208,35 @@ MsgCall (const char *message, MsgSndPtr msg,  Client client)
 #ifdef DEBUG
 	printf( "Sending message id=%d '%s'\n",msg->id,message);
 #endif
+	buffer.offset = 0;
 	// il faut essayer d'envoyer le message en une seule fois sur la socket
 	// pour eviter au maximun de passer dans le select plusieur fois par message du protocole Ivy
 	// pour eviter la latence ( PB de perfo detecte par ivyperf ping roudtrip )
-	offset += make_message_var( &buffer, &size, offset, "%d %d" ARG_START ,Msg, msg->id);
+	err = make_message_var( &buffer, "%d %d" ARG_START ,Msg, msg->id);
 #ifdef DEBUG
 	printf( "Send matching args count %ld\n",msg->regexp.re_nsub);
 #endif
 	index=1;
 	while ( index<rc ) {
-		offset += make_message_var( &buffer, &size, offset, "%.*s" ARG_END , ovector[2*index+1]- ovector[2*index],
+		err = make_message_var( &buffer,  "%.*s" ARG_END , ovector[2*index+1]- ovector[2*index],
 			    message + ovector[2*index]);
 		++index;
 	}
-	offset += make_message_var( &buffer, &size, offset, "\n");
-	SocketSendRaw(client, buffer , offset);
+	err = make_message_var( &buffer, "\n");
+	waiting = SocketSendRaw(client->client, buffer.data , buffer.offset);
+	if ( waiting )
+		fprintf(stderr, "Ivy: Slow client : %s\n", client->app_name );
 	return 1;
 }
 
 #else  /* we don't USE_PCRE_REGEX */
 static int
-MsgCall (const char *message, MsgSndPtr msg,  Client client)
+MsgCall (const char *message, MsgSndPtr msg,  IvyClientPtr client)
 {
-	static char *buffer = NULL; /* Use satic mem to eliminate multiple call to malloc /free */
-	static int size = 0;		/* donc non reentrant !!!! */
-	int offset = 0;
-  	
+	int waiting = 0;
+	static IvyBuffer buffer = { NULL, 0, 0 }; /* Use satic mem to eliminate multiple call to malloc /free */
+	int err;
+
 	regmatch_t match[MAX_MATCHING_ARGS+1];
 #ifdef GNU_REGEXP
 	regmatch_t* p;
@@ -249,7 +253,8 @@ MsgCall (const char *message, MsgSndPtr msg,  Client client)
 	// il faut essayer d'envoyer le message en une seule fois sur la socket
 	// pour eviter au maximun de passer dans le select plusieur fois par message du protocole Ivy
 	// pour eviter la latence ( PB detecte par ivyperf ping roudtrip )
-	offset += make_message_var( &buffer, &size, offset, "%d %d" ARG_START ,Msg, msg->id);
+	buffer.offset = 0;
+	err = make_message_var( &buffer, "%d %d" ARG_START ,Msg, msg->id);
 
 #ifdef DEBUG
 	printf( "Send matching args count %ld\n",msg->regexp.re_nsub);
@@ -258,7 +263,7 @@ MsgCall (const char *message, MsgSndPtr msg,  Client client)
 #ifdef GNU_REGEXP
 	p = &match[1];
 	while ( p->rm_so != -1 ) {
-		offset += make_message_var( &buffer, &size, offset, "%.*s" ARG_END , p->rm_eo - p->rm_so, 
+		err = make_message_var( &buffer, "%.*s" ARG_END , p->rm_eo - p->rm_so, 
 			    message + p->rm_so); 
 		++p;
 	}
@@ -270,10 +275,10 @@ MsgCall (const char *message, MsgSndPtr msg,  Client client)
 			printf ("Send matching arg%d %.*s\n",i,(int)(match[i].rm_eo - match[i].rm_so), 
 				message + match[i].rm_so);
 #endif
-			offset += make_message_var( &buffer, &size, offset, "%.*s" ARG_END ,(int)(match[i].rm_eo - match[i].rm_so), 
+			buffer.offset += make_message_var( &buffer, "%.*s" ARG_END ,(int)(match[i].rm_eo - match[i].rm_so), 
 				message + match[i].rm_so);
 		} else {
-			offset += make_message_var( &buffer, &size, offset, ARG_END );
+			buffer.offset += make_message_var( &buffer, ARG_END );
 #ifdef DEBUG
 			printf( "Send matching arg%d VIDE\n",i);
 #endif //DEBUG
@@ -281,8 +286,8 @@ MsgCall (const char *message, MsgSndPtr msg,  Client client)
 	}
 #endif
 
-	offset += make_message_var( &buffer, &size, offset, "\n");
-	SocketSendRaw(client, buffer , offset);
+	err = make_message_var( &buffer,"\n");
+	SocketSendRaw(client->client, buffer.data , buffer.offset);
 	return 1;
 }
 #endif /* USE_PCRE_REGEX */
@@ -294,7 +299,7 @@ ClientCall (IvyClientPtr clnt, const char *message)
 	int match_count = 0;
 	/* recherche dans la liste des requetes recues de ce client */
 	IVY_LIST_EACH (clnt->msg_send, msg) {
-		match_count+= MsgCall (message, msg, clnt->client);
+		match_count+= MsgCall (message, msg, clnt);
 	}
 	return match_count;
 }
@@ -401,9 +406,7 @@ static void Receive( Client client, void *data, char *line )
 			reg = regcomp(&regexp, arg, REGCOMP_OPT|REG_EXTENDED);
 			if ( reg == 0 )
 				{
-				IVY_LIST_ADD( clnt->msg_send, snd )
-				if ( snd )
-					{
+				IVY_LIST_ADD_START( clnt->msg_send, snd )
 					snd->id = id;
 					snd->str_regexp = strdup( arg );
 					snd->regexp = regexp;
@@ -411,7 +414,7 @@ static void Receive( Client client, void *data, char *line )
 					  {
 					    (*application_bind_callback)( clnt, application_bind_data, id, snd->str_regexp, IvyAddBind );
 					  }
-					}
+				IVY_LIST_ADD_END( clnt->msg_send, snd )
 				}
 			else
 			{
@@ -424,9 +427,7 @@ static void Receive( Client client, void *data, char *line )
 			regexp = pcre_compile(arg, PCRE_OPT,&errbuf,&erroffset,NULL);
 			if ( regexp != NULL )
 				{
-				IVY_LIST_ADD( clnt->msg_send, snd )
-				if ( snd )
-					{
+				IVY_LIST_ADD_START( clnt->msg_send, snd )
 					snd->id = id;
 					snd->str_regexp = strdup( arg );
 					snd->regexp = regexp;
@@ -440,7 +441,8 @@ static void Receive( Client client, void *data, char *line )
 					  {
 					    (*application_bind_callback)( clnt, application_bind_data, id, snd->str_regexp, IvyAddBind );
 					  }
-					}
+				IVY_LIST_ADD_END( clnt->msg_send, snd )
+				
 				}
 			else
 			{
@@ -564,9 +566,8 @@ static IvyClientPtr SendService( Client client )
 {
 	IvyClientPtr clnt;
 	MsgRcvPtr msg;
-	IVY_LIST_ADD( clients, clnt )
-	if ( clnt )
-		{
+	IVY_LIST_ADD_START( clients, clnt )
+
 		clnt->msg_send = 0;
 		clnt->client = client;
 		clnt->app_name = strdup("Unknown");
@@ -577,7 +578,8 @@ static IvyClientPtr SendService( Client client )
 			MsgSendTo( client, AddRegexp,msg->id,msg->regexp);
 			}
 		MsgSendTo( client, EndRegexp, 0, "");
-		}
+		
+	IVY_LIST_ADD_END( clients, clnt )
 	return clnt;
 }
 
@@ -837,25 +839,24 @@ IvyUnbindMsg (MsgRcvPtr msg)
 MsgRcvPtr
 IvyBindMsg (MsgCallback callback, void *user_data, const char *fmt_regex, ... )
 {
-	static char *buffer = NULL;
-	static int size = 0;
+	static IvyBuffer buffer = { NULL, 0, 0};
 	va_list ap;
 	static int recv_id = 0;
 	IvyClientPtr clnt;
 	MsgRcvPtr msg;
 
 	va_start (ap, fmt_regex );
-	make_message( &buffer, &size, 0, fmt_regex, ap );
+	buffer.offset = 0;
+	make_message( &buffer, fmt_regex, ap );
 	va_end  (ap );
 
 	/* add Msg to the query list */
-	IVY_LIST_ADD( msg_recv, msg );
-	if (msg)	{
+	IVY_LIST_ADD_START( msg_recv, msg )
 		msg->id = recv_id++;
-		msg->regexp = strdup(buffer);
+		msg->regexp = strdup(buffer.data);
 		msg->callback = callback;
 		msg->user_data = user_data;
-	}
+	IVY_LIST_ADD_END( msg_recv, msg )
 	/* Send to already connected clients */
 	/* recherche dans la liste des requetes recues de mes clients */
 	IVY_LIST_EACH( clients, clnt ) {
@@ -868,17 +869,17 @@ int IvySendMsg(const char *fmt, ...)
 {
 	IvyClientPtr clnt;
 	int match_count = 0;
-	static char *buffer = NULL; /* Use satic mem to eliminate multiple call to malloc /free */
-	static int size = 0;		/* donc non reentrant !!!! */
+	static IvyBuffer buffer = { NULL, 0, 0}; /* Use satic mem to eliminate multiple call to malloc /free */
 	va_list ap;
 	
 	va_start( ap, fmt );
-	make_message( &buffer, &size, 0, fmt, ap );
+	buffer.offset = 0;
+	make_message( &buffer, fmt, ap );
 	va_end ( ap );
 
 	/* recherche dans la liste des requetes recues de mes clients */
 	IVY_LIST_EACH (clients, clnt) {
-		match_count += ClientCall (clnt, buffer);
+		match_count += ClientCall (clnt, buffer.data);
 	}
 #ifdef DEBUG
 	if ( match_count == 0 ) printf( "Warning no recipient for %s\n",buffer);
@@ -888,14 +889,14 @@ int IvySendMsg(const char *fmt, ...)
 
 void IvySendError( IvyClientPtr app, int id, const char *fmt, ... )
 {
-	static char *buffer = NULL; /* Use satic mem to eliminate multiple call to malloc /free */
-	static int size = 0;		/* donc non reentrant !!!! */
+	static IvyBuffer buffer = { NULL, 0, 0}; /* Use satic mem to eliminate multiple call to malloc /free */
 	va_list ap;
 	
 	va_start( ap, fmt );
-	make_message( &buffer, &size, 0, fmt, ap );
+	buffer.offset = 0;
+	make_message( &buffer, fmt, ap );
 	va_end ( ap );
-	MsgSendTo( app->client, Error, id, buffer);
+	MsgSendTo( app->client, Error, id, buffer.data);
 }
 
 void IvyBindDirectMsg( MsgDirectCallback callback, void *user_data)

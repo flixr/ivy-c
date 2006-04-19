@@ -65,10 +65,10 @@ void IvyInit(
 	 void *die_data 		/* user data */
 	 );
   
-  void IvySetBindCallback(	 
+void IvySetBindCallback(	 
 			  IvyBindCallback bind_callback,
 			  void *bind_data );
-  void IvyDelBindCallback(); 
+void IvyDelBindCallback(); 
 void IvyStart (const char*);
 void IvyStop ();
 

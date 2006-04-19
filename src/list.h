@@ -50,14 +50,24 @@
 			}\
 		} \
 	}
-
-#define IVY_LIST_ADD(list, p ) \
+/* 
+on place le code d'initialisation de l'objet entre START et END 
+pour eviter de chainer un objet non initialise
+*/
+#define IVY_LIST_ADD_START(list, p ) \
         if ((p = (TYPEOF(p)) (malloc( sizeof( *p ))))) \
 		{ \
-		memset( p, 0 , sizeof( *p ));\
+		memset( p, 0 , sizeof( *p ));
+
+#define IVY_LIST_ADD_END(list, p ) \
 		p->next = list; \
 		list = p; \
-		} 
+		} \
+		else \
+		{ \
+		perror( "IVY LIST ADD malloc" ); \
+		exit(0); \
+		}
 
 #define IVY_LIST_EACH( list, p ) \
 	for ( p = list ; p ; p = p -> next )

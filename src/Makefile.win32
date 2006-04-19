@@ -19,8 +19,11 @@
 MAJOR=3
 MINOR=8
 
-PCREINC = -I "C:\Program Files\GnuWin32\include" #`pcre-config --cflags`
-PCRELIB = "C:\Program Files\GnuWin32\lib\libpcre.lib" #`pcre-config --libs`
+PCREINC = -I "C:\Documents and Settings\fcolin\My Documents\Visual Studio 2005\Projects\pcre-6.4" 
+PCRELIB = "C:\Documents and Settings\fcolin\My Documents\Visual Studio 2005\Projects\pcre-6.4\lib\libpcre.lib" #`pcre-config --libs`
+
+#PCREINC = -I "C:\Program Files\GnuWin32\include" #`pcre-config --cflags`
+#PCRELIB = "C:\Program Files\GnuWin32\lib\libpcre.lib" #`pcre-config --libs`
 
 PCRE_OPT = PCRE_CASELESS
 REGCOMP_OPT = REG_ICASE
@@ -34,7 +37,7 @@ PCREOBJ =
 
 #CC=gcc
 #CFLAGS = -g -Wall
-CFLAGS = -DWIN32 -nologo
+CFLAGS = -DWIN32 -D_CRT_SECURE_NO_DEPRECATE -nologo
 #LIBTOOL=ar q # linux and solaris
 #LIBTOOL=libtool -static -o
 LIBTOOL=lib -nologo /out:

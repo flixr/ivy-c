@@ -69,12 +69,12 @@ CHANNEL = -DTCL_CHANNEL_INTEGRATION
 CFLAGS = -g -Wall
 
 
-OBJ = ivyloop.o timer.o ivysocket.o ivy.o 
-GOBJ = ivyloop.o timer.o ivysocket.o givy.o
-XTOBJ = ivyxtloop.o ivysocket.o ivy.o
-GLIBOBJ = ivyglibloop.o ivysocket.o ivy.o
-GLUTOBJ = ivyglutloop.o ivysocket.o ivy.o
-TCLOBJ = ivytcl.o  timer.o ivysocket.o givy.o
+OBJ = ivyloop.o timer.o ivysocket.o ivy.o ivybuffer.o
+GOBJ = ivyloop.o timer.o ivysocket.o givy.o ivybuffer.o
+XTOBJ = ivyxtloop.o ivysocket.o ivy.o ivybuffer.o
+GLIBOBJ = ivyglibloop.o ivysocket.o ivy.o ivybuffer.o
+GLUTOBJ = ivyglutloop.o ivysocket.o ivy.o ivybuffer.o
+TCLOBJ = ivytcl.o  timer.o ivysocket.o givy.o ivybuffer.o
 
 # WINDOWS add ivyloop.o if TCL_CHANNEL_INTEGRATION is not set
 TARGETS = ivyprobe ivyperf ivyglibprobe ivyxtprobe 

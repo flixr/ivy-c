@@ -98,17 +98,14 @@ Channel IvyChannelSetUp (HANDLE fd, void *data,
 {
 	Channel channel;
 
-	IVY_LIST_ADD (channels_list, channel);
-	if (!channel) {
-		fprintf(stderr,"NOK Memory Alloc Error\n");
-		exit(0);
-	}
+	IVY_LIST_ADD_START (channels_list, channel)
 	channel->fd = fd;
 	channel->tobedeleted = 0;
 	channel->handle_delete = handle_delete;
 	channel->handle_read = handle_read;
 	channel->data = data;
-
+	IVY_LIST_ADD_END (channels_list, channel)
+	
 	FD_SET (channel->fd, &open_fds);
 
 	return channel;
@@ -165,7 +162,7 @@ void IvyStop (void)
 	MainLoop = 0;
 }
 
-void IvyMainLoop(void(*hook)(void))
+void IvyMainLoop(void(*BeforeSelect)(void),void(*AfterSelect)(void))
 {
 
 	fd_set rdset;
@@ -174,10 +171,12 @@ void IvyMainLoop(void(*hook)(void))
 
 	while (MainLoop) {
 		ChannelDefferedDelete();
-	   	if (hook) (*hook)();
+	   	if (BeforeSelect) (*BeforeSelect)();
 		rdset = open_fds;
 		exset = open_fds;
 		ready = select(64, &rdset, 0,  &exset, TimerGetSmallestTimeout());
+		if (AfterSelect) (*AfterSelect)();
+		
 		if (ready < 0 && (errno != EINTR)) {
          		fprintf (stderr, "select error %d\n",errno);
 			perror("select");
@@ -187,7 +186,6 @@ void IvyMainLoop(void(*hook)(void))
 		if (ready > 0) {
 			IvyChannelHandleExcpt(&exset);
 			IvyChannelHandleRead(&rdset);
-			continue;
 		}
 	}
 }

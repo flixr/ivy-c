@@ -103,18 +103,16 @@ TimerId TimerRepeatAfter( int count, long time, TimerCb cb, void *user_data )
 	/* si y a rien a faire et ben on fait rien */
 	if ( cb == NULL ) return NULL;
 
-	IVY_LIST_ADD( timers, timer )
-	if ( timer )
-	{
-	timer->repeat = count;
-	timer->callback = cb;
-	timer->user_data = user_data;
-	stamp = currentTime();
-	timer->period = time;
-	timer->when =  stamp + time;
-	if ( (timer->when < nextTimeout) || (timeoutptr == NULL))
-		SetNewTimeout( stamp, timer->when );
-	}
+	IVY_LIST_ADD_START( timers, timer )
+		timer->repeat = count;
+		timer->callback = cb;
+		timer->user_data = user_data;
+		stamp = currentTime();
+		timer->period = time;
+		timer->when =  stamp + time;
+		if ( (timer->when < nextTimeout) || (timeoutptr == NULL))
+			SetNewTimeout( stamp, timer->when );
+	IVY_LIST_ADD_END( timers, timer )
 	return timer;
 }
 void TimerRemove( TimerId timer )

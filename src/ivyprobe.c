@@ -398,7 +398,7 @@ int main(int argc, char *argv[])
 #endif
 
 #ifdef IVYMAINLOOP
-	IvyMainLoop (0);
+	IvyMainLoop (0,0);
 #endif
 	return 0;
 }
