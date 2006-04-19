@@ -39,6 +39,8 @@ extern int optind;
 #include "ivyloop.h"
 #define MILLISEC 1000.0
 
+char *mymessages[] = { "ping", "pong" };
+
 static double currentTime()
 {
         double current;
@@ -73,7 +75,23 @@ void TimerCall(TimerId id, void *user_data, unsigned long delta)
 	if ( count == 0 ) fprintf(stderr, "." );
 }
 
+void binCB( IvyClientPtr app, void *user_data, int id, char* regexp,  IvyBindEvent event ) 
+{
+	char *app_name = IvyGetApplicationName( app );
+	switch ( event )
+	{
+	case IvyAddBind:
+		printf("Application:%s bind '%s' ADDED\n", app_name, regexp );
+		break;
+	case IvyRemoveBind:
+		printf("Application:%s bind '%s' REMOVED\n", app_name, regexp );
+		break;
+	case IvyFilterBind:
+		printf("Application:%s bind '%s' FILTRED\n", app_name, regexp );
+		break;
 
+	}
+}
 int main(int argc, char *argv[])
 {
 	long time=200;
@@ -82,7 +100,8 @@ int main(int argc, char *argv[])
 	if ( argc > 1 ) time = atol( argv[1] );
 
 	IvyInit ("IvyPerf", "IvyPerf ready", NULL,NULL,NULL,NULL);
-	
+	IvyClasses( sizeof( mymessages )/ sizeof( char *),mymessages );
+	IvySetBindCallback( binCB, 0 ),
 	IvyBindMsg (Reply, NULL, "^ping ts=(.*)");
 	IvyBindMsg (Pong, NULL, "^pong ts=(.*) tr=(.*)");
 

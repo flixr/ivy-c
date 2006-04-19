@@ -402,7 +402,7 @@ static void Receive( Client client, void *data, char *line )
 #endif //DEBUG
 				if ( application_bind_callback )
 					  {
-					    (*application_bind_callback)( clnt, application_bind_data, id, snd->str_regexp, IvyFilterBind );
+					    (*application_bind_callback)( clnt, application_bind_data, id, arg, IvyFilterBind );
 					  }
 				return;
 				}
