@@ -29,7 +29,7 @@ extern "C" {
 typedef struct _clnt_lst *IvyClientPtr;
 
 typedef enum { IvyApplicationConnected, IvyApplicationDisconnected } IvyApplicationEvent;
-typedef enum { IvyAddBind, IvyRemoveBind } IvyBindEvent;
+typedef enum { IvyAddBind, IvyRemoveBind, IvyFilterBind } IvyBindEvent;
 
 extern void IvyDefaultApplicationCallback( IvyClientPtr app, void *user_data, IvyApplicationEvent event ) ;
 extern void IvyDefaultBindCallback( IvyClientPtr app, void *user_data, int id, char* regexp,  IvyBindEvent event ) ;

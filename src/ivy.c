@@ -400,6 +400,10 @@ static void Receive( Client client, void *data, char *line )
 #ifdef DEBUG
 				printf("Warning: regexp '%s' illegal, removing from %s\n",arg,ApplicationName);
 #endif //DEBUG
+				if ( application_bind_callback )
+					  {
+					    (*application_bind_callback)( clnt, application_bind_data, id, snd->str_regexp, IvyFilterBind );
+					  }
 				return;
 				}
 #ifndef USE_PCRE_REGEX
