@@ -39,6 +39,7 @@
 
 #include <X11/Intrinsic.h>
 
+#include "ivydebug.h"
 #include "ivychannel.h"
 #include "ivyxtloop.h"
 
@@ -92,18 +93,14 @@ void IvyXtChannelClose( Channel channel )
 static void IvyXtHandleChannelRead( XtPointer closure, int* source, XtInputId* id )
 {
 	Channel channel = (Channel)closure;
-#ifdef DEBUG
-	printf("Handle Channel read %d\n",*source );
-#endif
+	TRACE("Handle Channel read %d\n",*source );
 	(*channel->handle_read)(channel,*source,channel->data);
 }
 
 static void IvyXtHandleChannelDelete( XtPointer closure, int* source, XtInputId* id )
 {
 	Channel channel = (Channel)closure;
-#ifdef DEBUG
-	printf("Handle Channel delete %d\n",*source );
-#endif
+	TRACE("Handle Channel delete %d\n",*source );
 	(*channel->handle_delete)(channel->data);
 }
 

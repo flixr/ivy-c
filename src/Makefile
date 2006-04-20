@@ -101,7 +101,7 @@ ivy.o: ivy.c
 	$(CC) -c $(CFLAGS) $(REGEXP) $(PCREINC) ivy.c
 
 givy.o: ivy.c
-	$(CC) -c $(CFLAGS) $(REGEXP) -DREGCOMP_OPT=$(REGCOMP_OPT) -o givy.o ivy.c
+	$(CC) -c $(CFLAGS) $(REGEXP) $(PCREINC) -DDEBUG -o givy.o ivy.c
 
 ivyglutloop.o: ivyglutloop.c ivyglutloop.h
 	$(CC) -c $(CFLAGS) $(GLUTINC) ivyglutloop.c

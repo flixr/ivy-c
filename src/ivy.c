@@ -39,6 +39,7 @@
 #include "ivysocket.h"
 #include "list.h"
 #include "ivybuffer.h"
+#include "ivydebug.h"
 #include "ivy.h"
 
 #define VERSION 3
@@ -212,17 +213,17 @@ MsgCall (const char *message, MsgSndPtr msg,  IvyClientPtr client)
 	    ovector,
 	    OVECSIZE);
 	if (rc<1) return 0; /* no match */
-#ifdef DEBUG
-	printf( "Sending message id=%d '%s'\n",msg->id,message);
-#endif
+	
+	TRACE( "Sending message id=%d '%s'\n",msg->id,message);
+
 	buffer.offset = 0;
 	// il faut essayer d'envoyer le message en une seule fois sur la socket
 	// pour eviter au maximun de passer dans le select plusieur fois par message du protocole Ivy
 	// pour eviter la latence ( PB de perfo detecte par ivyperf ping roudtrip )
 	err = make_message_var( &buffer, "%d %d" ARG_START ,Msg, msg->id);
-#ifdef DEBUG
-	printf( "Send matching args count %ld\n",msg->regexp.re_nsub);
-#endif
+
+	TRACE( "Send matching args count %d\n",rc);
+
 	index=1;
 	while ( index<rc ) {
 		err = make_message_var( &buffer,  "%.*s" ARG_END , ovector[2*index+1]- ovector[2*index],
@@ -254,18 +255,15 @@ MsgCall (const char *message, MsgSndPtr msg,  IvyClientPtr client)
 	if (regexec (&msg->regexp, message, MAX_MATCHING_ARGS, match, 0) != 0)
 		return 0;
 
-#ifdef DEBUG
-	printf( "Sending message id=%d '%s'\n",msg->id,message);
-#endif
+	TRACE( "Sending message id=%d '%s'\n",msg->id,message);
+
 	// il faut essayer d'envoyer le message en une seule fois sur la socket
 	// pour eviter au maximun de passer dans le select plusieur fois par message du protocole Ivy
 	// pour eviter la latence ( PB detecte par ivyperf ping roudtrip )
 	buffer.offset = 0;
 	err = make_message_var( &buffer, "%d %d" ARG_START ,Msg, msg->id);
 
-#ifdef DEBUG
-	printf( "Send matching args count %ld\n",msg->regexp.re_nsub);
-#endif //DEBUG
+	TRACE( "Send matching args count %ld\n",msg->regexp.re_nsub);
 
 #ifdef GNU_REGEXP
 	p = &match[1];
@@ -277,18 +275,17 @@ MsgCall (const char *message, MsgSndPtr msg,  IvyClientPtr client)
 #else
 	for ( i = 1; i < msg->regexp.re_nsub+1; i ++ ) {
 		if ( match[i].rm_so != -1 ) {
-#ifdef DEBUG
-			printf ("Send matching arg%d %d %d\n",i,match[i].rm_so , match[i].rm_eo);
-			printf ("Send matching arg%d %.*s\n",i,(int)(match[i].rm_eo - match[i].rm_so), 
+
+			TRACE("Send matching arg%d %d %d\n",i,match[i].rm_so , match[i].rm_eo);
+			TRACE ("Send matching arg%d %.*s\n",i,(int)(match[i].rm_eo - match[i].rm_so), 
 				message + match[i].rm_so);
-#endif
+
 			buffer.offset += make_message_var( &buffer, "%.*s" ARG_END ,(int)(match[i].rm_eo - match[i].rm_so), 
 				message + match[i].rm_so);
 		} else {
 			buffer.offset += make_message_var( &buffer, ARG_END );
-#ifdef DEBUG
-			printf( "Send matching arg%d VIDE\n",i);
-#endif //DEBUG
+
+			TRACE( "Send matching arg%d VIDE\n",i);
 		}
 	}
 #endif
@@ -356,11 +353,11 @@ static int ExtractTokenRegexp (const char *exp, char *buffer, int buffersize)
 #else
 	for ( i = 1; i < msg->regexp.re_nsub+1; i ++ ) {
 		if ( match[i].rm_so != -1 ) {
-#ifdef DEBUG
-			printf ("Send matching arg%d %d %d\n",i,match[i].rm_so , match[i].rm_eo);
-			printf ("Send matching arg%d %.*s\n",i,(int)(match[i].rm_eo - match[i].rm_so), 
+
+			TRACE ("Send matching arg%d %d %d\n",i,match[i].rm_so , match[i].rm_eo);
+			TRACE ("Send matching arg%d %.*s\n",i,(int)(match[i].rm_eo - match[i].rm_so), 
 				message + match[i].rm_so);
-#endif
+
 			buffer.offset += make_message_var( &buffer, "%.*s" ARG_END ,(int)(match[i].rm_eo - match[i].rm_so), 
 				message + match[i].rm_so);
 		} else {
@@ -376,6 +373,7 @@ static int ExtractTokenRegexp (const char *exp, char *buffer, int buffersize)
 static int CheckRegexp(char *exp)
 {
 	int i;
+	int err;
 	int regexp_ok = 1; /* accepte tout par default */
 	char token[200];
 	
@@ -384,7 +382,7 @@ static int CheckRegexp(char *exp)
 		regexp_ok = 0;
 		
 		/* extract token */
-		int err = ExtractTokenRegexp ( exp, token, sizeof(token));
+		err = ExtractTokenRegexp ( exp, token, sizeof(token));
 		if ( err < 1 ) return 1;
 		for ( i = 0 ; i < messages_classes_count; i++ )
 		{
@@ -455,9 +453,7 @@ static void Receive( Client client, void *data, char *line )
 		{
 		case Bye:
 			
-#ifdef DEBUG
-			printf("Quitting  %s\n",  line);
-#endif //DEBUG
+			TRACE("Quitting  %s\n",  line);
 
 			SocketClose( client );
 			break;
@@ -466,14 +462,14 @@ static void Receive( Client client, void *data, char *line )
 			break;
 		case AddRegexp:
 
-#ifdef DEBUG
-			printf("Regexp  id=%d exp='%s'\n",  id, arg);
-#endif //DEBUG
+
+			TRACE("Regexp  id=%d exp='%s'\n",  id, arg);
+
 			if ( !CheckRegexp( arg ) )
 				{
-#ifdef DEBUG
-				printf("Warning: regexp '%s' illegal, removing from %s\n",arg,ApplicationName);
-#endif //DEBUG
+
+				TRACE("Warning: regexp '%s' illegal, removing from %s\n",arg,ApplicationName);
+
 				if ( application_bind_callback )
 					  {
 					    (*application_bind_callback)( clnt, application_bind_data, id, arg, IvyFilterBind );
@@ -530,9 +526,8 @@ static void Receive( Client client, void *data, char *line )
 #endif
 			break;
 		case DelRegexp:
-#ifdef DEBUG
-			printf("Regexp Delete id=%d\n",  id);
-#endif //DEBUG
+
+			TRACE("Regexp Delete id=%d\n",  id);
 
 			IVY_LIST_ITER( clnt->msg_send, snd, ( id != snd->id ));
 			if ( snd )
@@ -552,25 +547,24 @@ static void Receive( Client client, void *data, char *line )
 				}
 			break;
 		case StartRegexp:
-#ifdef DEBUG
-			printf("Regexp Start id=%d Application='%s'\n",  id, arg);
-#endif //DEBUG
+
+			TRACE("Regexp Start id=%d Application='%s'\n",  id, arg);
+
 			clnt->app_name = strdup( arg );
 			clnt->app_port = id;
 			if ( CheckConnected( clnt ) )
 			{			
-#ifdef DEBUG
-			printf("Quitting  already connected %s\n",  line);
-#endif //DEBUG
+
+			TRACE("Quitting  already connected %s\n",  line);
+
 			IvySendError( clnt, 0, "Application already connected" );
 			SocketClose( client );
 			}
 			break;
 		case EndRegexp:
 			
-#ifdef DEBUG
-			printf("Regexp End id=%d\n",  id);
-#endif //DEBUG
+			TRACE("Regexp End id=%d\n",  id);
+
 			if ( application_callback )
 				{
 				(*application_callback)( clnt, application_user_data, IvyApplicationConnected );
@@ -580,17 +574,12 @@ static void Receive( Client client, void *data, char *line )
 				int count;
 				count = ClientCall( clnt, ready_message );
 				
-#ifdef DEBUG
-				printf(" Sendind ready message %d\n", count);
-#endif //DEBUG
-
+				TRACE(" Sendind ready message %d\n", count);
 				}
 			break;
 		case Msg:
 			
-#ifdef DEBUG
-		printf("Message id=%d msg='%s'\n", id, arg);
-#endif //DEBUG
+			TRACE("Message id=%d msg='%s'\n", id, arg);
 
 			IVY_LIST_EACH( msg_recv, rcv )
 				{
@@ -602,9 +591,7 @@ static void Receive( Client client, void *data, char *line )
 						argv[argc++] = arg;
 						arg = nextArg( 0, ARG_END );
 						}
-#ifdef DEBUG
-					printf("Calling  id=%d argc=%d for %s\n", id, argc,rcv->regexp);
-#endif
+					TRACE("Calling  id=%d argc=%d for %s\n", id, argc,rcv->regexp);
 					if ( rcv->callback ) (*rcv->callback)( clnt, rcv->user_data, argc, argv );
 					return;
 					}
@@ -613,9 +600,7 @@ static void Receive( Client client, void *data, char *line )
 			break;
 		case DirectMsg:
 			
-#ifdef DEBUG
-			printf("Direct Message id=%d msg='%s'\n", id, arg);
-#endif //DEBUG
+			TRACE("Direct Message id=%d msg='%s'\n", id, arg);
 
 			if ( direct_callback)
 				(*direct_callback)( clnt, direct_user_data, id, arg );
@@ -623,9 +608,7 @@ static void Receive( Client client, void *data, char *line )
 
 		case Die:
 			
-#ifdef DEBUG
-			printf("Die Message\n");
-#endif //DEBUG
+			TRACE("Die Message\n");
 
 			if ( application_die_callback)
 				(*application_die_callback)( clnt, application_die_user_data, id );
@@ -678,7 +661,7 @@ static void ClientDelete( Client client, void *data )
 #ifdef DEBUG
 	/* probably bogus call, but this is for debug only anyway */
 	SocketGetRemoteHost( client, &remotehost, &remoteport );
-	printf("Deconnexion de %s:%hu\n", remotehost, remoteport );
+	TRACE("Deconnexion de %s:%hu\n", remotehost, remoteport );
 #endif //DEBUG
 
 	if ( clnt->app_name ) free( clnt->app_name );
@@ -698,7 +681,7 @@ static void *ClientCreate( Client client )
 	char *remotehost;
 	unsigned short remoteport;
 	SocketGetRemoteHost( client, &remotehost, &remoteport );
-	printf("Connexion de %s:%hu\n", remotehost, remoteport );
+	TRACE("Connexion de %s:%hu\n", remotehost, remoteport );
 #endif //DEBUG
 
 	return SendService (client);
@@ -739,7 +722,7 @@ static void BroadcastReceive( Client client, void *data, char *line )
 	
 #ifdef DEBUG
 	SocketGetRemoteHost (client, &remotehost, &remoteport );
-	printf(" Broadcast de %s:%hu port %hu\n", remotehost, remoteport, serviceport );
+	TRACE(" Broadcast de %s:%hu port %hu\n", remotehost, remoteport, serviceport );
 #endif //DEBUG
 
 	/* connect to the service and send the regexp */
@@ -773,25 +756,18 @@ void IvySetBindCallback(IvyBindCallback bind_callback, void *bind_data
   application_bind_data=bind_data;
 }
 
-void IvyDelBindCallback()
-{
-  application_bind_callback=0;
-  free(application_bind_data);
-  application_bind_data=0;
-}
 void IvyClasses( int argc, const char **argv)
 {
-	messages_classes_count = argc;
-	messages_classes = argv;
 
 #ifndef USE_PCRE_REGEX
-	regex_t regexp;
 	int reg;
 #else
-	pcre *regexp;
 	const char *errbuf;
 	int erroffset;
 #endif
+	messages_classes_count = argc;
+	messages_classes = argv;
+
 	/* compile the token extraction regexp */
 #ifndef USE_PCRE_REGEX
 			reg = regcomp(&token_extract, "^\\^([a-zA-Z_0-9-]+).*", REGCOMP_OPT|REG_EXTENDED);
@@ -930,9 +906,7 @@ void IvyStart (const char* bus)
 		++p;
 	}
 
-#ifdef DEBUG
-	fprintf (stderr,"Listening on TCP:%hu\n",ApplicationPort);
-#endif
+	TRACE ("Listening on TCP:%hu\n",ApplicationPort);
 
 }
 
@@ -995,9 +969,7 @@ int IvySendMsg(const char *fmt, ...)
 	IVY_LIST_EACH (clients, clnt) {
 		match_count += ClientCall (clnt, buffer.data);
 	}
-#ifdef DEBUG
-	if ( match_count == 0 ) printf( "Warning no recipient for %s\n",buffer);
-#endif
+	TRACE_IF( match_count == 0, "Warning no recipient for %s\n",buffer.data);
 	return match_count;
 }
 
@@ -1066,6 +1038,9 @@ void IvyDefaultBindCallback( IvyClientPtr app, void *user_data, int id, char* re
 	case IvyRemoveBind:
 		printf("Application: %s on %s remove regexp %d :%s\n", IvyGetApplicationName( app ), IvyGetApplicationHost(app), id, regexp);
 		break;
+	case IvyFilterBind:
+		printf("Application: %s on %s as been filtred regexp %d :%s\n", IvyGetApplicationName( app ), IvyGetApplicationHost(app), id, regexp);
+		break;
 	default:
 		printf("Application: %s unkown event %d\n",IvyGetApplicationName( app ), event);
 		break;
@@ -1079,22 +1054,22 @@ IvyClientPtr IvyGetApplication( char *name )
 	return app;
 }
 
-char *IvyGetApplicationList()
+char *IvyGetApplicationList(const char *sep)
 {
-	static char applist[4096];
+	static char applist[4096]; /* TODO remove that ugly Thing */
 	IvyClientPtr app;
 	applist[0] = '\0';
 	IVY_LIST_EACH( clients, app )
 		{
 		strcat( applist, app->app_name );
-		strcat( applist, " " );
+		strcat( applist, sep );
 		}
 	return applist;
 }
 
 char **IvyGetApplicationMessages( IvyClientPtr app )
 {
-	static char *messagelist[200];
+	static char *messagelist[200];/* TODO remove that ugly Thing */
 	MsgSndPtr msg;
 	int msgCount= 0;
 	memset( messagelist, 0 , sizeof( messagelist ));

@@ -45,11 +45,11 @@
 extern char *optarg;
 extern int optind;
 #endif
-#ifndef USE_PCRE_REGEX
-#include <regex.h> 
-#else
+#ifdef USE_PCRE_REGEX
 #define OVECSIZE 60 /* must be multiple of 3, for regexp return */
 #include <pcre.h>
+#else
+#include <regex.h>
 #endif
 
 
@@ -79,22 +79,12 @@ int app_count = 0;
 int wait_count = 0;
 int fbindcallback = 0;
 
-void DirectCallback(IvyClientPtr app, void *user_data, int id, char *msg ) {
+void DirectCallback(IvyClientPtr app, void *user_data, int id, char *msg ) 
+{
 	printf("%s sent a direct message, id=%d, message=%s\n",
 	    IvyGetApplicationName(app),id,msg);
 }
 
-void BindCallback(IvyClientPtr app, void *user_data, int id, char *regexp, IvyBindEvent event ) {
-  char *sevent;
-  if (event==IvyAddBind){
-    sevent="added";
-  }
-  else{
-    sevent="removed";
-  }
-	printf("%s has modified his binding, id=%d, regexp=%s is %s\n",
-	    IvyGetApplicationName(app),id,regexp,sevent);
-}
 
 void Callback (IvyClientPtr app, void *user_data, int argc, char *argv[])
 {
@@ -153,8 +143,8 @@ void HandleStdin (Channel channel, HANDLE fd, void *data)
 			}
 
 		} else if (strcmp(cmd, "dieall-yes-i-am-sure") == 0) {
-			arg = IvyGetApplicationList();
-			arg = strtok (arg, " \n");
+			arg = IvyGetApplicationList("#");
+			arg = strtok (arg, "#");
 			while  (arg) {
 				app = IvyGetApplication (arg);
 				if  (app)
@@ -167,21 +157,21 @@ void HandleStdin (Channel channel, HANDLE fd, void *data)
 		} else if (strcmp(cmd,  "bind") == 0) {
 		  arg = strtok (NULL, "'");
 		  if  (arg) {
-#ifndef USE_PCRE_REGEX
-		    regex_t reg;
-		    int err;
-		    Chop(arg);
-		    if (err=regcomp(&reg,arg,REG_ICASE|REG_EXTENDED)!=0) {
-		      char errbuf[4096];
-		      regerror (err, &reg, errbuf, 4096);
-		      printf("Error compiling '%s', %s, not bound\n", arg, errbuf);
-#else
+#ifdef USE_PCRE_REGEX
 		    pcre *regexp;
 		    const char *errbuf;
 		    int erroffset;
 		    Chop(arg);
 		    regexp = pcre_compile(arg, 0,&errbuf,&erroffset,NULL);
 		    if (regexp==NULL) {
+		      printf("Error compiling '%s', %s, not bound\n", arg, errbuf);
+#else
+			regex_t reg;
+		    int err;
+		    Chop(arg);
+		    if (err=regcomp(&reg,arg,REG_ICASE|REG_EXTENDED)!=0) {
+		      char errbuf[4096];
+		      regerror (err, &reg, errbuf, 4096);
 		      printf("Error compiling '%s', %s, not bound\n", arg, errbuf);
 #endif
 		    } else {
@@ -211,26 +201,26 @@ void HandleStdin (Channel channel, HANDLE fd, void *data)
 			}
 			
 		} else if  (strcmp(cmd, "who") == 0) {
-			printf("Apps: %s\n", IvyGetApplicationList());
+			printf("Apps: %s\n", IvyGetApplicationList(","));
 
 		} else if  (strcmp(cmd, "help") == 0) {
 			fprintf(stderr,"Commands list:\n");
-			printf("	.help				- this help\n");
-			printf("	.quit				- terminate this application\n");
-			printf("	.die appname			- send die msg to appname\n");
+			printf("	.help						- this help\n");
+			printf("	.quit						- terminate this application\n");
+			printf("	.die appname				- send die msg to appname\n");
 			printf("	.dieall-yes-i-am-sure		- send die msg to all applis\n");
 			printf("	.direct appname	id 'arg'	- send direct msg to appname\n");
-			printf("	.where appname			- on which host is appname\n");
-			printf("	.bind 'regexp'			- add a msg to receive\n");
-			printf("        .bindcall                       - show binds \n");
+			printf("	.where appname				- on which host is appname\n");
+			printf("	.bind 'regexp'				- add a msg to receive\n");
+			printf("	.showbind					- show bindings \n");
 			
 			printf("	.who				- who is on the bus\n");
-		} else if  (strcmp(cmd, "bindcall") == 0) {
+		} else if  (strcmp(cmd, "showbind") == 0) {
 		  if (!fbindcallback) {
-		    IvySetBindCallback(BindCallback, NULL);
+		    IvySetBindCallback(IvyDefaultBindCallback, NULL);
 		    fbindcallback=1;
 		  } else {
-		    IvyDelBindCallback();
+		    IvySetBindCallback(NULL, NULL);
 		    fbindcallback=0;
 		  }
 		} else if  (strcmp(cmd, "quit") == 0) {
@@ -334,7 +324,7 @@ int main(int argc, char *argv[])
 			        timer_test = 1;
 			        break;
 			case 's':
-			        IvySetBindCallback(BindCallback, NULL);
+			        IvySetBindCallback(IvyDefaultBindCallback, NULL);
 			        fbindcallback=1;
 				break;
 			default:

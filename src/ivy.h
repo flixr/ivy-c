@@ -68,7 +68,7 @@ void IvyInit(
 void IvySetBindCallback(	 
 			  IvyBindCallback bind_callback,
 			  void *bind_data );
-void IvyDelBindCallback(); 
+
 void IvyStart (const char*);
 void IvyStop ();
 
@@ -76,7 +76,7 @@ void IvyStop ();
 char *IvyGetApplicationName( IvyClientPtr app );
 char *IvyGetApplicationHost( IvyClientPtr app );
 IvyClientPtr IvyGetApplication( char *name );
-char *IvyGetApplicationList();
+char *IvyGetApplicationList(const char *sep);
 char **IvyGetApplicationMessages( IvyClientPtr app); /* demande de reception d'un message */
 
 MsgRcvPtr IvyBindMsg( MsgCallback callback, void *user_data, const char *fmt_regexp, ... ); /* avec sprintf prealable */

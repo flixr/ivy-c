@@ -39,7 +39,8 @@ extern int optind;
 #include "ivyloop.h"
 #define MILLISEC 1000.0
 
-char *mymessages[] = { "ping", "pong" };
+const char *mymessages[] = { "IvyPerf", "ping", "pong" };
+static double origin = 0;
 
 static double currentTime()
 {
@@ -56,11 +57,11 @@ static double currentTime()
 
 void Reply (IvyClientPtr app, void *user_data, int argc, char *argv[])
 {
-	IvySendMsg ("pong ts=%s tr=%f", *argv, currentTime());
+	IvySendMsg ("pong ts=%s tr=%f", *argv, currentTime()- origin);
 }
 void Pong (IvyClientPtr app, void *user_data, int argc, char *argv[])
 {
-	double current = currentTime();
+	double current = currentTime() - origin ;
 	double ts = atof( *argv++ );
 	double tr = atof( *argv++ );
 	double roundtrip1 = tr-ts;
@@ -71,7 +72,7 @@ void Pong (IvyClientPtr app, void *user_data, int argc, char *argv[])
 
 void TimerCall(TimerId id, void *user_data, unsigned long delta)
 {
-	int count = IvySendMsg ("ping ts=%f", currentTime() );
+	int count = IvySendMsg ("ping ts=%f", currentTime() - origin );
 	if ( count == 0 ) fprintf(stderr, "." );
 }
 
@@ -104,7 +105,7 @@ int main(int argc, char *argv[])
 	IvySetBindCallback( binCB, 0 ),
 	IvyBindMsg (Reply, NULL, "^ping ts=(.*)");
 	IvyBindMsg (Pong, NULL, "^pong ts=(.*) tr=(.*)");
-
+	origin = currentTime();
 	IvyStart (0);
 
 	TimerRepeatAfter (TIMER_LOOP, time, TimerCall, (void*)1);

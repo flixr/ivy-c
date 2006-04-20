@@ -42,6 +42,7 @@
 #include "ivysocket.h"
 #include "ivyloop.h"
 #include "ivybuffer.h"
+#include "ivydebug.h"
 
 #define BUFFER_SIZE 4096	/* taille buffer initiale on multiple pas deux a chaque realloc */
 
@@ -75,11 +76,7 @@ struct _client {
 static Server servers_list = NULL;
 static Client clients_list = NULL;
 
-#ifdef DEBUG
-static int debug_send = 1;
-#else
 static int debug_send = 0;
-#endif
 
 #ifdef WIN32
 WSADATA	WsaData;
@@ -180,18 +177,18 @@ static void HandleServer(Channel channel, HANDLE fd, void *data)
 	HANDLE ns;
 	socklen_t addrlen;
 	struct sockaddr_in remote2;
-#ifdef DEBUG
-	printf( "Accepting Connection...\n");
-#endif //DEBUG
+
+	TRACE( "Accepting Connection...\n");
+
 	addrlen = sizeof (remote2 );
 	if ((ns = accept (fd, (struct sockaddr *)&remote2, &addrlen)) <0)
 		{
 		perror ("*** accept ***");
 		return;
 		};
-#ifdef DEBUG
-	printf( "Accepting Connection ret\n");
-#endif //DEBUG
+
+	TRACE( "Accepting Connection ret\n");
+
 	IVY_LIST_ADD_START (clients_list, client );
 	
 	client->buffer_size = BUFFER_SIZE;

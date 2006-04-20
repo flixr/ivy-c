@@ -39,6 +39,7 @@
 
 #include <GL/glut.h>
 
+#include "ivydebug.h"
 #include "ivychannel.h"
 #include "ivyglutloop.h"
 
@@ -83,18 +84,14 @@ void IvyGlutChannelClose( Channel channel )
 static void IvyGlutHandleChannelRead( int source, GLUTInputId id, void *data )
 {
 	Channel channel = (Channel)data;
-#ifdef DEBUG
-	printf("Handle Channel read %d\n",source );
-#endif
+	TRACE("Handle Channel read %d\n",source );
 	(*channel->handle_read)(channel,source,channel->data);
 }
 
 static void IvyGlutHandleChannelDelete( int source, GLUTInputId id, void *data )
 {
 	Channel channel = (Channel)data;
-#ifdef DEBUG
-	printf("Handle Channel delete %d\n",source );
-#endif
+	TRACE("Handle Channel delete %d\n",source );
 	(*channel->handle_delete)(channel->data);
 }
 

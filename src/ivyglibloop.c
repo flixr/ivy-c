@@ -26,7 +26,7 @@
 #endif
 
 #include <glib.h>
-
+#include "ivydebug.h"
 #include "ivyglibloop.h"
 
 struct _channel {
@@ -100,9 +100,7 @@ static gboolean IvyGlibHandleChannelRead(GIOChannel *source,
 					 GIOCondition condition,
 					 gpointer data) {
   Channel channel = (Channel)data;
-#ifdef DEBUG
-  printf("Handle Channel read %d\n",source );
-#endif
+  TRACE("Handle Channel read %d\n",source );
   (*channel->handle_read)(channel, g_io_channel_unix_get_fd(source), channel->data);
   return TRUE;
 }
@@ -111,9 +109,7 @@ static gboolean IvyGlibHandleChannelDelete(GIOChannel *source,
 					 GIOCondition condition,
 					 gpointer data) {
   Channel channel = (Channel)data;
-#ifdef DEBUG
-  printf("Handle Channel delete %d\n",source );
-#endif
+  TRACE("Handle Channel delete %d\n",source );
   (*channel->handle_delete)(channel->data);
   return TRUE;
 }
