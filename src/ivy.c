@@ -118,6 +118,13 @@ static const char *ApplicationName = 0;
 /* classes de messages emis par l'application utilise pour le filtrage */
 static int	messages_classes_count = 0;
 static const char **messages_classes = 0;
+/* regexp d'extraction du mot clef des regexp client pour le filtrage des regexp , ca va c'est clair ??? */
+#ifndef USE_PCRE_REGEX
+	regex_t token_extract;
+#else
+	pcre *token_extract;
+	pcre_extra *token_inspect;
+#endif
 
 /* callback appele sur reception d'un message direct */
 static MsgDirectCallback direct_callback = 0;
@@ -148,19 +155,19 @@ static const char *ready_message = 0;
  * */
 static char * nextArg( char *s, const char *separator )
 {
-		static char *start = NULL;
-			static char *end = NULL;
-				if ( s ) 
-							{
-										end = s;
-												}
-					start = end;
-							
-						while ( *end && *end != *separator )
-									end++;
-							if ( *end == *separator ) *end++ = '\0';  
-								if ( end == start ) return NULL;
-									return start;
+	static char *start = NULL;
+	static char *end = NULL;
+	if ( s ) 
+	{
+		end = s;
+	}
+	start = end;
+
+	while ( *end && *end != *separator )
+		end++;
+	if ( *end == *separator ) *end++ = '\0';  
+	if ( end == start ) return NULL;
+	return start;
 }
 static int MsgSendTo( Client client, MsgType msgtype, int id, const char *message )
 {
@@ -303,18 +310,85 @@ ClientCall (IvyClientPtr clnt, const char *message)
 	}
 	return match_count;
 }
+#ifdef USE_PCRE_REGEX
+static int ExtractTokenRegexp (const char *exp, char *buffer, int buffersize)
+{
+#define TOKEN_OVECSIZE 3*2 /* must be multiple of 3, for regexp return */
+	int ovector[TOKEN_OVECSIZE];
+	int rc=pcre_exec(
+	    token_extract,
+	    token_inspect,
+	    exp,
+	    strlen(exp),
+	    0, /* debut */
+	    0, /* no other regexp option */
+	    ovector,
+	    TOKEN_OVECSIZE);
+	/*if (rc<1) return rc; *//* no match */
 
+	return pcre_copy_substring(exp, ovector, rc, 1, buffer, buffersize); 
+
+
+}
+
+#else  /* we don't USE_PCRE_REGEX */
+static int ExtractTokenRegexp (const char *exp, char *buffer, int buffersize)
+{
+	int err;
+
+	regmatch_t match[MAX_MATCHING_ARGS+1];
+#ifdef GNU_REGEXP
+	regmatch_t* p;
+#else
+	unsigned int i;
+#endif
+	memset( match, -1, sizeof(match )); /* work around bug !!!*/
+	if (regexec (&msg->regexp, message, MAX_MATCHING_ARGS, match, 0) != 0)
+		return 0;
+
+#ifdef GNU_REGEXP
+	p = &match[1];
+	while ( p->rm_so != -1 ) {
+		err = make_message_var( &buffer, "%.*s" ARG_END , p->rm_eo - p->rm_so, 
+			    message + p->rm_so); 
+		++p;
+	}
+#else
+	for ( i = 1; i < msg->regexp.re_nsub+1; i ++ ) {
+		if ( match[i].rm_so != -1 ) {
+#ifdef DEBUG
+			printf ("Send matching arg%d %d %d\n",i,match[i].rm_so , match[i].rm_eo);
+			printf ("Send matching arg%d %.*s\n",i,(int)(match[i].rm_eo - match[i].rm_so), 
+				message + match[i].rm_so);
+#endif
+			buffer.offset += make_message_var( &buffer, "%.*s" ARG_END ,(int)(match[i].rm_eo - match[i].rm_so), 
+				message + match[i].rm_so);
+		} else {
+			buffer.offset += make_message_var( &buffer, ARG_END );
+		}
+	}
+#endif
+
+	return 1;
+}
+#endif /* USE_PCRE_REGEX */
+	
 static int CheckRegexp(char *exp)
 {
-	/* accepte tout par default */
 	int i;
-	int regexp_ok = 1;
+	int regexp_ok = 1; /* accepte tout par default */
+	char token[200];
+	
 	if ( *exp =='^' && messages_classes_count !=0 )
 	{
 		regexp_ok = 0;
+		
+		/* extract token */
+		int err = ExtractTokenRegexp ( exp, token, sizeof(token));
+		if ( err < 1 ) return 1;
 		for ( i = 0 ; i < messages_classes_count; i++ )
 		{
-			if (strncmp( messages_classes[i], exp+1, strlen( messages_classes[i] )) == 0)
+			if (strncmp( messages_classes[i], token, strlen( token )) == 0)
 				return 1;
 		}
  	}
@@ -709,6 +783,42 @@ void IvyClasses( int argc, const char **argv)
 {
 	messages_classes_count = argc;
 	messages_classes = argv;
+
+#ifndef USE_PCRE_REGEX
+	regex_t regexp;
+	int reg;
+#else
+	pcre *regexp;
+	const char *errbuf;
+	int erroffset;
+#endif
+	/* compile the token extraction regexp */
+#ifndef USE_PCRE_REGEX
+			reg = regcomp(&token_extract, "^\\^([a-zA-Z_0-9-]+).*", REGCOMP_OPT|REG_EXTENDED);
+			if ( reg == 0 )
+				{
+				}
+			else
+			{
+			char errbuf[4096];
+			regerror (reg, &regexp, errbuf, 4096);
+			printf("Error compiling Token Extract regexp: %s\n", errbuf);
+			}
+#else
+			token_extract = pcre_compile("^\\^([a-zA-Z_0-9-]+).*", PCRE_OPT,&errbuf,&erroffset,NULL);
+			if ( token_extract != NULL )
+				{
+					token_inspect = pcre_study(token_extract,0,&errbuf);
+					if (errbuf!=NULL)
+						{
+						  printf("Error studying Token Extract regexp: %s\n",errbuf);
+						}
+				}
+			else
+			{
+				printf("Error compiling Token Extract regexp: %s\n", errbuf);
+			}
+#endif
 }
 
 void IvyStart (const char* bus)
