@@ -54,7 +54,7 @@ typedef void (*MsgDirectCallback)( IvyClientPtr app, void *user_data, int id, ch
 typedef struct _msg_rcv *MsgRcvPtr;
 
 /* filtrage des regexps */
-void IvyClasses( int argc, const char **argv);
+void IvySetFilter( int argc, const char **argv);
 
 void IvyInit(
 	 const char *AppName,		/* nom de l'application */
