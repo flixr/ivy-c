@@ -101,7 +101,7 @@ int main(int argc, char *argv[])
 	if ( argc > 1 ) time = atol( argv[1] );
 
 	IvyInit ("IvyPerf", "IvyPerf ready", NULL,NULL,NULL,NULL);
-	IvyClasses( sizeof( mymessages )/ sizeof( char *),mymessages );
+	IvySetFilter( sizeof( mymessages )/ sizeof( char *),mymessages );
 	IvySetBindCallback( binCB, 0 ),
 	IvyBindMsg (Reply, NULL, "^ping ts=(.*)");
 	IvyBindMsg (Pong, NULL, "^pong ts=(.*) tr=(.*)");

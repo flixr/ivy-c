@@ -163,7 +163,7 @@ int IvyBindingExec( IvyBinding bind, const char * message )
 
 void IvyBindingMatch( IvyBinding bind, const char *message, int argnum, int *arglen, const char **arg)
 {
-	
+	argnum++; /* first arg == Wall string */
 #ifdef USE_PCRE_REGEX
 	
 		*arglen = bind->ovector[2*argnum+1]- bind->ovector[2*argnum];

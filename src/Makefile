@@ -69,12 +69,12 @@ CHANNEL = -DTCL_CHANNEL_INTEGRATION
 CFLAGS = -g -Wall
 
 
-OBJ = ivyloop.o timer.o ivysocket.o ivy.o ivybuffer.o
-GOBJ = ivyloop.o timer.o ivysocket.o givy.o ivybuffer.o
-XTOBJ = ivyxtloop.o ivysocket.o ivy.o ivybuffer.o
-GLIBOBJ = ivyglibloop.o ivysocket.o ivy.o ivybuffer.o
-GLUTOBJ = ivyglutloop.o ivysocket.o ivy.o ivybuffer.o
-TCLOBJ = ivytcl.o  timer.o ivysocket.o givy.o ivybuffer.o
+OBJ = ivyloop.o timer.o ivysocket.o ivy.o ivybuffer.o ivybind.o
+GOBJ = ivyloop.o timer.o ivysocket.o givy.o ivybuffer.o ivybind.o
+XTOBJ = ivyxtloop.o ivysocket.o ivy.o ivybuffer.o ivybind.o
+GLIBOBJ = ivyglibloop.o ivysocket.o ivy.o ivybuffer.o ivybind.o
+GLUTOBJ = ivyglutloop.o ivysocket.o ivy.o ivybuffer.o ivybind.o
+TCLOBJ = ivytcl.o  timer.o ivysocket.o givy.o ivybuffer.o ivybind.o
 
 # WINDOWS add ivyloop.o if TCL_CHANNEL_INTEGRATION is not set
 TARGETS = ivyprobe ivyperf ivyglibprobe ivyxtprobe 
@@ -94,14 +94,15 @@ shared-libs: $(TARGETLIBS)
 
 commands: $(TARGETS)
 
+ivybind.o: ivybind.c
+	$(CC) -c $(CFLAGS) $(REGEXP) $(PCREINC) ivybind.c
+
+
 ivytcl.o: ivytcl.c
 	$(CC) -c $(CFLAGS) $(TCLINCL) $(CHANNEL) ivytcl.c
 
-ivy.o: ivy.c
-	$(CC) -c $(CFLAGS) $(REGEXP) $(PCREINC) ivy.c
-
 givy.o: ivy.c
-	$(CC) -c $(CFLAGS) $(REGEXP) $(PCREINC) -DDEBUG -o givy.o ivy.c
+	$(CC) -c $(CFLAGS) -DDEBUG -o givy.o ivy.c
 
 ivyglutloop.o: ivyglutloop.c ivyglutloop.h
 	$(CC) -c $(CFLAGS) $(GLUTINC) ivyglutloop.c
@@ -117,9 +118,6 @@ ivyprobe.o : ivyprobe.c
 	
 ivyperf: ivyperf.o libivy.a
 	$(CC)  $(CFLAGS) -o $@ ivyperf.o -L. -livy $(PCRELIB) $(EXTRALIB)
-
-ivyperf.o : ivyperf.c
-	$(CC)  $(CFLAGS) $(REGEXP) -c ivyperf.c -o $@
 
 ivyxtprobe.o : ivyprobe.c
 	$(CC)  $(CFLAGS) $(REGEXP) -DXTMAINLOOP -c ivyprobe.c -o $@ $(XTINC)

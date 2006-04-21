@@ -196,11 +196,10 @@ static int MsgCall (const char *message, MsgSndPtr msg,  IvyClientPtr client)
 
 	TRACE( "Send matching args count %d\n",rc);
 
-	index=1;
-	while ( index<rc ) {
+	for(  index=0; index < rc ; index++ )
+	{
 		IvyBindingMatch( msg->binding, message, index, &arglen, & arg );
 		err = make_message_var( &buffer,  "%.*s" ARG_END , arglen, arg );
-		++index;
 	}
 	err = make_message_var( &buffer, "\n");
 	waiting = SocketSendRaw(client->client, buffer.data , buffer.offset);
