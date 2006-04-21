@@ -38,7 +38,9 @@ typedef void (*ChannelHandleRead)( Channel channel, HANDLE fd, void *data);
 
 /* fonction appele par le bus pour initialisation */
 extern void IvyChannelInit(void);
-						
+
+extern void IvyChannelStop (void);
+
 /* fonction appele par le bus pour mise en place des callback sur le canal */
 extern Channel IvyChannelAdd(
 	HANDLE fd,

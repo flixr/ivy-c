@@ -27,6 +27,7 @@
 
 #include <glib.h>
 #include "ivydebug.h"
+#include "ivychannel.h"
 #include "ivyglibloop.h"
 
 struct _channel {
@@ -39,9 +40,6 @@ struct _channel {
 
 static int channel_initialized = 0;
 
-ChannelInit channel_init = IvyGlibChannelInit;
-ChannelSetUp channel_setup = IvyGlibChannelSetUp;
-ChannelClose channel_close = IvyGlibChannelClose;
 
 static gboolean IvyGlibHandleChannelRead(GIOChannel *source,
 					 GIOCondition condition,
@@ -52,7 +50,7 @@ static gboolean IvyGlibHandleChannelDelete(GIOChannel *source,
 					   gpointer data);
 
 
-void IvyGlibChannelInit(void) {
+void IvyChannelInit(void) {
   if ( channel_initialized ) return;
   /* fixes bug when another app coredumps */
 #ifndef WIN32
@@ -63,7 +61,7 @@ void IvyGlibChannelInit(void) {
 
 
 
-Channel IvyGlibChannelSetUp(HANDLE fd, void *data,
+Channel IvyChannelAdd(HANDLE fd, void *data,
 			   ChannelHandleDelete handle_delete,
 			   ChannelHandleRead handle_read
 			   ) {
@@ -88,7 +86,7 @@ Channel IvyGlibChannelSetUp(HANDLE fd, void *data,
 
 
 
-void IvyGlibChannelClose( Channel channel ) {
+void IvyChannelRemove( Channel channel ) {
   if ( channel->handle_delete )
     (*channel->handle_delete)( channel->data );
   g_source_remove( channel->id_read );
@@ -116,7 +114,7 @@ static gboolean IvyGlibHandleChannelDelete(GIOChannel *source,
 
 
 void
-IvyStop ()
+IvyChannelStop ()
 {
   /* To be implemented */
 }

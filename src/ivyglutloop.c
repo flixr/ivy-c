@@ -54,12 +54,7 @@ struct _channel {
 
 static int channel_initialized = 0;
 
-ChannelInit channel_init = IvyGlutChannelInit;
-ChannelSetUp channel_setup = IvyGlutChannelSetUp;
-ChannelClose channel_close = IvyGlutChannelClose;
-
-
-void IvyGlutChannelInit(void)
+void IvyChannelInit(void)
 {
 
 	if ( channel_initialized ) return;
@@ -71,7 +66,7 @@ void IvyGlutChannelInit(void)
 	channel_initialized = 1;
 }
 
-void IvyGlutChannelClose( Channel channel )
+void IvyChannelRemove( Channel channel )
 {
 
 	if ( channel->handle_delete )
@@ -95,7 +90,7 @@ static void IvyGlutHandleChannelDelete( int source, GLUTInputId id, void *data )
 	(*channel->handle_delete)(channel->data);
 }
 
-Channel IvyGlutChannelSetUp(HANDLE fd, void *data,
+Channel IvyChannelAdd(HANDLE fd, void *data,
 				ChannelHandleDelete handle_delete,
 				ChannelHandleRead handle_read
 				)						
@@ -121,7 +116,7 @@ Channel IvyGlutChannelSetUp(HANDLE fd, void *data,
 
 
 void
-IvyStop ()
+IvyChannelStop ()
 {
   /* To be implemented */
 }

@@ -29,6 +29,7 @@
 
 #include "ivytcl.h"
 #include "ivysocket.h"
+#include "ivychannel.h"
 #include "ivy.h"
 #include "timer.h"
 
@@ -37,10 +38,6 @@
 // On utilisa la boucle Standard TCL 
 // mais il y a des problemes sur les socket server 
 // Il n'y a pas de Tcl_MakeTCPserver
-
-ChannelInit channel_init = IvyTclChannelInit;
-ChannelSetUp channel_setup = IvyTclChannelSetUp;
-ChannelClose channel_close = IvyTclChannelClose;
 
 struct _channel {
 	HANDLE fd;
@@ -59,7 +56,7 @@ static int channel_initialized = 0;
 WSADATA WsaData;
 #endif
 
-void IvyTclChannelInit(void)
+void IvyChannelInit(void)
 {
 #ifdef WIN32
 	int error;
@@ -93,7 +90,7 @@ IvyHandleFd(ClientData	cd,
   }
 }
 
-void IvyTclChannelClose( Channel channel )
+void IvyChannelRemove( Channel channel )
 {
 
 	if ( channel->handle_delete )
@@ -103,7 +100,7 @@ void IvyTclChannelClose( Channel channel )
 }
 
 
-Channel IvyTclChannelSetUp(HANDLE fd, void *data,
+Channel IvyChannelAdd(HANDLE fd, void *data,
 				ChannelHandleDelete handle_delete,
 				ChannelHandleRead handle_read
 				)						
@@ -138,7 +135,7 @@ void IvyIdleProc(ClientData clientData)
 #endif
 
 void
-TclIvyStop ()
+IvyChannelStop ()
 {
   /* To be implemented */
 #ifndef TCL_CHANNEL_INTEGRATION

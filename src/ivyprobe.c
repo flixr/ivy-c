@@ -230,7 +230,7 @@ void ApplicationCallback (IvyClientPtr app, void *user_data, IvyApplicationEvent
 #ifndef WIN32
 /* Stdin not compatible with select , select only accept socket */
 		if  (app_count == wait_count)
-			IvyChannelSetUp (0, NULL, NULL, HandleStdin);
+			IvyChannelAdd (0, NULL, NULL, HandleStdin);
 #endif
 		break;
 
@@ -322,7 +322,7 @@ int main(int argc, char *argv[])
 	if  (wait_count == 0)
 #ifndef WIN32
 /* Stdin not compatible with select , select only accept socket */
-		IvyChannelSetUp (0, NULL, NULL, HandleStdin);
+		IvyChannelAdd (0, NULL, NULL, HandleStdin);
 #endif
 
 	IvyStart (bus);

@@ -551,6 +551,12 @@ void IvySetFilter( int argc, const char **argv)
 	IvyBindingSetFilter( argc, argv );
 }
 
+void IvyStop (void)
+{
+	IvyChannelStop();
+}
+
+
 void IvyStart (const char* bus)
 {
 

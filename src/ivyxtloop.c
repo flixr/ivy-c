@@ -57,12 +57,8 @@ static int channel_initialized = 0;
 
 static XtAppContext    app = NULL;
 
-ChannelInit channel_init = IvyXtChannelInit;
-ChannelSetUp channel_setup = IvyXtChannelSetUp;
-ChannelClose channel_close = IvyXtChannelClose;
 
-
-void IvyXtChannelInit(void)
+void IvyChannelInit(void)
 {
 
 	if ( channel_initialized ) return;
@@ -80,7 +76,7 @@ void IvyXtChannelInit(void)
 	channel_initialized = 1;
 }
 
-void IvyXtChannelClose( Channel channel )
+void IvyChannelRemove( Channel channel )
 {
 
 	if ( channel->handle_delete )
@@ -110,7 +106,7 @@ void IvyXtChannelAppContext( XtAppContext cntx )
 	app = cntx;
 }
 
-Channel IvyXtChannelSetUp(HANDLE fd, void *data,
+Channel IvyChannelAdd(HANDLE fd, void *data,
 				ChannelHandleDelete handle_delete,
 				ChannelHandleRead handle_read
 				)						
@@ -136,7 +132,7 @@ Channel IvyXtChannelSetUp(HANDLE fd, void *data,
 
 
 void
-IvyStop ()
+IvyChannelStop ()
 {
   /* To be implemented */
 }

@@ -21,28 +21,7 @@
 extern "C" {
 #endif
 
-#define ANYPORT	0
-
-#ifdef WIN32
-#include <windows.h>
-#define HANDLE SOCKET
-#else
-#define HANDLE int
-#endif
-
-#include "ivychannel.h"
-
-extern void IvyGlibChannelInit(void);
-
-extern Channel IvyGlibChannelSetUp(
-				   HANDLE fd,
-				   void *data,
-				   ChannelHandleDelete handle_delete,
-				   ChannelHandleRead handle_read
-				   );
-
-extern void IvyGlibChannelClose( Channel channel );
-
+/* Nothnig special */
 #ifdef __cplusplus
 }
 #endif
