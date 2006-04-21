@@ -10,8 +10,8 @@
 	if ( cond ) fprintf (stderr, format , __VA_ARGS__ )
 
 #else
-#define TRACE(format, args...) /**/
-#define TRACE_IF( cond, format, args...)  /**/
+#define TRACE(format, ...) /**/
+#define TRACE_IF( cond, format, ...)  /**/
 #endif
 #else
 #ifdef DEBUG
