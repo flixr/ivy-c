@@ -34,6 +34,7 @@
 #include <string.h>
 #ifdef WIN32
 #include <windows.h>
+#include "getopt.h"
 #ifdef __MINGW32__
 #include <regex.h> 
 #include <getopt.h>
@@ -45,13 +46,6 @@
 extern char *optarg;
 extern int optind;
 #endif
-#ifdef USE_PCRE_REGEX
-#define OVECSIZE 60 /* must be multiple of 3, for regexp return */
-#include <pcre.h>
-#else
-#include <regex.h>
-#endif
-
 
 #endif
 #ifdef XTMAINLOOP
@@ -68,6 +62,8 @@ extern int optind;
 #include "ivyloop.h"
 #endif
 #include "ivysocket.h"
+#include "ivychannel.h"
+#include "ivybind.h" /* to test regexp before passing to BinMsg */
 #include "ivy.h"
 #include "timer.h"
 #ifdef XTMAINLOOP
@@ -97,7 +93,7 @@ void Callback (IvyClientPtr app, void *user_data, int argc, char *argv[])
 
 char * Chop(char *arg)
 {
-  	int len;
+  	size_t len;
 	if (arg==NULL) return arg;
 	len=strlen(arg)-1;
 	if ((*(arg+len))=='\n') *(arg+len)=0;
@@ -115,19 +111,9 @@ void HandleStdin (Channel channel, HANDLE fd, void *data)
 	int err;
 	line = fgets(buf, 4096, stdin);
 	if  (!line)	{
-#ifdef XTMAINLOOP
-		IvyXtChannelClose (channel);
-#endif
-#ifdef GLIBMAINLOOP
-		IvyGlibChannelClose(channel);
-#endif
-#ifdef GLUTMAINLOOP
-		IvyGlutChannelClose(channel);
-#endif
-#ifdef IVYMAINLOOP
-		IvyChannelClose (channel);
+
+		IvyChannelRemove (channel);
 		IvyStop();
-#endif
 		return;
 	}
 	if  (*line == '.') {
@@ -156,26 +142,17 @@ void HandleStdin (Channel channel, HANDLE fd, void *data)
 			
 		} else if (strcmp(cmd,  "bind") == 0) {
 		  arg = strtok (NULL, "'");
+		  Chop(arg);
 		  if  (arg) {
-#ifdef USE_PCRE_REGEX
-		    pcre *regexp;
+		    IvyBinding bind;
 		    const char *errbuf;
 		    int erroffset;
-		    Chop(arg);
-		    regexp = pcre_compile(arg, 0,&errbuf,&erroffset,NULL);
-		    if (regexp==NULL) {
-		      printf("Error compiling '%s', %s, not bound\n", arg, errbuf);
-#else
-			regex_t reg;
-		    int err;
-		    Chop(arg);
-		    if (err=regcomp(&reg,arg,REG_ICASE|REG_EXTENDED)!=0) {
-		      char errbuf[4096];
-		      regerror (err, &reg, errbuf, 4096);
-		      printf("Error compiling '%s', %s, not bound\n", arg, errbuf);
-#endif
+		    bind = IvyBindingCompile(arg, & erroffset, & errbuf);
+		    if (bind==NULL) {
+			  printf("Error compiling '%s', %s, not bound\n", arg, errbuf);
 		    } else {
-		      IvyBindMsg (Callback, NULL, Chop(arg));
+			  IvyBindingFree( bind );
+		      IvyBindMsg (Callback, NULL, arg);
 		    }
 		  }
 
@@ -250,18 +227,10 @@ void ApplicationCallback (IvyClientPtr app, void *user_data, IvyApplicationEvent
 		while (*msgList )
 			printf("%s subscribes to '%s'\n",appname,*msgList++);
 /*		printf("Application(%s): End Messages\n",appname);*/
+#ifndef WIN32
+/* Stdin not compatible with select , select only accept socket */
 		if  (app_count == wait_count)
-#ifdef XTMAINLOOP
-		IvyXtChannelSetUp (0, NULL, NULL, HandleStdin);
-#endif
-#ifdef GLIBMAINLLOP
-		IvyGlibChannelSetUp( 0, NULL, NULL, HandleStdin);
-#endif
-#ifdef GLUTMAINLLOP
-		IvyGlutChannelSetUp( 0, NULL, NULL, HandleStdin);
-#endif
-#ifdef IVYMAINLOOP
-		IvyChannelSetUp (0, NULL, NULL, HandleStdin);
+			IvyChannelSetUp (0, NULL, NULL, HandleStdin);
 #endif
 		break;
 
@@ -277,7 +246,7 @@ void ApplicationCallback (IvyClientPtr app, void *user_data, IvyApplicationEvent
 }
 
 
-#ifndef XTMAINLOOP
+#ifdef IVYMAINLOOP
 void TimerCall(TimerId id, void *user_data, unsigned long delta)
 {
 	printf("Timer callback: %d delta %lu ms\n", (int)user_data, delta);
@@ -351,20 +320,9 @@ int main(int argc, char *argv[])
 		IvyBindMsg (Callback, NULL, argv[optind]);
 
 	if  (wait_count == 0)
-#ifdef XTMAINLOOP
-		IvyXtChannelSetUp (0, NULL, NULL, HandleStdin);
-#endif
-#ifdef GLIBMAINLOOP
-		IvyGlibChannelSetUp (0, NULL, NULL, HandleStdin);
-#endif
-#ifdef GLUTMAINLOOP
-		IvyGlutChannelSetUp (0, NULL, NULL, HandleStdin);
-#endif
-#ifdef IVYMAINLOOP
 #ifndef WIN32
 /* Stdin not compatible with select , select only accept socket */
 		IvyChannelSetUp (0, NULL, NULL, HandleStdin);
-#endif
 #endif
 
 	IvyStart (bus);

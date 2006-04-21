@@ -20,7 +20,7 @@ MAJOR=3
 MINOR=8
 
 PCREINC = -I "C:\Documents and Settings\fcolin\My Documents\Visual Studio 2005\Projects\pcre-6.4\\" 
-PCRELIB = "C:\Documents and Settings\fcolin\My Documents\Visual Studio 2005\Projects\pcre-6.4\lib\libpcre.lib" #`pcre-config --libs`
+PCRELIB = Debug\pcre.lib
 
 #PCREINC = -I "C:\Program Files\GnuWin32\include" #`pcre-config --cflags`
 #PCRELIB = "C:\Program Files\GnuWin32\lib\libpcre.lib" #`pcre-config --libs`
@@ -48,7 +48,7 @@ REGEXP= /DUSE_PCRE_REGEX /DPCRE_OPT=$(PCRE_OPT)
 # see below
 CHANNEL = -DTCL_CHANNEL_INTEGRATION 
 
-OBJ = ivyloop.obj timer.obj ivysocket.obj ivy.obj ivybind.obj
+OBJ = ivyloop.obj timer.obj ivysocket.obj ivy.obj ivybuffer.obj ivybind.obj getopt.obj
 
 # WINDOWS add ivyloop.obj if TCL_CHANNEL_INTEGRATION is not set
 TARGETS = ivyprobe.exe ivyperf.exe 
@@ -65,21 +65,18 @@ shared-libs: $(TARGETLIBS)
 
 commands: $(TARGETS)
 
-ivy.obj: ivy.c
-	$(CC) $(CFLAGS) $(REGEXP) $(PCREINC) /c ivy.c
+ivybind.obj: ivybind.c
+	$(CC) $(CFLAGS) $(REGEXP) $(PCREINC) /c ivybind.c
 
 
 ivyprobe.exe: ivyprobe.obj libivy.lib
-	$(CC)  $(CFLAGS) -o $@ ivyprobe.obj libivy.lib wsock32.lib $(PCRELIB)
+	$(CC)  $(CFLAGS) /Fe$@ ivyprobe.obj libivy.lib wsock32.lib $(PCRELIB)
 
 ivyprobe.obj : ivyprobe.c 
 	$(CC) $(CFLAGS) $(REGEXP) $(PCREINC) /c ivyprobe.c
 	
 ivyperf.exe: ivyperf.obj libivy.lib
-	$(CC) $(CFLAGS) -o $@ ivyperf.obj libivy.lib wsock32.lib $(PCRELIB)
-
-ivyperf.obj : ivyperf.c
-	$(CC) $(CFLAGS) $(REGEXP) $(PCREINC) /c ivyperf.c
+	$(CC) $(CFLAGS) /Fe$@ ivyperf.obj libivy.lib wsock32.lib $(PCRELIB)
 
 
 libivy.lib: $(OBJ)

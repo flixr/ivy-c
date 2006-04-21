@@ -49,10 +49,6 @@ struct _channel {
 	ChannelHandleRead handle_read;
 };
 
-ChannelInit channel_init = IvyChannelInit;
-ChannelSetUp channel_setup = IvyChannelSetUp;
-ChannelClose channel_close = IvyChannelClose;
-
 static Channel channels_list = NULL;
 
 static int channel_initialized = 0;
@@ -65,7 +61,7 @@ WSADATA WsaData;
 #endif
 
 void
-IvyChannelClose (Channel channel)
+IvyChannelRemove (Channel channel)
 {
 	channel->tobedeleted = 1;
 }
@@ -91,7 +87,7 @@ ChannelDefferedDelete ()
 	}
 }
 
-Channel IvyChannelSetUp (HANDLE fd, void *data, 
+Channel IvyChannelAdd (HANDLE fd, void *data, 
 				ChannelHandleDelete handle_delete,
 				ChannelHandleRead handle_read
 				)						

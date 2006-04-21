@@ -84,13 +84,8 @@ WSADATA	WsaData;
 
 void SocketInit()
 {
-	if (! channel_init )
-	{
-		fprintf (stderr, "Channel management functions not set, exiting.\n");
-		exit(-1);
-	}
 	if ( getenv( "IVY_DEBUG_SEND" )) debug_send = 1;
-	(*channel_init)();
+	IvyChannelInit();
 }
 
 static void DeleteSocket(void *data)
@@ -141,11 +136,11 @@ static void HandleSocket (Channel channel, HANDLE fd, void *data)
 		       &len);
 	if (nb  < 0) {
 		perror(" Read Socket ");
-		(*channel_close) (client->channel );
+		IvyChannelRemove (client->channel );
 		return;
 	}
 	if (nb == 0 ) {
-		(*channel_close) (client->channel );
+		IvyChannelRemove (client->channel );
 		return;
 	}
 	client->ptr += nb;
@@ -201,7 +196,7 @@ static void HandleServer(Channel channel, HANDLE fd, void *data)
 		client->terminator = '\n';
 	client->from = remote2;
 	client->fd = ns;
-	client->channel = (*channel_setup) (ns, client,  DeleteSocket, HandleSocket );
+	client->channel = IvyChannelAdd (ns, client,  DeleteSocket, HandleSocket );
 	client->interpretation = server->interpretation;
 	client->ptr = client->buffer;
 	client->handle_delete = server->handle_delete;
@@ -272,7 +267,7 @@ Server SocketServer(unsigned short port,
 
 	IVY_LIST_ADD_START (servers_list, server );
 	server->fd = fd;
-	server->channel =	(*channel_setup) (fd, server, DeleteServerSocket, HandleServer );
+	server->channel =	IvyChannelAdd (fd, server, DeleteServerSocket, HandleServer );
 	server->create = create;
 	server->handle_delete = handle_delete;
 	server->interpretation = interpretation;
@@ -291,7 +286,7 @@ void SocketServerClose (Server server )
 {
 	if (!server)
 		return;
-	(*channel_close) (server->channel );
+	IvyChannelRemove (server->channel );
 }
 
 char *SocketGetPeerHost (Client client )
@@ -334,7 +329,7 @@ void SocketGetRemoteHost (Client client, char **host, unsigned short *port )
 void SocketClose (Client client )
 {
 	if (client)
-		(*channel_close) (client->channel );
+		IvyChannelRemove (client->channel );
 }
 
 int SocketSendRaw (Client client, char *buffer, int len )
@@ -474,7 +469,7 @@ Client SocketConnectAddr (struct in_addr * addr, unsigned short port,
 		}
 		client->terminator = '\n';
 	client->fd = handle;
-	client->channel = (*channel_setup) (handle, client,  DeleteSocket, HandleSocket );
+	client->channel = IvyChannelAdd (handle, client,  DeleteSocket, HandleSocket );
 	client->interpretation = interpretation;
 	client->ptr = client->buffer;
 	client->data = data;
@@ -599,7 +594,7 @@ Client SocketBroadcastCreate (unsigned short port,
 		}
 	client->terminator = '\n';
 	client->fd = handle;
-	client->channel = (*channel_setup) (handle, client,  DeleteSocket, HandleSocket );
+	client->channel = IvyChannelAdd (handle, client,  DeleteSocket, HandleSocket );
 	client->interpretation = interpretation;
 	client->ptr = client->buffer;
 	client->data = data;

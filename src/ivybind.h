@@ -1,7 +1,7 @@
 /*
  *	Ivy, C interface
  *
- *	Copyright (C) 1997-2000
+ *	Copyright (C) 1997-2006
  *	Centre d'Études de la Navigation Aérienne
  *
  *	Bind syntax for extracting message comtent 
@@ -18,12 +18,14 @@
 
 typedef struct _binding *IvyBinding;
 
+/* Mise en place des Filtrages */
 void IvyBindingSetFilter( int argc, const char ** argv );
 int IvyBindingFilter( const char *expression );
 
-IvyBinding IvyBindingCompile( const char *expression );
-void IvyBindingGetCompileError( int *erroffset, const char **errmessage );
+/* Creation, Compilation */
+IvyBinding IvyBindingCompile( const char *expression, int *erroffset, const char **errmessage );
 void IvyBindingFree( IvyBinding bind );
 
+/* Execution , extraction */
 int IvyBindingExec( IvyBinding bind, const char * message );
 void IvyBindingMatch( IvyBinding bind, const char *message, int argnum, int *arglen, const char **arg );

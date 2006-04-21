@@ -31,10 +31,10 @@
 #ifdef USE_PCRE_REGEX
 #define OVECSIZE 60 /* must be multiple of 3, for regexp return */
 #include <pcre.h>
-#else
+#else  /* we don't USE_PCRE_REGEX */
 #define MAX_MSG_FIELDS 200
 #include <regex.h>
-#endif
+#endif /* USE_PCRE_REGEX */
 
 #include "list.h"
 #include "ivybind.h"
@@ -43,21 +43,20 @@ static int err_offset;
 
 #ifdef USE_PCRE_REGEX
 	static const char *err_buf;
-#else
+#else  /* we don't USE_PCRE_REGEX */
 	static char err_buf[4096];
-#endif
+#endif /* USE_PCRE_REGEX */
 
 struct _binding {
-	const char *expression;			/* regexp*/
 #ifdef USE_PCRE_REGEX
 	pcre *regexp;
 	pcre_extra *inspect;
 	int nb_match;
 	int ovector[OVECSIZE];
-#else
+#else  /* we don't USE_PCRE_REGEX */
 	regex_t regexp;						/* la regexp sous forme machine */
 	regmatch_t match[MAX_MSG_FIELDS+1];	/* resultat du match */
-#endif
+#endif /* USE_PCRE_REGEX */
 	};
 
 /* classes de messages emis par l'application utilise pour le filtrage */
@@ -66,7 +65,7 @@ static const char **messages_classes = 0;
 /* regexp d'extraction du mot clef des regexp client pour le filtrage des regexp , ca va c'est clair ??? */
 static IvyBinding token_extract;
 
-IvyBinding IvyBindingCompile( const char * expression )
+IvyBinding IvyBindingCompile( const char * expression,  int *erroffset, const char **errmessage )
 {
 	IvyBinding bind=0;
 #ifdef USE_PCRE_REGEX
@@ -90,9 +89,11 @@ IvyBinding IvyBindingCompile( const char * expression )
 		}
 		else
 		{
+		*erroffset = err_offset;
+		*errmessage = err_buf;
 		printf("Error compiling '%s', %s\n", expression, err_buf);
 		}
-#else
+#else  /* we don't USE_PCRE_REGEX */
 	regex_t regexp;
 	int reg;
 	reg = regcomp(&regexp, expression, REGCOMP_OPT|REG_EXTENDED);
@@ -106,27 +107,23 @@ IvyBinding IvyBindingCompile( const char * expression )
 		else
 		{
 		regerror (reg, &regexp, err_buf, sizeof(err_buf) );
-		err_offset = 0; // TODO unkown offset error
+		*erroffset = err_offset;
+		*errmessage = err_buf;
 		printf("Error compiling '%s', %s\n", expression, err_buf);
 		}
-#endif
+#endif /* USE_PCRE_REGEX */
 	return bind;
 }
 
-void IvyBindingGetCompileError( int *offset, const char **errmessage )
-{
-	*offset = err_offset;
-	*errmessage = err_buf;
-}
 void IvyBindingFree( IvyBinding bind )
 {
 #ifdef USE_PCRE_REGEX
 	if (bind->inspect!=NULL)
 		pcre_free(bind->inspect);
 		pcre_free(bind->regexp);
-#else
+#else  /* we don't USE_PCRE_REGEX */
 	free( bind->regexp );
-#endif
+#endif /* USE_PCRE_REGEX */
 	free ( bind );
 }
 int IvyBindingExec( IvyBinding bind, const char * message )
@@ -147,7 +144,7 @@ int IvyBindingExec( IvyBinding bind, const char * message )
 	bind->nb_match = nb_match;
 	nb_match--; // firts arg wall string ???
 
-#else
+#else  /* we don't USE_PCRE_REGEX */
 	memset( bind->match, -1, sizeof(bind->match )); /* work around bug !!!*/
 	nb_match = regexec (&bind->regexp, message, MAX_MSG_FIELDS, bind->match, 0) 
 	if (nb_match == REG_NOMATCH)
@@ -157,7 +154,7 @@ int IvyBindingExec( IvyBinding bind, const char * message )
 		if ( bind->match[i].rm_so != -1 )
 			nb_match++;
 	}
-#endif
+#endif /* USE_PCRE_REGEX */
 	return nb_match;
 }
 
@@ -180,7 +177,7 @@ void IvyBindingMatch( IvyBinding bind, const char *message, int argnum, int *arg
 			*arglen = 0;
 			*arg = NULL;
 	}
-#endif // USE_PCRE_REGEX
+#endif /* USE_PCRE_REGEX */
 
 }
 
@@ -194,10 +191,9 @@ void IvyBindingSetFilter( int argc, const char **argv)
 	messages_classes = argv;
 	/* compile the token extraction regexp */
 
-	token_extract = IvyBindingCompile("^\\^([a-zA-Z_0-9-]+).*");
+	token_extract = IvyBindingCompile("^\\^([a-zA-Z_0-9-]+).*", & erroffset, & errbuf);
 	if ( !token_extract )
 	{
-		IvyBindingGetCompileError( & erroffset, & errbuf );
 		printf("Error compiling Token Extract regexp: %s\n", errbuf);
 	}
 }

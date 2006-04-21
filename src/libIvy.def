@@ -3,7 +3,9 @@ LIBRARY	Ivy
 EXPORTS
 
 IvyDefaultApplicationCallback
-IvyClasses
+IvyDefaultBindCallback
+
+IvySetFilter
 IvyInit
 IvyStart
 IvyStop
@@ -27,5 +29,11 @@ IvySendDirectMsg
 
 IvyMainLoop
 IvyChannelInit
-IvyChannelClose
-IvyChannelSetUp
+IvyChannelRemove
+IvyChannelAdd
+
+IvyBindingCompile
+IvyBindingFree
+
+IvyBindingExec
+IvyBindingMatch

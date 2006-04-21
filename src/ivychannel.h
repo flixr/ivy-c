@@ -37,22 +37,19 @@ typedef void (*ChannelHandleDelete)( void *data );
 typedef void (*ChannelHandleRead)( Channel channel, HANDLE fd, void *data);
 
 /* fonction appele par le bus pour initialisation */
-typedef void (*ChannelInit)(void);
+extern void IvyChannelInit(void);
 						
 /* fonction appele par le bus pour mise en place des callback sur le canal */
-typedef Channel (*ChannelSetUp)(
+extern Channel IvyChannelAdd(
 	HANDLE fd,
 	void *data,
 	ChannelHandleDelete handle_delete,
 	ChannelHandleRead handle_read
 );
 
-/* fonction appele par le bus pour fermeture du canal */
-typedef void (*ChannelClose)( Channel channel );
+/* fonction appele par le bus pour suppression des callback sur le canal */
+extern void IvyChannelRemove( Channel channel );
 
-extern ChannelInit channel_init;
-extern ChannelClose channel_close;
-extern ChannelSetUp channel_setup;
 
 #ifdef __cplusplus
 }

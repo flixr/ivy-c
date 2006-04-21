@@ -301,7 +301,7 @@ static void Receive( Client client, void *data, char *line )
 				return;
 				}
 
-			bind = IvyBindingCompile( arg );
+			bind = IvyBindingCompile( arg, & erroffset, & errbuf );
 			if ( bind != NULL )
 				{
 				IVY_LIST_ADD_START( clnt->msg_send, snd )
@@ -317,7 +317,6 @@ static void Receive( Client client, void *data, char *line )
 				}
 			else
 			{
-			IvyBindingGetCompileError( & erroffset, & errbuf );
 			printf("Error compiling '%s', %s\n", arg, errbuf);
 			MsgSendTo( client, Error, erroffset, errbuf );
 			}

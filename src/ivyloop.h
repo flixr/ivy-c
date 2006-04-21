@@ -55,16 +55,6 @@ de la maniere suivante:
 extern void IvyMainLoop(void(*BeforeSelect)(void),void(*AfterSelect)(void) );
 
 
-extern void IvyChannelInit(void);
-extern void IvyChannelClose( Channel channel );
-extern Channel IvyChannelSetUp(
-			HANDLE fd,
-			void *data,
-			ChannelHandleDelete handle_delete,
-			ChannelHandleRead handle_read);
-
-
-
 #ifdef __cplusplus
 }
 #endif
