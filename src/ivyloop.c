@@ -171,7 +171,8 @@ void IvyMainLoop(void(*BeforeSelect)(void),void(*AfterSelect)(void))
 		rdset = open_fds;
 		exset = open_fds;
 		ready = select(64, &rdset, 0,  &exset, TimerGetSmallestTimeout());
-		if (AfterSelect) (*AfterSelect)();
+		/* for compatibility with older version we test also the first parameter */
+		if (BeforeSelect && AfterSelect) (*AfterSelect)();
 		
 		if (ready < 0 && (errno != EINTR)) {
          		fprintf (stderr, "select error %d\n",errno);
