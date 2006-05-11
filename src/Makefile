@@ -19,8 +19,19 @@
 MAJOR=3
 MINOR=8
 
+PERHAPS64 := $(shell uname -m | perl -ne "print /64/ ? '64' : '';")
+LIB = lib$(PERHAPS64)
+ifeq ($(PERHAPS64), "64")
+	FPIC=
+else
+	FPIC=-fPIC
+endif
+
+INSTALL_BINDIR=$(PREFIX)/usr/local/bin
+INSTALL_LIBDIR=$(PREFIX)/usr/local/$(LIB)
+
 XTINC = -I/usr/X11R6/include
-XTLIB = -L/usr/X11R6/lib -lXt -lX11 -lSM -lICE
+XTLIB = -L/usr/X11R6/$(LIB) -lXt -lX11 -lSM -lICE
 GLIBINC = `pkg-config --cflags glib-2.0`
 GLIBLIB = `pkg-config --libs glib-2.0`
 GLUTINC = -I/usr/include -I.
@@ -29,6 +40,9 @@ GLUTLIB = -L. -lglut -lGLU -lGL -lX11 -lXmu
 
 #TCLVERS = `perl -e '@_=sort map (m|/usr/lib/libtcl(\d\.\d)\.so|, glob ("/usr/lib/libtcl*")); print pop @_'`
 TCLVERS:= $(shell perl -e '@_=sort map (m|/usr/lib/libtcl(\d\.\d)\.so|, glob ("/usr/lib/libtcl*")); print pop @_')
+ifndef TCLVERS
+TCLVERS:= $(shell perl -e '@_=sort map (m|/usr/lib64/libtcl(\d\.\d)\.so|, glob ("/usr/lib64/libtcl*")); print pop @_')
+endif
 ifndef TCLVERS
 TCLVERS=8.3
 endif
@@ -66,7 +80,7 @@ REGEXP= -DUSE_PCRE_REGEX -DPCRE_OPT=$(PCRE_OPT)
 # on activeTCL , set #define CHANNEL to null, and add ivyloop.o in the ivytcl target,
 # see below
 CHANNEL = -DTCL_CHANNEL_INTEGRATION 
-CFLAGS = -g -Wall
+CFLAGS = -g -Wall $(FPIC)
 
 
 OBJ = ivyloop.o timer.o ivysocket.o ivy.o ivybuffer.o ivybind.o
@@ -115,7 +129,7 @@ ivyprobe: ivyprobe.o libivy.a
 
 ivyprobe.o : ivyprobe.c 
 	$(CC)  $(CFLAGS) $(REGEXP) -c ivyprobe.c -o $@
-	
+
 ivyperf: ivyperf.o libivy.a
 	$(CC)  $(CFLAGS) -o $@ ivyperf.o -L. -livy $(PCRELIB) $(EXTRALIB)
 
@@ -196,39 +210,39 @@ clean:
 	-rm -f $(TARGETS) $(TARGETLIBS) *.o *.a *.so *.so.* *~
 
 installlibs: static-libs shared-libs
-	test -d $(PREFIX)/usr/lib || mkdirhier $(PREFIX)/usr/lib
-	test -d $(PREFIX)/usr/X11R6/lib || mkdirhier $(PREFIX)/usr/X11R6/lib
-	test -d $(PREFIX)/usr/include || mkdirhier $(PREFIX)/usr/include
-	install -m644 libivy.a $(PREFIX)/usr/lib
-	install -m644 libgivy.a $(PREFIX)/usr/lib
-	install -m644 libxtivy.a $(PREFIX)/usr/X11R6/lib
-	install -m644 libtclivy.a $(PREFIX)/usr/lib
-	install -m644 libglibivy.a $(PREFIX)/usr/lib
+	test -d $(INSTALL_LIBDIR) || mkdirhier $(INSTALL_LIBDIR)
+	test -d $(PREFIX)/usr/X11R6/$(LIB) || mkdirhier $(PREFIX)/usr/X11R6/$(LIB)
+	test -d $(PREFIX)/usr/local/include || mkdirhier $(PREFIX)/usr/local/include
+	install -m644 libivy.a $(INSTALL_LIBDIR)
+	install -m644 libgivy.a $(INSTALL_LIBDIR)
+	install -m644 libxtivy.a $(PREFIX)/usr/X11R6/$(LIB)
+	install -m644 libtclivy.a $(INSTALL_LIBDIR)
+	install -m644 libglibivy.a $(INSTALL_LIBDIR)
 
-	install -m644 libivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/lib
-	install -m644 libgivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/lib
-	install -m644 libxtivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/X11R6/lib
-	install -m644 libtclivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/lib
-	install -m644 libglibivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/lib
+	install -m644 libivy.so.$(MAJOR).$(MINOR) $(INSTALL_LIBDIR)
+	install -m644 libgivy.so.$(MAJOR).$(MINOR) $(INSTALL_LIBDIR)
+	install -m644 libxtivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/X11R6/$(LIB)
+	install -m644 libtclivy.so.$(MAJOR).$(MINOR) $(INSTALL_LIBDIR)
+	install -m644 libglibivy.so.$(MAJOR).$(MINOR) $(INSTALL_LIBDIR)
 
-	install -m644 *.h $(PREFIX)/usr/include
+	install -m644 *.h $(PREFIX)/usr/local/include
 
 installliblinks: installlibs
-	ln -fs /usr/lib/libivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/lib/libivy.so
-	ln -fs /usr/lib/libivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/lib/libivy.so.$(MAJOR)
-	ln -fs /usr/lib/libgivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/lib/libgivy.so
-	ln -fs /usr/lib/libgivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/lib/libgivy.so.$(MAJOR)
-	ln -fs /usr/X11R6/lib/libxtivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/X11R6/lib/libxtivy.so
-	ln -fs /usr/X11R6/lib/libxtivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/X11R6/lib/libxtivy.so.$(MAJOR)
-	ln -fs /usr/lib/libtclivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/lib/libtclivy.so
-	ln -fs /usr/lib/libtclivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/lib/libtclivy.so.$(MAJOR)
+	ln -fs $(INSTALL_LIBDIR)/libivy.so.$(MAJOR).$(MINOR) $(INSTALL_LIBDIR)/libivy.so
+	ln -fs $(INSTALL_LIBDIR)/libivy.so.$(MAJOR).$(MINOR) $(INSTALL_LIBDIR)/libivy.so.$(MAJOR)
+	ln -fs $(INSTALL_LIBDIR)/libgivy.so.$(MAJOR).$(MINOR) $(INSTALL_LIBDIR)/libgivy.so
+	ln -fs $(INSTALL_LIBDIR)/libgivy.so.$(MAJOR).$(MINOR) $(INSTALL_LIBDIR)/libgivy.so.$(MAJOR)
+	ln -fs /usr/X11R6/$(LIB)/libxtivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/X11R6/$(LIB)/libxtivy.so
+	ln -fs /usr/X11R6/$(LIB)/libxtivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/X11R6/$(LIB)/libxtivy.so.$(MAJOR)
+	ln -fs $(INSTALL_LIBDIR)/libtclivy.so.$(MAJOR).$(MINOR) $(INSTALL_LIBDIR)/libtclivy.so
+	ln -fs $(INSTALL_LIBDIR)/libtclivy.so.$(MAJOR).$(MINOR) $(INSTALL_LIBDIR)/libtclivy.so.$(MAJOR)
 
 installbins: commands
-	test -d $(PREFIX)/usr/bin || mkdirhier $(PREFIX)/usr/bin
+	test -d $(INSTALL_BINDIR) || mkdirhier $(INSTALL_BINDIR)
 	test -d $(PREFIX)/usr/X11R6/bin || mkdirhier $(PREFIX)/usr/X11R6/bin
-	install -m755 ivyprobe $(PREFIX)/usr/bin
+	install -m755 ivyprobe $(INSTALL_BINDIR)
 	#install -m755 ivyxtprobe $(PREFIX)/usr/X11R6/bin
-	#install -m755 ivyglibprobe $(PREFIX)/usr/bin
+	#install -m755 ivyglibprobe $(INSTALL_BINDIR)
 	#install -m755 ivyglutprobe $(PREFIX)/usr/X11R6/bin
 
 installdocs:
