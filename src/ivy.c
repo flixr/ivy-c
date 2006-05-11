@@ -196,7 +196,7 @@ static int MsgCall (const char *message, MsgSndPtr msg,  IvyClientPtr client)
 
 	TRACE( "Send matching args count %d\n",rc);
 
-	for(  index=0; index < rc ; index++ )
+	for(  index=1; index < rc ; index++ )
 	{
 		IvyBindingMatch( msg->binding, message, index, &arglen, & arg );
 		err = make_message_var( &buffer,  "%.*s" ARG_END , arglen, arg );

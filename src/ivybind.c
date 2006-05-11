@@ -142,8 +142,6 @@ int IvyBindingExec( IvyBinding bind, const char * message )
 					OVECSIZE);
 	if (nb_match<1) return 0; /* no match */
 	bind->nb_match = nb_match;
-	nb_match--; // firts arg wall string ???
-
 #else  /* we don't USE_PCRE_REGEX */
 	memset( bind->match, -1, sizeof(bind->match )); /* work around bug !!!*/
 	nb_match = regexec (&bind->regexp, message, MAX_MSG_FIELDS, bind->match, 0) 
