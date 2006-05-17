@@ -1,40 +1,783 @@
-ivy-c (3.1)
+2006-05-11 19:20  fcolin
 
-  * src/Makefile : Ajout de liens pour les libs paratagées
-  *                Ajout du majeur et du mineur
-  * Making ivyprobe ivy-3.0 compliant
-  * Bug correction which appears at ivy closing
-  
- --
+	* ivybind.c: correction BUg regexp encore
 
-ivy-c (3.0)
+2006-05-11 18:42  fcolin
 
-  * new api : see documentation
-  * src/Makefile : updates
-  * src/ivy.c
-  * - bug correction when broadcast socket can't be opened
-  * src/ivychannel.c :
-  * - bug correction when handling expceptions on channels
-  * Clean headers
-  * testivy -> ivyprobe
+	* ivy.c, ivybind.c: correction Bug introduit lors de la separation
+	  ivybind ( regexp sans argument )
 
- -- 
+2006-05-11 18:13  fcolin
 
-ivy-c (1.2)
+	* ivyloop.c: rendu compatible avec la version 3.7 a un suel
+	  parametre sur la mainloop
 
-  * Mise au propre
-  * Ajout du mecanisme de choix des adresses de broadcast
+2006-05-11 18:06  bustico
 
- -- 
+	* Makefile:
+	  adaptation pour linux 64 bits
 
-ivy-c (1.1)
+2006-04-21 18:34  fcolin
 
-  * Suppression du header list.h qui est aussi défini dans utils-c.
-  * Ajout du soname à la bibliothèque dynamique.
-  
- -- 
+	* ivy.c, ivychannel.h, ivyglibloop.c, ivyglibloop.h, ivyglutloop.c,
+	  ivyglutloop.h, ivyloop.c, ivyprobe.c, ivytcl.c, ivyxtloop.c,
+	  ivyxtloop.h: cleanup sur channel et main loop
 
-ivy-c (1.1)
+2006-04-21 17:54  fcolin
 
-  * Initial Release.
+	* getopt.c, getopt.h: ajout de getopt pour la compile sur Windows
+
+2006-04-21 17:51  fcolin
+
+	* Makefile.win32, ivy.c, ivybind.c, ivybind.h, ivychannel.h,
+	  ivyloop.c, ivyloop.h, ivyprobe.c, ivysocket.c, libIvy.def:
+	  suppression de l'indirection sur les fonction channel et renomage
+	  !
+
+2006-04-21 14:49  fcolin
+
+	* Makefile, Makefile.win32, ivy.c, ivybind.c, ivyperf.c: separation
+	  regexp en module ( bug arg num edbute a 1 )
+
+2006-04-21 14:13  fcolin
+
+	* ivy.c, ivy.h, ivybind.c, ivybind.h: Separation du code Regexp
+	  dans un module
+
+2006-04-21 11:49  fcolin
+
+	* ivydebug.h: et aussi pour la version sans le DEBUG
+
+2006-04-21 11:38  fcolin
+
+	* ivydebug.h: portage WIN32 ( pb sur macro debug )
+
+2006-04-21 10:44  fcolin
+
+	* ivybind.c, ivybind.h: ivy bind pour isolation code regexp
+
+2006-04-21 10:41  fcolin
+
+	* Makefile, Makefile.mingw, Makefile.win32, ivy.c, ivybuffer.c,
+	  ivybuffer.h, ivydebug.h, ivyperf.c, ivyprobe.c, ivysocket.c,
+	  ivytcl.c: dos2unix -U
+
+2006-04-21 10:37  fcolin
+
+	* ivy.h, ivybuffer.c, ivybuffer.h, ivychannel.h, ivydebug.h,
+	  ivyglibloop.c, ivyglibloop.h, ivyglutloop.c, ivyglutloop.h,
+	  ivyloop.c, ivyloop.h, ivyperf.c, ivyprobe.c, ivysocket.c,
+	  ivysocket.h, ivytcl.c, ivytcl.h, ivyxtloop.c, ivyxtloop.h,
+	  list.h, timer.c, timer.h, version.h: dos2unix grrr!!!
+
+2006-04-21 10:31  fcolin
+
+	* ivy.h, ivybuffer.c, ivybuffer.h, ivychannel.h, ivydebug.h,
+	  ivyglibloop.c, ivyglibloop.h, ivyglutloop.c, ivyglutloop.h,
+	  ivyloop.c, ivyloop.h, ivyperf.c, ivyprobe.c, ivysocket.c,
+	  ivysocket.h, ivytcl.c, ivytcl.h, ivyxtloop.c, ivyxtloop.h,
+	  list.h, timer.c, timer.h, version.h: dos2unix
+
+2006-04-21 10:27  fcolin
+
+	* Makefile, Makefile.mingw, Makefile.win32, ivytcl.c, libIvy.def:
+	  dos2unix
+
+2006-04-20 17:58  fcolin
+
+	* ivybuffer.c, ivybuffer.h: gestion de buffer a taille variable
+	  pour eliminer les pbs de taille static dans le  code
+
+2006-04-20 17:55  fcolin
+
+	* ivydebug.h: Macro de debug afin d'eviter de truffer le code de
+	  #ifdef DEBUG #endif
+
+2006-04-20 17:51  fcolin
+
+	* Makefile, Makefile.win32, ivy.c, ivy.h, ivyglibloop.c,
+	  ivyglutloop.c, ivyperf.c, ivyprobe.c, ivysocket.c, ivyxtloop.c:
+	  cleanup DEBUG code
+
+2006-04-20 10:54  fcolin
+
+	* ivy.c: correction bug sur filtrage regexp
+
+2006-04-19 18:53  fcolin
+
+	* ivy.c, ivyperf.c: correction Filtred Binding + test avec ivyperf
+
+2006-04-19 18:30  fcolin
+
+	* ivy.c, ivy.h: Add indication on regexp filtering when classes are
+	  used call BindingCallback
+
+2006-04-19 12:07  fcolin
+
+	* ivyprobe.c: add doc printf for commande bincall in ivyprobe
+
+2006-04-19 10:28  fcolin
+
+	* Makefile, Makefile.win32, ivy.c, ivy.h, ivyloop.c, ivyloop.h,
+	  ivyperf.c, ivyprobe.c, ivysocket.c, ivysocket.h, list.h, timer.c:
+	  correction de probleme potentiel en multithread ( Ada rejeu )
+	  ajout d'un warning en cas de client bloquant si la varaiable
+	  d'env IVY_DEBUG_SEND est positionne
+
+2006-04-18 14:24  fcolin
+
+	* version.h: changement version suite a modif ( hook unhook ) et
+	  test sur blocage a l'emission
+
+2006-04-18 13:51  fcolin
+
+	* ivy.c, Makefile, Makefile.win32: retour au protocol V3
+
+2006-01-10 14:51  fcolin
+
+	* ivybind.h: modif nom fichier en minuscule
+
+2005-08-19 15:44  fcolin
+
+	* ivybind.c: correction bug malloc free
+
+2005-08-18 09:36  fcolin
+
+	* ivybind.c: memory leak malloc/free cleanup
+
+2005-08-12 16:56  fcolin
+
+	* ivybind.c, ivybind.h: Implementation binding simple sans regexp
+
+2005-08-10 17:36  fcolin
+
+	* ivybind.c: uniformisation variable  message d'erreur
+
+2005-08-10 11:52  fcolin
+
+	* ivybind.c, ivybind.h: remplacement argc argv par IvyArgument
+
+2005-07-26 10:47  fcolin
+
+	* getopt.c, getopt.h, ivybind.c: compile sur Windows les fichiers
+	  getopt sont necessaires uniquement sur Windows( WIN32 )
+	  compilateur VStudio
+
+2005-07-25 16:28  fcolin
+
+	* ivybind.c, ivybind.h: gestion argument Ivy
+
+2005-07-22 16:20  fcolin
+
+	* ivybind.c: socket Buffered output
+
+2005-06-03 18:43  fcolin
+
+	* ivybind.c, ivybind.h: separation du code regexp dans un module a
+	  part en vue de l'implementation des bindings simple!
+
+2005-05-23 15:52  fcolin
+
+	* libIvy.def: fichiers d'export pour Windows
+
+2005-05-23 13:05  fcolin
+
+	* ivy.c: pb de compile avec DEBUG
+
+2005-05-20 17:29  fcolin
+
+	* Makefile.win32, ivy.c, ivysocket.c, ivysocket.h: portages des
+	  modifications sur windows
+
+2005-05-20 14:53  fcolin
+
+	* ivyperf.c: un test de performance d'ivy a lancer en deux
+	  exemplaires donne le temps de roundtrip d'un ping pong
+
+2005-05-20 14:48  fcolin
+
+	* Makefile, ivy.c, ivysocket.c, ivysocket.h, version.h: elimination
+	  des tailles de buffer par utilisation de realloc la plupart des
+	  fonctions utilisent un pointeur static pour eviter de multiple
+	  malloc/free ce qui veut dire que IvyC n'est pas reentrant !!!!
+
+2005-02-24 17:33  vidon
+
+	* ivyprobe.c: Fix bugs with LF
+
+2005-02-24 16:17  vidon
+
+	* ivyprobe.c: Add functions to test binding events
+
+2005-02-24 16:15  vidon
+
+	* ivy.c, ivy.h: Add functions to manipulate binding events
+
+2004-11-03 16:45  fcolin
+
+	* ivy.c: added comment on check connected function
+
+2004-09-07 15:40  bustico
+
+	* Makefile, ivy.c: permit case sensisite/insensitive choice for
+	  pcre and gnu regexp at Makefile level
+
+2004-09-07 13:13  bustico
+
+	* Makefile: pcre and libpcre dependance added no more reference at
+	  libgtkivy and relative tools : /ivygtkprobe
+
+2004-09-03 11:48  bustico
+
+	* Makefile:
+	  redhat files have been updated to permit an automatised packaging
+	  of ivy-c with the rpmize tool
+
+	  Makefile has been improved : automatic detection of tcl version,
+	  and installliblinks target has been fixed
+
+2004-09-01 17:54  drouin
+
+	* Makefile, ivy.c, ivyglibloop.c, ivyglibloop.h, ivyprobe.c,
+	  ivysocket.c, ivytcl.c, list.h: replaced the gtk mainloop with a
+	  glib one. added -Wall compile directive . fixed some warnings
+
+2004-07-23 17:14  jestin
+
+	* Makefile, version.h: ce Makefile tient compte des PCRE ( perl
+	  compatible regular expressions ), et peut permettre de fabriquer
+	  ivy sous solaris et osx , moyennant une édition.
+
+2004-07-23 15:25  jestin
+
+	* Makefile, ivyprobe.c: now uses USE_PCRE_REGEXP in ivyprobe
+	  (xtprobe ... gtkprobe ...) when binding a pattern
+
+2004-06-25 20:27  jestin
+
+	* Makefile, Makefile.mingw, ivy.c, ivyprobe.c, ivysocket.c,
+	  ivytcl.c, version.h: le Makefile peut être utilisé sur Solaris,
+	  OSX et Linux. Par dégaut, c'est pour linux.
+
+	  ivy.c corrige un unbindmsg
+
+	  ivyprobe: -n pour le nom de l'agent, -v pour la version de la lib
+
+	  ivytcl: plein de problèmes réglés, d'autres introduits, notamment
+	  pour la gestion de la boucle d'évéenents sous windows ...
+
+	  Test.tcl déplacé dans les exemples
+
+2004-03-24 11:15  fcolin
+
+	* Makefile, ivysocket.c: correction fonction WIN32 non encadrée
+	  WIN32
+
+2004-03-24 11:10  fcolin
+
+	* Makefile.mingw, ivyloop.c, ivysocket.c, ivytcl.c: Pb de mainloop
+	  TCL sous windows
+
+2004-03-23 16:53  fcolin
+
+	* ivytcl.c: [no log message]
+
+2004-03-12 10:40  fcolin
+
+	* Makefile.mingw: ajout des -l qui vont bien pour compile sous
+	  MinGW reste a eliminer les parties qui ne sont pas compilable
+	  sous MINGW
+
+2004-03-12 10:37  fcolin
+
+	* ivyloop.c, ivyprobe.c, ivysocket.c, ivytcl.c: compile avec MINGW
+	  sous WIN32
+
+2004-01-20 14:40  fcolin
+
+	* ivyprobe.c:
+	   pour la compilation sous INTERIX ( Windows SFU 3.5) avec gcc
+
+2004-01-20 14:39  fcolin
+
+	* ivysocket.h:
+	  pour la compilation sous INTERIX ( Windows SFU 3.5) avec gcc
+
+2003-10-09 13:48  jestin
+
+	* Makefile, ivysocket.c: Modified makefiles to allow compilation on
+	  OSX
+
+2003-09-18 18:02  fcolin
+
+	* ivytcl.c: modif callback argument ( c'etait tres merdique avant )
+	  pas de possibilite de mettre des blancs dans les arguments
+
+2003-09-18 15:44  fcolin
+
+	* ivytcl.h: pas besoin de include X11/Intyrinsics !!!( portage win
+	  pb )
+
+2003-09-18 15:43  fcolin
+
+	* ivytcl.c: modif passage tcl 8.4 ( const sur argv )
+
+2003-05-20 15:33  fcolin
+
+	* ivy.c: modif pour compile MinGW les includes sys/socket n'ont
+	  rien a faire la ils sont dans ivysocket.h
+
+2003-05-20 15:25  fcolin
+
+	* ivysocket.h: modif pour compilation avec MinGW
+
+2003-03-17 18:13  jestin
+
+	* Makefile, ivyprobe.c: Makefile changed ... once again. We need a
+	  configure ?
+
+2002-12-16 15:51  fcolin
+
+	* ivy.c, ivyglutloop.c, ivysocket.c, list.h: passage en GCC 3.2
+
+2002-06-25 12:14  chatty
+
+	* Makefile, ivy.c: Modified Makefile to allow for compatibity
+	  between install patterns of Tcl In ivy.c, restored DEFAULT_DOMAIN
+	  to original value (not a string)
+
+2002-06-21 15:00  buisson
+
+	* ivy.c: Line 110, 114, 118 : add "void" to *expr Line 205 : cast
+	  argument to int for osx compatibility with int_64
+
+2002-06-20 14:02  mertz
+
+	* Makefile: Makefile plus portable
+
+2002-04-04 10:55  fcolin
+
+	* ivy.c, timer.c: remove Timer struct def , and ## in ivy.c
+
+2002-04-04 10:50  fcolin
+
+	* ivy.c, ivyloop.c, ivysocket.c, list.h, timer.c: replace LIST_
+	  IVY_LIST_ collision macro
+
+2001-10-23 17:20  fcolin
+
+	* ivysocket.h: [no log message]
+
+2001-10-08 11:41  fcolin
+
+	* ivy.c: correction bug du a l'utilisation de strtok pour
+	  decortiquer les arguments recu pb en cas d'arg vide !!! ([0-9]*)
+
+2001-01-17 13:55  fcolin
+
+	* ivy.c: correction bug sur SUN_OS inet_ntoa
+
+2000-12-22 10:47  sc
+
+	* Makefile: Commented out install of ivyglutprobe, which apparently
+	  is not ready
+
+2000-12-21 10:51  fcolin
+
+	* Makefile: maj gtk et comment Glut ( waiting for modified glut )
+
+2000-12-21 10:45  fcolin
+
+	* ivy.c: broadcast printf in number dot notation
+
+2000-12-20 17:47  fcolin
+
+	* ivy.c, ivyprobe.c, ivysocket.c: multicast and glut eventloop
+	  support
+
+2000-12-20 17:43  fcolin
+
+	* Makefile: add targets for the glut eventloop
+
+2000-12-20 17:26  fcolin
+
+	* ivyglutloop.c, ivyglutloop.h: suppression des \r en fin de ligne
+	  (windows)
+
+2000-12-20 17:23  fcolin
+
+	* ivysocket.h: ajout de SocketAddMember pour le multicast.
+
+2000-12-20 16:58  fcolin
+
+	* ivyglutloop.c, ivyglutloop.h: initial version for the glut
+	  eventloop
+
+2000-12-19 17:19  mertz
+
+	* ivyprobe.c: ajout d'une ligne dans l'aide des commandes: .help
+
+2000-08-07 13:29  sc
+
+	* Makefile, ivy.c, ivy.h, ivychannel.h, ivyloop.c, ivyloop.h,
+	  ivyprobe.c, ivysocket.c, ivysocket.h, ivytcl.c, ivytcl.h,
+	  ivyxtloop.c, ivyxtloop.h, list.h, timer.c, timer.h, version.h:
+	  Fixed headers
+
+2000-03-13 15:55  mertz
+
+	* Makefile: bad version dependency of ivy-c-dev corrected the
+	  ivygtkprobe executable is added to the package
+
+2000-03-10 17:41  mertz
+
+	* Makefile, ivytcl.c, version.h: html docs are re-included in
+	  /usr/share/doc libtclivy works again... (didn't work anymore due
+	  to library rename)
+
+2000-02-22 19:36  mertz
+
+	* version.h: maj licence LGPL et description
+
+2000-01-19 20:32  bothorel
+
+	* ivyprobe.c: original file from FRC
+
+2000-01-19 20:30  bothorel
+
+	* ivyprobe.c: adding an empty file
+
+2000-01-19 20:07  bothorel
+
+	* ivyprobe.c: [no log message]
+
+2000-01-19 19:58  bothorel
+
+	* Makefile: Ajout lib GTK
+
+2000-01-19 18:11  damiano
+
+	* Makefile: split of target install into specific ones.  change
+	  name of ivy tcl library from ivytcl.* to libtclivy.* add
+	  generation of libtclivy.a
+
+2000-01-14 16:13  jestin
+
+	* list.h: Bon, je le remet, on m'a expliqué pourquoi c'est pas
+	  super d'enlever list.h.  A suivre ?
+
+2000-01-14 15:57  jestin
+
+	* list.h:   J'enlève list.h, qui est fourni par utils-c-dev, et qui
+	  entre en conflit
+	    avec icelui. Du coup, hop ! Dépendance.
+
+1999-11-10 15:14  fcolin
+
+	* ivy.c: modif pour chaine vide dans le domain traite de la meme
+	  maniere que NULL
+
+1999-04-30 17:40  fcolin
+
+	* ivy.c, ivytcl.c: [no log message]
+
+1999-04-28 13:20  lecoanet
+
+	* Makefile: Ajout de l'installation de ivytcl.so
+
+1999-04-27 17:08  fcolin
+
+	* Makefile, ivytcl.h: ivytcl.h
+
+1999-04-27 16:58  fcolin
+
+	* ivytcl.c: Interface Ivy TCL
+
+1999-04-13 16:47  damiano
+
+	* Makefile: Changing MINOR to match version 3.1
+
+1999-04-13 11:24  jacomi
+
+	* Makefile: doc files added to ivy-c package
+
+1999-03-26 16:50  fcolin
+
+	* ivysocket.c: correction d'un bug a la fermeture de Ivy :wq
+
+1999-02-20 17:07  sc
+
+	* Makefile: Aded links for shared libs Added minor and major number
+
+1999-02-19 10:53  sc
+
+	* ivyprobe.c:
+
+	  Result of merge (two attempts to make ivyprobe ivy-3.0-compliant)
+
+1999-02-19 10:45  damiano
+
+	* Makefile, ivy.c, ivyprobe.c: L'argument bus est retiré de IvyInit
+	  (ivy.c, ivy.h, ivyprobe.c) La variable DefaultIvyBus est
+	  maintenant de la forme "<domain>:<port>" (ivy.c) Les fichiers
+	  debian/* ont été corrigés pour le paquetage 3.0 (tag V3_0)
+
+1999-02-19 09:47  sc
+
+	* ivy.c:
+
+	  Default broadcast network is now 127
+
+1999-02-17 12:28  damiano
+
+	* ivy.c, ivy.h: remove argument bus from function IvyInit
+
+1999-02-09 23:54  sc
+
+	* ivysocket.c: Clean up
+
+1999-02-09 23:52  sc
+
+	* ivyprobe.c:
+
+	  Just some clean up
+
+1999-02-09 23:51  sc
+
+	* ivyloop.c:
+
+	  A bit of clean up Corrected bug in handling exceptions on
+	  channels.
+
+1999-02-05 20:03  sc
+
+	* ivy.c, ivysocket.c:
+
+	  Corrected bug when broadcast socket can't be opened.
+
+1999-01-29 15:46  jacomi
+
+	* Makefile: Makefile updated
+
+1999-01-28 16:24  jacomi
+
+	* list.h: useful file
+
+1999-01-28 16:14  jacomi
+
+	* ivyloop.c: c++ comment removed
+
+1999-01-27 16:28  jacomi
+
+	* Makefile, version.h: version and makefile updated
+
+1999-01-26 14:12  jacomi
+
+	* Makefile: update of directory redhat and makefile
+
+1999-01-26 09:53  sc
+
+	* ivy.c, ivy.h, ivychannel.h, ivyloop.h, ivyprobe.c, ivysocket.c,
+	  ivysocket.h, ivyxtloop.c, ivyxtloop.h:
+
+	  A bit of clean up in headers Changes in IvyStart and IvyInit:  -
+	  expanded parsing of IvyStart argument to bus addresses like
+	  123.123,123.122:2019	- socket for receiving broadcast handshakes
+	  is now in IvyStart (we thus lose the ability to have "passive"
+	  agents (agents that listen but don't say hello))
+
+1999-01-26 09:53  sc
+
+	* Makefile, ivyloop.c: A bit of clean up in headers Changes in
+	  IvyStart and IvyInit:  - expanded parsing of IvyStart argument to
+	  bus addresses like 123.123,123.122:2019  - socket for receiving
+	  broadcast handshakes is now in IvyStart (we thus lose the ability
+	  to have "passive" agents (agents that listen but don't say
+	  hello))
+
+1999-01-20 16:55  jacomi
+
+	* Makefile, ivy.c, ivy.h, ivychannel.h, ivyloop.c, ivyloop.h,
+	  ivyprobe.c, ivysocket.c, ivysocket.h, ivyxtloop.c, ivyxtloop.h:
+	  headers
+
+1999-01-12 12:19  chatty
+
+	* ivysocket.c: Just a bit of cleaning up tabulations.
+
+1999-01-12 12:18  chatty
+
+	* ivy.c: Limited calls to SocketGetRemote in BroadcastReceive to
+	  the strict minimum, because it calls gethostbyaddr and may
+	  sometimes get stuck.
+
+1999-01-12 12:17  chatty
+
+	* Makefile: Added -Wall
+
+1999-01-11 12:38  sc
+
+	* ivyxtloop.c: Added stub for IvyStop. Someday, we'll have to call
+	  the appropriate Xt function
+
+1999-01-11 12:36  sc
+
+	* ivyprobe.c: IvyChannelStop -> IvyStop
+
+1999-01-11 12:36  sc
+
+	* ivyloop.c, ivyloop.h: IvyChannelStop -> IvyStop moved declaration
+	  to ivy.h
+
+1999-01-11 12:35  sc
+
+	* ivy.h: Added declaration of IvyStop Updated declaration of
+	  IvyStart
+
+1999-01-11 12:34  sc
+
+	* Makefile:
+
+	  Added executables to clean up list Added a bunch of libs for
+	  ivyxtprobe
+
+1999-01-08 11:39  chatty
+
+	* Makefile, ivyprobe.c:
+
+	  testivy -> ivyprobe
+
+1999-01-08 11:32  chatty
+
+	* ivyloop.c, ivyloop.h, ivysocket.c, ivyxtloop.c:
+
+	  Bus -> Ivy Simplified management of different versions of channel
+	  management.  SetChannelManagement has disappeared.
+
+1999-01-08 11:32  chatty
+
+	* ivychannel.h, ivysocket.h, ivyxtloop.h: Bus -> Ivy Simplified
+	  management of different versions of channel management.
+	  SetChannelManagement has disappeared.
+
+1999-01-08 11:31  chatty
+
+	* ivy.h:
+
+	  Bus -> Ivy Added domains argument to IvyStart
+
+1999-01-08 11:30  chatty
+
+	* ivy.c:
+	  Bus -> Ivy Added domains argument to IvyStart
+
+1999-01-08 11:28  chatty
+
+	* timer.c, timer.h:
+
+	  Just updated copyright
+
+1999-01-06 15:15  jacomi
+
+	* Makefile: V1_3
+
+1998-12-28 16:55  damiano
+
+	* Makefile: Correction de debian/rules
+
+1998-12-28 16:48  damiano
+
+	* Makefile: Correction de debian/rules et src/Makefile
+
+1998-12-28 13:35  damiano
+
+	* Makefile: Correction sur debian/rules et src/Makefile
+
+1998-12-22 18:19  damiano
+
+	* Makefile: Debianisation des sources de la version de Stéphane C
+
+1998-12-22 13:49  chatty
+
+	* ivy.c:
+
+	  Corrected bogus call to SocketGetRemote in ClientDelete
+
+1998-12-22 11:16  chatty
+
+	* ivy.c:
+
+	  Mise au propre Ajout du mecanisme de choix des adresses de
+	  broadcast
+
+1998-12-22 11:15  chatty
+
+	* ivy.h, ivychannel.h, ivyloop.h, ivysocket.h, ivyxtloop.h,
+	  timer.h, ivyloop.c, ivysocket.c, ivyxtloop.c, timer.c:
+
+	  Mise au propre
+
+1998-12-22 11:15  chatty
+
+	* Makefile:
+
+	  Mise au propre Correction de la regle des lib
+
+1998-12-11 18:24  lecoanet
+
+	* Makefile, ivy.c, list.h: Modification pour debianisation
+
+1998-10-20 16:28  jacomi
+
+	* ivy.c: safety rule added
+
+1998-10-20 13:31  fcolin
+
+	* ivysocket.c: correction bus buscleanup et fermeture bus
+
+1998-10-20 13:31  fcolin
+
+	* ivysocket.h: correction bus sur buscleanup gestion liste et
+	  fermeture serveur
+
+1998-10-07 12:22  jacomi
+
+	* ivy.c: nouvelle adresse reseau ajoutee
+
+1998-09-18 11:33  jacomi
+
+	* Makefile: [no log message]
+
+1998-09-14 14:10  jacomi
+
+	* Makefile: librairies dynamiques ajoutees
+
+1998-09-03 10:18  jacomi
+
+	* ivychannel.h: [no log message]
+
+1998-08-12 12:23  jacomi
+
+	* Makefile, ivy.c, ivy.h, ivyloop.c, ivyloop.h, ivysocket.c,
+	  ivysocket.h, ivyxtloop.c, ivyxtloop.h: version relookee en ivy
+
+1998-08-03 14:58  fcolin
+
+	* Makefile: eclatement de bussocket pour permettre la creation de
+	  mainloop externe autre que XT et Interne buschannel.h devient
+	  l'interface avec la gestion MainLoop busxtloop.[ch] MainLoop
+	  Style XT busloop.[ch] MainLoop Interne basee sur select
+
+1998-06-16 11:26  fcolin
+
+	* Makefile, timer.c: Modif timer.c
+
+1998-04-15 11:47  damiano
+
+	* Makefile: Rename des fichiers socket en bussocket, et modifs des
+	  sources et du Makefile en consequence
+
+1998-04-09 15:55  damiano
+
+	* Makefile, list.h, timer.c, timer.h: Move des fichiers dans src
 

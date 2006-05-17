@@ -1,10 +1,61 @@
+ivy-c (3.8) unstable; urgency=low
+
+  * correction Bug regexp encore
+  * correction Bug introduit lors de la separation ivybind ( regexp sans
+    argument )
+  * rendu compatible avec la version 3.7 a un seul parametre sur la mainloop
+  * adaptation pour linux 64 bits
+  * cleanup sur channel et main loop
+  * ajout de getopt pour la compile sur Windows
+  * suppression de l'indirection sur les fonction channel et renomage
+  * separation regexp en module ( bug arg num edbute a 1 )
+  * Separation du code Regexp dans un module
+  * portage WIN32 ( pb sur macro debug )
+  * ivy bind pour isolation code regexp
+  * gestion de buffer a taille variable pour eliminer les pbs de taille static
+    dans le  code
+  * Macro de debug afin d'eviter de truffer le code de #ifdef DEBUG #endif
+  * cleanup DEBUG code
+  * correction bug sur filtrage regexp
+  * correction Filtred Binding + test avec ivyperf
+  * add indication on regexp filtering when classes are used call
+    BindingCallback
+  * add doc printf for commande bincall in ivyprobe
+  * correction de probleme potentiel en multithread ( Ada rejeu ) ajout d'un
+    warning en cas de client bloquant si la varaiable d'env IVY_DEBUG_SEND est
+    positionne
+  * changement version suite a modif ( hook unhook ) et test sur blocage a
+    l'emission
+  * retour au protocol V3
+  * correction bug malloc free
+  * memory leak malloc/free cleanup
+  * Implementation binding simple sans regexp
+  * uniformisation variable  message d'erreur
+  * remplacement argc argv par IvyArgument
+  * compile sur Windows les fichiers getopt sont necessaires uniquement sur
+    Windows( WIN32 ) compilateur VStudio
+  * gestion argument Ivy
+  * socket Buffered output
+  * separation du code regexp dans un module a part en vue de l'implementation
+    des bindings simple!
+  * fichiers d'export pour Windows
+  * pb de compile avec DEBUG
+  * portages des modifications sur windows
+  * un test de performance d'ivy a lancer en deux exemplaires donne le temps
+    de roundtrip d'un ping pong
+  * elimination des tailles de buffer par utilisation de realloc la plupart
+    des fonctions utilisent un pointeur static pour eviter de multiple
+    malloc/free ce qui veut dire que IvyC n'est pas reentrant !!!!
+
+ -- Olivier Fourdan <fourdan@lerak.tls.cena.fr>  Wed, 17 May 2006 15:09:07 +0200
+
 ivy-c (3.7) unstable; urgency=low
 
-  *  no more libgtkivy, replaced by libgivy (thx Alexandre Bustico <bustico@cena.fr>)
+  * no more libgtkivy, replaced by libgivy (thx Alexandre Bustico <bustico@cena.fr>)
   * Add new callback to treat binding events on ivy bus (Guillaume Vidon <vidon@cena.fr>)
   * Add Option to ivyprobe to test new callback on binding events
 
- --
+ -- Guillaume Vidon <vidon@cena.fr>  Fri, 24 Feb 2005 16:16:39 +0100
 
 ivy-c (3.6) unstable; urgency=low
 
