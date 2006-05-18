@@ -2,8 +2,8 @@
 #include <stdio.h>
 #include <strings.h>
 #include <Xm/PushB.h>
-#include <ivy.h>
-#include <ivyxtloop.h>
+#include <Ivy/ivy.h>
+#include <Ivy/ivyxtloop.h>
 
 void myMotifCallback(Widget w,XtPointer client_d,XtPointer call_d){
   // sends the string on the bus

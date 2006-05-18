@@ -13,8 +13,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ivyloop.h>
-#include <ivy.h>
+#include <Ivy/ivyloop.h>
+#include <Ivy/ivy.h>
 #define REGEXP "^ub"
 
 void Callback (IvyClientPtr app, void *user_data, int argc, char *argv[]) {

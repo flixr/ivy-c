@@ -4,11 +4,11 @@
 #	Copyright (C) 1997-2002
 #	Centre d'Études de la Navigation Aérienne
 #
-# 	Makefile
+#	Makefile
 #
 #	Authors: François-Régis Colin <fcolin@cena.fr>
-# 		 Stéphane Chatty <chatty@cena.fr>
-# 		 Yannick Jestin <jestin@cena.fr>
+#		 Stéphane Chatty <chatty@cena.fr>
+#		 Yannick Jestin <jestin@cena.fr>
 #
 #	Please refer to file version.h for the
 #	copyright notice regarding this software
@@ -20,18 +20,18 @@ MAJOR=3
 MINOR=8
 
 PERHAPS64 := $(shell uname -m | perl -ne "print /64/ ? '64' : '';")
-LIB = lib$(PERHAPS64)
+LIB = /lib$(PERHAPS64)
 ifeq ($(PERHAPS64), "64")
 	FPIC=
 else
 	FPIC=-fPIC
 endif
 
-INSTALL_BINDIR=$(PREFIX)/usr/local/bin
-INSTALL_LIBDIR=$(PREFIX)/usr/local/$(LIB)
+PREFIX = /usr
+X11_PREFIX = /usr/X11R6
 
-XTINC = -I/usr/X11R6/include
-XTLIB = -L/usr/X11R6/$(LIB) -lXt -lX11 -lSM -lICE
+XTINC = -I$(X11_PREFIX)/include
+XTLIB = -L$(X11_PREFIX)$(LIB) -lXt -lX11 -lSM -lICE
 GLIBINC = `pkg-config --cflags glib-2.0`
 GLIBLIB = `pkg-config --libs glib-2.0`
 GLUTINC = -I/usr/include -I.
@@ -47,12 +47,12 @@ ifndef TCLVERS
 TCLVERS=8.3
 endif
 
-TCLINCL	= -I/usr/include/tcl$(TCLVERS)
+TCLINCL = -I/usr/include/tcl$(TCLVERS)
 TCLLIB = -ltcl$(TCLVERS)
 #TCLINCL	= -I/usr/include/tcl8.4
 #TCLLIB = -ltcl8.4
 # use these if you want to use Aqua Tcl on macOSX
-#TCLINC	= -I/Library/Frameworks/Tcl.framework/Headers
+#TCLINC = -I/Library/Frameworks/Tcl.framework/Headers
 #TCLLIB = -framework Tcl
 PCREINC = `pcre-config --cflags`
 PCRELIB = `pcre-config --libs`
@@ -75,7 +75,7 @@ CC=gcc
 LIBTOOL=ar q # linux and solaris
 #LIBTOOL=libtool -static -o
 
-#REGEXP = -DGNU_REGEXP  -DREGCOMP_OPT=$(REGCOMP_OPT) # deprecated !
+#REGEXP = -DGNU_REGEXP	-DREGCOMP_OPT=$(REGCOMP_OPT) # deprecated !
 REGEXP= -DUSE_PCRE_REGEX -DPCRE_OPT=$(PCRE_OPT)
 # on activeTCL , set #define CHANNEL to null, and add ivyloop.o in the ivytcl target,
 # see below
@@ -210,57 +210,70 @@ clean:
 	-rm -f $(TARGETS) $(TARGETLIBS) *.o *.a *.so *.so.* *~
 
 installlibs: static-libs shared-libs
-	test -d $(INSTALL_LIBDIR) || mkdirhier $(INSTALL_LIBDIR)
-	test -d $(PREFIX)/usr/X11R6/$(LIB) || mkdirhier $(PREFIX)/usr/X11R6/$(LIB)
-	test -d $(PREFIX)/usr/local/include || mkdirhier $(PREFIX)/usr/local/include
-	install -m644 libivy.a $(INSTALL_LIBDIR)
-	install -m644 libgivy.a $(INSTALL_LIBDIR)
-	install -m644 libxtivy.a $(PREFIX)/usr/X11R6/$(LIB)
-	install -m644 libtclivy.a $(INSTALL_LIBDIR)
-	install -m644 libglibivy.a $(INSTALL_LIBDIR)
+	test -d $(DESTDIR)$(PREFIX)$(LIB)  || mkdirhier $(DESTDIR)$(PREFIX)$(LIB)
+	test -d $(DESTDIR)$(X11_PREFIX)$(LIB)  || mkdirhier $(DESTDIR)$(X11_PREFIX)$(LIB)
 
-	install -m644 libivy.so.$(MAJOR).$(MINOR) $(INSTALL_LIBDIR)
-	install -m644 libgivy.so.$(MAJOR).$(MINOR) $(INSTALL_LIBDIR)
-	install -m644 libxtivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/X11R6/$(LIB)
-	install -m644 libtclivy.so.$(MAJOR).$(MINOR) $(INSTALL_LIBDIR)
-	install -m644 libglibivy.so.$(MAJOR).$(MINOR) $(INSTALL_LIBDIR)
+	install -m644 libivy.a						$(DESTDIR)$(PREFIX)$(LIB)
+	install -m644 libgivy.a						$(DESTDIR)$(PREFIX)$(LIB)
+	install -m644 libxtivy.a					$(DESTDIR)$(X11_PREFIX)$(LIB)
+	install -m644 libtclivy.a					$(DESTDIR)$(PREFIX)$(LIB)
+	install -m644 libglibivy.a					$(DESTDIR)$(PREFIX)$(LIB)
 
-	install -m644 *.h $(PREFIX)/usr/local/include
+	install -m644 libivy.so.$(MAJOR).$(MINOR)			$(DESTDIR)$(PREFIX)$(LIB)
+	install -m644 libgivy.so.$(MAJOR).$(MINOR)			$(DESTDIR)$(PREFIX)$(LIB)
+	install -m644 libxtivy.so.$(MAJOR).$(MINOR)			$(DESTDIR)$(X11_PREFIX)$(LIB)
+	install -m644 libtclivy.so.$(MAJOR).$(MINOR)			$(DESTDIR)$(PREFIX)$(LIB)
+	install -m644 libglibivy.so.$(MAJOR).$(MINOR)			$(DESTDIR)$(PREFIX)$(LIB)
+
+	test -d $(DESTDIR)$(PREFIX)/include/Ivy || mkdirhier $(DESTDIR)$(PREFIX)/include/Ivy
+	install -m644 ivy.h						$(DESTDIR)$(PREFIX)/include/Ivy/
+	install -m644 ivybind.h						$(DESTDIR)$(PREFIX)/include/Ivy/
+	install -m644 ivybuffer.h					$(DESTDIR)$(PREFIX)/include/Ivy/
+	install -m644 ivychannel.h					$(DESTDIR)$(PREFIX)/include/Ivy/
+	install -m644 ivydebug.h					$(DESTDIR)$(PREFIX)/include/Ivy/
+	install -m644 ivyglibloop.h					$(DESTDIR)$(PREFIX)/include/Ivy/
+	install -m644 ivyglutloop.h*					$(DESTDIR)$(PREFIX)/include/Ivy/
+	install -m644 ivyloop.h						$(DESTDIR)$(PREFIX)/include/Ivy/
+	install -m644 ivysocket.h					$(DESTDIR)$(PREFIX)/include/Ivy/
+	install -m644 ivytcl.h*						$(DESTDIR)$(PREFIX)/include/Ivy/
+	install -m644 ivyxtloop.h					$(DESTDIR)$(PREFIX)/include/Ivy/
+	install -m644 list.h						$(DESTDIR)$(PREFIX)/include/Ivy/
+	install -m644 timer.h						$(DESTDIR)$(PREFIX)/include/Ivy/
+	install -m644 version.h						$(DESTDIR)$(PREFIX)/include/Ivy/
 
 installliblinks: installlibs
-	ln -fs $(INSTALL_LIBDIR)/libivy.so.$(MAJOR).$(MINOR) $(INSTALL_LIBDIR)/libivy.so
-	ln -fs $(INSTALL_LIBDIR)/libivy.so.$(MAJOR).$(MINOR) $(INSTALL_LIBDIR)/libivy.so.$(MAJOR)
-	ln -fs $(INSTALL_LIBDIR)/libgivy.so.$(MAJOR).$(MINOR) $(INSTALL_LIBDIR)/libgivy.so
-	ln -fs $(INSTALL_LIBDIR)/libgivy.so.$(MAJOR).$(MINOR) $(INSTALL_LIBDIR)/libgivy.so.$(MAJOR)
-	ln -fs /usr/X11R6/$(LIB)/libxtivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/X11R6/$(LIB)/libxtivy.so
-	ln -fs /usr/X11R6/$(LIB)/libxtivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/X11R6/$(LIB)/libxtivy.so.$(MAJOR)
-	ln -fs $(INSTALL_LIBDIR)/libtclivy.so.$(MAJOR).$(MINOR) $(INSTALL_LIBDIR)/libtclivy.so
-	ln -fs $(INSTALL_LIBDIR)/libtclivy.so.$(MAJOR).$(MINOR) $(INSTALL_LIBDIR)/libtclivy.so.$(MAJOR)
+	ln -fs $(PREFIX)$(LIB)/libivy.so.$(MAJOR).$(MINOR)		$(DESTDIR)$(PREFIX)$(LIB)/libivy.so
+	ln -fs $(PREFIX)$(LIB)/libivy.so.$(MAJOR).$(MINOR)		$(DESTDIR)$(PREFIX)$(LIB)/libivy.so.$(MAJOR)
+	ln -fs $(PREFIX)$(LIB)/libgivy.so.$(MAJOR).$(MINOR)		$(DESTDIR)$(PREFIX)$(LIB)/libgivy.so
+	ln -fs $(PREFIX)$(LIB)/libgivy.so.$(MAJOR).$(MINOR)		$(DESTDIR)$(PREFIX)$(LIB)/libgivy.so.$(MAJOR)
+	ln -fs $(X11_PREFIX)$(LIB)/libxtivy.so.$(MAJOR).$(MINOR)	$(DESTDIR)$(X11_PREFIX)$(LIB)/libxtivy.so
+	ln -fs $(X11_PREFIX)$(LIB)/libxtivy.so.$(MAJOR).$(MINOR)	$(DESTDIR)$(X11_PREFIX)$(LIB)/libxtivy.so.$(MAJOR)
+	ln -fs $(PREFIX)$(LIB)/libtclivy.so.$(MAJOR).$(MINOR)		$(DESTDIR)$(PREFIX)$(LIB)/libtclivy.so
+	ln -fs $(PREFIX)$(LIB)/libtclivy.so.$(MAJOR).$(MINOR)		$(DESTDIR)$(PREFIX)$(LIB)/libtclivy.so.$(MAJOR)
 
 installbins: commands
-	test -d $(INSTALL_BINDIR) || mkdirhier $(INSTALL_BINDIR)
-	test -d $(PREFIX)/usr/X11R6/bin || mkdirhier $(PREFIX)/usr/X11R6/bin
-	install -m755 ivyprobe $(INSTALL_BINDIR)
-	#install -m755 ivyxtprobe $(PREFIX)/usr/X11R6/bin
-	#install -m755 ivyglibprobe $(INSTALL_BINDIR)
-	#install -m755 ivyglutprobe $(PREFIX)/usr/X11R6/bin
+	test -d $(DESTDIR)$(PREFIX)/bin || mkdirhier $(DESTDIR)$(PREFIX)/bin
+	install -m755 ivyprobe $(DESTDIR)$(PREFIX)/bin
+	#install -m755 ivyxtprobe $(DESTDIR)$(PREFIX)/bin
+	#install -m755 ivyglibprobe $(DESTDIR)$(PREFIX)/bin
+	#install -m755 ivyglutprobe $(DESTDIR)$(PREFIX)/bin
 
 installdocs:
-	test -d $(PREFIX)/usr/share/doc/ivy-c || mkdirhier $(PREFIX)/usr/share/doc/ivy-c
-	for f in `find  ../doc/*.html -type f -maxdepth 1`; do \
-                install -m 644 $$f $(PREFIX)/usr/share/doc/ivy-c; \
-        done
-	test -d $(PREFIX)/usr/man/man1 || mkdirhier $(PREFIX)/usr/man/man1
-	for f in `find  ../doc/*.1 -type f -maxdepth 1`; do \
-                install -m 644 $$f $(PREFIX)/usr/man/man1; \
-        done
-	test -d $(PREFIX)/usr/share/doc/ivy-c/examples || mkdirhier $(PREFIX)/usr/share/doc/ivy-c/examples
-	install -m 644 version.h $(PREFIX)/usr/share/doc/ivy-c/copyright
-	install -m 644 ../examples/motifButtonIvy.c $(PREFIX)/usr/share/doc/ivy-c/examples
-	install -m 644 ../examples/testUnbind.c $(PREFIX)/usr/share/doc/ivy-c/examples
-	install -m 766 ../examples/Test.tcl $(PREFIX)/usr/share/doc/ivy-c/examples
-	install -m 766 ../examples/button.tk $(PREFIX)/usr/share/doc/ivy-c/examples
-	install -m 766 ../examples/unBind.tcl $(PREFIX)/usr/share/doc/ivy-c/examples
+	test -d $(DESTDIR)$(PREFIX)/share/doc/ivy-c || mkdirhier $(DESTDIR)$(PREFIX)/share/doc/ivy-c
+	for f in `find	../doc/*.html -type f -maxdepth 1`; do \
+		install -m 644 $$f					$(DESTDIR)$(PREFIX)/share/doc/ivy-c; \
+	done
+	test -d $(DESTDIR)$(PREFIX)/man/man1 || mkdirhier $(DESTDIR)$(PREFIX)/man/man1
+	for f in `find	../doc/*.1 -type f -maxdepth 1`; do \
+		install -m 644 $$f					$(DESTDIR)$(PREFIX)/man/man1; \
+	done
+	test -d $(DESTDIR)$(PREFIX)/share/doc/ivy-c/examples || mkdirhier $(DESTDIR)$(PREFIX)/share/doc/ivy-c/examples
+	install -m 644 version.h					$(DESTDIR)$(PREFIX)/share/doc/ivy-c/copyright
+	install -m 644 ../examples/motifButtonIvy.c			$(DESTDIR)$(PREFIX)/share/doc/ivy-c/examples
+	install -m 644 ../examples/testUnbind.c				$(DESTDIR)$(PREFIX)/share/doc/ivy-c/examples
+	install -m 766 ../examples/Test.tcl				$(DESTDIR)$(PREFIX)/share/doc/ivy-c/examples
+	install -m 766 ../examples/button.tk				$(DESTDIR)$(PREFIX)/share/doc/ivy-c/examples
+	install -m 766 ../examples/unBind.tcl				$(DESTDIR)$(PREFIX)/share/doc/ivy-c/examples
 
 install: installlibs installbins installliblinks installdocs
 
