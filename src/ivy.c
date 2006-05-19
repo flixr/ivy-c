@@ -7,8 +7,7 @@
  *
  *	Main functions
  *
- *	Authors: Francois-Regis Colin <fcolin@cena.dgac.fr>
- *		Stephane Chatty <chatty@cena.dgac.fr>
+ *	Authors: Francois-Regis Colin,Stephane Chatty
  *
  *	$Id$
  *
@@ -551,8 +550,8 @@ static const char * GenApplicationUniqueIdentifier()
 	static char appid[2048];
 	long curtime;
 	curtime = currentTime();
-	srandom( curtime );
-	sprintf(appid,"%ld:%ld:%d",random(),curtime,ApplicationPort);
+	srand( curtime );
+	sprintf(appid,"%ld:%ld:%d",rand(),curtime,ApplicationPort);
 	return appid;
 }
 void IvyInit (const char *appname, const char *ready, 
