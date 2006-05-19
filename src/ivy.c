@@ -551,7 +551,7 @@ static const char * GenApplicationUniqueIdentifier()
 	long curtime;
 	curtime = currentTime();
 	srand( curtime );
-	sprintf(appid,"%ld:%ld:%d",rand(),curtime,ApplicationPort);
+	sprintf(appid,"%d:%ld:%d",rand(),curtime,ApplicationPort);
 	return appid;
 }
 void IvyInit (const char *appname, const char *ready, 
