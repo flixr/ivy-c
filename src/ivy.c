@@ -16,9 +16,12 @@
  *	copyright notice regarding this software
  */
 
+
 #include <stdlib.h>
 #ifdef WIN32
+#include <windows.h>
 #else
+#include <sys/time.h>
 #include <arpa/inet.h>
 #endif
 #include <stdio.h>
@@ -104,6 +107,7 @@ static unsigned short SupervisionPort;
 static Client broadcast;
 
 static const char *ApplicationName = 0;
+static const char *ApplicationID = 0;
 
 
 /* callback appele sur reception d'un message direct */
@@ -414,7 +418,7 @@ static void Receive( Client client, void *data, char *line )
 		
 }
 
-static IvyClientPtr SendService( Client client )
+static IvyClientPtr SendService( Client client, const char *appname )
 {
 	IvyClientPtr clnt;
 	MsgRcvPtr msg;
@@ -422,7 +426,7 @@ static IvyClientPtr SendService( Client client )
 
 		clnt->msg_send = 0;
 		clnt->client = client;
-		clnt->app_name = strdup("Unknown");
+		clnt->app_name = strdup(appname);
 		clnt->app_port = 0;
 		MsgSendTo( client, StartRegexp, ApplicationPort, ApplicationName);
 		IVY_LIST_EACH(msg_recv, msg )
@@ -475,7 +479,7 @@ static void *ClientCreate( Client client )
 	TRACE("Connexion de %s:%hu\n", remotehost, remoteport );
 #endif //DEBUG
 
-	return SendService (client);
+	return SendService (client, "Unknown");
 }
 
 static void BroadcastReceive( Client client, void *data, char *line )
@@ -484,13 +488,16 @@ static void BroadcastReceive( Client client, void *data, char *line )
 	int err;
 	int version;
 	unsigned short serviceport;
+	char appid[2048];
+	char appname[2048];
 #ifdef DEBUG
 	unsigned short remoteport;
 	char *remotehost = 0;
 #endif
-
-	err = sscanf (line,"%d %hu", &version, &serviceport);
-	if ( err != 2 ) {
+	memset( appid, 0, sizeof( appid ) );
+	memset( appname, 0, sizeof( appname ) );
+	err = sscanf (line,"%d %hu %s %[^\n]", &version, &serviceport, appid, appname);
+	if ( err < 2 ) {
 		/* ignore the message */
 		unsigned short remoteport;
 		char *remotehost;
@@ -509,6 +516,7 @@ static void BroadcastReceive( Client client, void *data, char *line )
 		return;
 	}
 	/* check if we received our own message. SHOULD ALSO TEST THE HOST */
+	if ( strcmp( appid , ApplicationID) ==0 ) return;
 	if (serviceport == ApplicationPort) return;
 	
 #ifdef DEBUG
@@ -520,11 +528,33 @@ static void BroadcastReceive( Client client, void *data, char *line )
 	app = SocketConnectAddr(SocketGetRemoteAddr(client), serviceport, 0, Receive, ClientDelete );
 	if (app) {
 		IvyClientPtr clnt;
-		clnt = SendService( app );
+		clnt = SendService( app, appname );
 		SocketSetData( app, clnt);
 	}
 }
+static unsigned long currentTime()
+{
+#define MILLISEC 1000
+	unsigned long current;
+#ifdef WIN32
+	current = GetTickCount();
+#else
+	struct timeval stamp;
+        gettimeofday( &stamp, NULL );
+        current = stamp.tv_sec * MILLISEC + stamp.tv_usec/MILLISEC;
+#endif
+        return  current;
+}
 
+static const char * GenApplicationUniqueIdentifier()
+{
+	static char appid[2048];
+	long curtime;
+	curtime = currentTime();
+	srandom( curtime );
+	sprintf(appid,"%ld:%ld:%d",random(),curtime,ApplicationPort);
+	return appid;
+}
 void IvyInit (const char *appname, const char *ready, 
 			 IvyApplicationCallback callback, void *data,
 			 IvyDieCallback die_callback, void *die_data
@@ -576,7 +606,8 @@ void IvyStart (const char* bus)
 	 */
 	server = SocketServer (ANYPORT, ClientCreate, ClientDelete, Receive);
 	ApplicationPort = SocketServerGetPort (server);
-
+	ApplicationID = GenApplicationUniqueIdentifier();
+	        
 	/*
 	 * Find network list as well as broadcast port
 	 * (we accept things like 123.231,123.123:2000 or 123.231 or :2000),
@@ -636,7 +667,7 @@ void IvyStart (const char* bus)
 				if ( IN_MULTICAST( mask ) )
 					SocketAddMember (broadcast , mask );
 
-				SocketSendBroadcast (broadcast, mask, SupervisionPort, "%d %hu\n", VERSION, ApplicationPort); 
+				SocketSendBroadcast (broadcast, mask, SupervisionPort, "%d %hu %s %s\n", VERSION, ApplicationPort, ApplicationID, ApplicationName); 
 				numelem = 0;
 				mask = 0xffffffff;
 			}
