@@ -2,7 +2,7 @@ Source: ivy-c
 Priority: extra
 Section: devel
 Maintainer: Yannick Jestin <jestin@cena.fr>
-Build-Depends: debhelper (>> 4.0.0)
+Build-Depends: debhelper (>> 4.0.0), libc6-dev, xlibs-dev, tcl8.4-dev, libgtk1.2-dev, libpcre3-dev
 Standards-Version: 3.6.1
 
 Package: ivy-c-dev
@@ -20,7 +20,6 @@ Package: ivy-c
 Section: libs
 Architecture: any
 Depends: ${shlibs:Depends}
-Build-Depends: debhelper, libc6-dev, xlibs-dev, tcl8.4-dev, libgtk1.2-dev, libpcre3-dev
 Suggests: tclsh, wish
 Conflicts: ivy-tcl
 Description: Ivy software bus. runtime Package
