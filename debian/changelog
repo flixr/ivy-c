@@ -1,5 +1,9 @@
-ivy-c (3.8) unstable; urgency=low
+ivy-c (3.8-1) unstable; urgency=low
 
+  * suppression warning format
+  * portage WIN32 random => rand
+  * modification du protocol Ivy UDP : ajout de appid et appname dans 
+    le mesage Hello
   * rework the Makefile for cleaner installation
   * redo the debian packaging administration files for better lib/dev 
     files splitting
