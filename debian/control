@@ -8,7 +8,7 @@ Standards-Version: 3.6.1
 Package: ivy-c-dev
 Section: libdevel
 Architecture: any
-Depends: ivy-c (= ${Source-Version}), libc6-dev, xlibs-dev, libgtk1.2-dev
+Depends: ivy-c (= ${Source-Version}), libc6-dev, libx11-dev | xlibs-dev, libgtk1.2-dev
 Suggests: tclsh, wish
 Description: Ivy software bus. development Package
  This package is needed for compiling applications using ivy-c.
