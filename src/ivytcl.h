@@ -21,32 +21,6 @@
 extern "C" {
 #endif
 
-/*#include <X11/Intrinsic.h>*/
-
-/* general Handle */
-
-#define ANYPORT	0
-
-#ifdef WIN32
-#include <windows.h>
-#define HANDLE SOCKET
-#else
-#define HANDLE int
-#endif
-
-#include "ivychannel.h"
-
-extern void IvyTclChannelInit(void);
-
-extern Channel IvyTclChannelSetUp(
-		HANDLE fd,
-		void *data,
-		ChannelHandleDelete handle_delete,
-		ChannelHandleRead handle_read
-);
-
-extern void IvyTclChannelClose( Channel channel );
-
 #ifdef __cplusplus
 }
 #endif
