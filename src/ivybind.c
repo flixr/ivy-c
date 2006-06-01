@@ -210,11 +210,14 @@ int IvyBindingFilter(const char *expression)
 		/* extract token */
 		err = IvyBindingExec( token_extract, expression );
 		if ( err < 1 ) return 1;
-		IvyBindingMatch( token_extract, expression , 0, &tokenlen, &token );
+		IvyBindingMatch( token_extract, expression , 1, &tokenlen, &token );
 		for ( i = 0 ; i < messages_classes_count; i++ )
 		{
-			if (strncmp( messages_classes[i], token, tokenlen ) == 0)
-				return 1;
+		  if (strncmp( messages_classes[i], token, tokenlen ) == 0) {
+		    return 1; }
+		  //		  else {
+		  //printf ("DBG> %s eliminé [%s]\n", token, expression);
+		  //}
 		}
  	}
 	return regexp_ok;

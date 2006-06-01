@@ -27,7 +27,7 @@ else
 	FPIC=-fPIC
 endif
 
-PREFIX = /usr
+PREFIX = /usr/local
 X11_PREFIX = /usr/X11R6
 
 XTINC = -I$(X11_PREFIX)/include
