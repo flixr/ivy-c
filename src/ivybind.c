@@ -166,7 +166,7 @@ void IvyBindingMatch( IvyBinding bind, const char *message, int argnum, int *arg
 	
 	regmatch_t* p;
 
-	p = &bind->match[argnum+1];
+	p = &bind->match[argnum];
 	if ( p->rm_so != -1 ) {
 			*arglen = p->rm_eo - p->rm_so;
 			*arg = message + p->rm_so;
