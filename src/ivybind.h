@@ -28,4 +28,6 @@ void IvyBindingFree( IvyBinding bind );
 
 /* Execution , extraction */
 int IvyBindingExec( IvyBinding bind, const char * message );
+/* Get Argument */
 void IvyBindingMatch( IvyBinding bind, const char *message, int argnum, int *arglen, const char **arg );
+
