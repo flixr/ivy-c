@@ -1,3 +1,9 @@
+ivy-c (3.8.1-1) unstable; urgency=low
+
+  * Bug fix in filtering (bustico)
+
+ -- Olivier Fourdan <fourdan@lerak.tls.cena.fr>  Thu,  1 Jun 2006 14:27:08 +0200
+
 ivy-c (3.8-2) unstable; urgency=low
 
   * Include deps patch from Yannick.
