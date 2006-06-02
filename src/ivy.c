@@ -548,10 +548,10 @@ static unsigned long currentTime()
 static const char * GenApplicationUniqueIdentifier()
 {
 	static char appid[2048];
-	long curtime;
+	unsigned long curtime;
 	curtime = currentTime();
 	srand( curtime );
-	sprintf(appid,"%d:%ld:%d",rand(),curtime,ApplicationPort);
+	sprintf(appid,"%d:%lu:%d",rand(),curtime,ApplicationPort);
 	return appid;
 }
 void IvyInit (const char *appname, const char *ready, 
