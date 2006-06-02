@@ -27,7 +27,10 @@ else
 	FPIC=-fPIC
 endif
 
-PREFIX = /usr/local
+ifndef PREFIX
+    PREFIX=/usr/local
+endif
+
 X11_PREFIX = /usr/X11R6
 
 XTINC = -I$(X11_PREFIX)/include
@@ -225,6 +228,7 @@ installlibs: static-libs shared-libs
 	install -m644 libtclivy.so.$(MAJOR).$(MINOR)			$(DESTDIR)$(PREFIX)$(LIB)
 	install -m644 libglibivy.so.$(MAJOR).$(MINOR)			$(DESTDIR)$(PREFIX)$(LIB)
 
+includes:
 	test -d $(DESTDIR)$(PREFIX)/include/Ivy || mkdirhier $(DESTDIR)$(PREFIX)/include/Ivy
 	install -m644 ivy.h						$(DESTDIR)$(PREFIX)/include/Ivy/
 	install -m644 ivybind.h						$(DESTDIR)$(PREFIX)/include/Ivy/
@@ -275,7 +279,7 @@ installdocs:
 	install -m 766 ../examples/button.tk				$(DESTDIR)$(PREFIX)/share/doc/ivy-c/examples
 	install -m 766 ../examples/unBind.tcl				$(DESTDIR)$(PREFIX)/share/doc/ivy-c/examples
 
-install: installlibs installbins installliblinks installdocs
+install: installlibs installbins installliblinks installdocs includes
 
 rpm::
 	/usr/bin/rpmize
