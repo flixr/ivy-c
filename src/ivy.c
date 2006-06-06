@@ -750,6 +750,7 @@ int IvySendMsg(const char *fmt, ...)
 	static IvyBuffer buffer = { NULL, 0, 0}; /* Use satic mem to eliminate multiple call to malloc /free */
 	va_list ap;
 	
+	if( fmt == 0 || strlen(fmt) == 0 ) return 0;	
 	va_start( ap, fmt );
 	buffer.offset = 0;
 	make_message( &buffer, fmt, ap );

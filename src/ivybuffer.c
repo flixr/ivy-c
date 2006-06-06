@@ -40,7 +40,7 @@ int make_message(IvyBuffer* buffer, const char *fmt, va_list ap)
 		if ( buffer->data == NULL )
 			{
 			perror(" Ivy make message MALLOC error: " );
-		    return -1;
+			return -1;
 			}
 		}
     while (1) {
@@ -63,7 +63,7 @@ int make_message(IvyBuffer* buffer, const char *fmt, va_list ap)
         buffer->size *= 2;  /* twice the old size */
     if ((buffer->data = realloc (buffer->data, buffer->size)) == NULL)
 		{
-        perror(" Ivy make message MALLOC error: " );
+       		perror(" Ivy make message REALLOC error: " );
 		return -1;
 		}
     }
