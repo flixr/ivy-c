@@ -244,6 +244,11 @@ static int CheckConnected( IvyClientPtr clnt )
 			if ( addr1->s_addr == addr2->s_addr )
 				return 1;
 			}
+		/* client different mais applicationID identique */
+		if ( (client != clnt) && (clnt->app_id == client->app_id) )
+			{
+				return 1;
+			}
 			
 	}
 	return 0;
