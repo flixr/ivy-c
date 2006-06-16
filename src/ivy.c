@@ -245,10 +245,12 @@ static int CheckConnected( IvyClientPtr clnt )
 				return 1;
 			}
 		/* client different mais applicationID identique */
+		/* TODO est-ce utile ??? verif dans UDP 
 		if ( (client != clnt) && (clnt->app_id == client->app_id) )
 			{
 				return 1;
 			}
+		*/
 			
 	}
 	return 0;
