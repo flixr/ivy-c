@@ -860,7 +860,8 @@ char *IvyGetApplicationList(const char *sep)
 
 char **IvyGetApplicationMessages( IvyClientPtr app )
 {
-	static char *messagelist[200];/* TODO remove that ugly Thing */
+#define MAX_REGEXP 4096
+	static char *messagelist[MAX_REGEXP+1];/* TODO remove that ugly Thing */
 	MsgSndPtr msg;
 	int msgCount= 0;
 	memset( messagelist, 0 , sizeof( messagelist ));
@@ -868,6 +869,11 @@ char **IvyGetApplicationMessages( IvyClientPtr app )
 	IVY_LIST_EACH( app->msg_send, msg )
 	{
 	messagelist[msgCount++]= msg->str_regexp;
+	if ( msgCount >= MAX_REGEXP )
+		{
+		fprintf(stderr,"Too Much expression(%d) for buffer\n",msgCount);
+		break;
+		}
 	}
 	return messagelist;
 }

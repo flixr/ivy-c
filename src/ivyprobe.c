@@ -263,18 +263,43 @@ display(void)
 }
 #endif
 
+void BindMsgOfFile( const char * regex_file )
+{
+	char line[4096];
+	size_t size;
+	FILE* file;
+	file = fopen( regex_file, "r" );
+	if ( !file ) {
+		perror( "Regexp file open ");
+		return;
+	}
+	while( !feof( file ) )
+	{
+	if ( fgets( line, sizeof(line), file ) )
+		{
+		size = strlen(line);
+		if ( size > 1 )
+			{
+			line[size-1] = '\0'; /* supress \n */
+			IvyBindMsg (Callback, NULL, line);
+			}
+		}
+	}
+}
+
 int main(int argc, char *argv[])
 {
 	int c;
 	int timer_test = 0;
 	char busbuf [1024] = "";
 	const char* bus = 0;
+	const char* regex_file = 0;
 	char agentnamebuf [1024] = "";
 	const char* agentname = DEFAULT_IVYPROBE_NAME;
 	char agentready [1024] = "";
 	const char* helpmsg =
 	  "[options] [regexps]\n\t-b bus\tdefines the Ivy bus to which to connect to, defaults to 127:2010\n\t-t\ttriggers the timer test\n\t-n name\tchanges the name of the agent, defaults to IVYPROBE\n\t-v\tprints the ivy relase number\n\nregexp is a Perl5 compatible regular expression (see ivyprobe(1) and pcrepattern(3) for more info\nuse .help within ivyprobe\n\t-s bindcall\tactive the interception of regexp's subscribing or unscribing\n";
-	while ((c = getopt(argc, argv, "vn:d:b:w:t:s")) != EOF)
+	while ((c = getopt(argc, argv, "vn:d:b:w:t:sf:")) != EOF)
 			switch (c) {
 			case 'b':
 				strcpy (busbuf, optarg);
@@ -282,6 +307,9 @@ int main(int argc, char *argv[])
 				break;
 			case 'w':
 				wait_count = atoi(optarg) ;
+				break;
+			case 'f':
+				regex_file = optarg ;
 				break;
 			case 'n':
 				strcpy(agentnamebuf, optarg);
@@ -316,6 +344,8 @@ int main(int argc, char *argv[])
 #endif
 	IvyInit (agentname, agentready, ApplicationCallback,NULL,NULL,NULL);
 	IvyBindDirectMsg( DirectCallback,NULL);
+	if ( regex_file )
+		BindMsgOfFile( regex_file );
 	for  (; optind < argc; optind++)
 		IvyBindMsg (Callback, NULL, argv[optind]);
 
