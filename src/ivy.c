@@ -93,6 +93,9 @@ struct _clnt_lst {
 	unsigned short app_port;	/* port de l'application */
 };
 
+/* flag pour le debug en cas de Filter de regexp */
+int debug_filter = 0;
+
 /* server  pour la socket application */
 static Server server;
 
@@ -585,6 +588,8 @@ void IvySetBindCallback( IvyBindCallback bind_callback, void *bind_data )
 void IvySetFilter( int argc, const char **argv)
 {
 	IvyBindingSetFilter( argc, argv );
+	if ( getenv( "IVY_DEBUG_FILTER" )) debug_filter = 1;
+
 }
 
 void IvyStop (void)
@@ -749,7 +754,7 @@ IvyBindMsg (MsgCallback callback, void *user_data, const char *fmt_regex, ... )
 	}
 	return msg;
 }
-
+/* emmission d'un message avec formatage a la printf */
 int IvySendMsg(const char *fmt, ...)
 {
 	IvyClientPtr clnt;
@@ -768,6 +773,11 @@ int IvySendMsg(const char *fmt, ...)
 		match_count += ClientCall (clnt, buffer.data);
 	}
 	TRACE_IF( match_count == 0, "Warning no recipient for %s\n",buffer.data);
+	/* si le message n'est pas emit et qu'il y a des filtres alors WARNING */
+	if ( match_count == 0 && debug_filter )
+	{
+		IvyBindindFilterCheck( buffer.data );
+	}
 	return match_count;
 }
 

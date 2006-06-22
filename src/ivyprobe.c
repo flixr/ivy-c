@@ -74,6 +74,9 @@ XtAppContext cntx;
 int app_count = 0;
 int wait_count = 0;
 int fbindcallback = 0;
+int filter_count = 0;
+const char *filter[4096];
+char *classes;
 
 void DirectCallback(IvyClientPtr app, void *user_data, int id, char *msg ) 
 {
@@ -223,9 +226,11 @@ void ApplicationCallback (IvyClientPtr app, void *user_data, IvyApplicationEvent
 		app_count++;
 		printf("%s connected from %s\n", appname,  host);
 /*		printf("Application(%s): Begin Messages\n", appname);*/
+/* double usage with -s flag remove it 
 		msgList = IvyGetApplicationMessages (app);
 		while (*msgList )
 			printf("%s subscribes to '%s'\n",appname,*msgList++);
+*/
 /*		printf("Application(%s): End Messages\n",appname);*/
 #ifndef WIN32
 /* Stdin not compatible with select , select only accept socket */
@@ -243,6 +248,28 @@ void ApplicationCallback (IvyClientPtr app, void *user_data, IvyApplicationEvent
 		printf("%s: unkown event %d\n", appname, event);
 		break;
 	}
+}
+void IvyPrintBindCallback( IvyClientPtr app, void *user_data, int id, char* regexp,  IvyBindEvent event)
+{
+        switch ( event )  {
+        case IvyAddBind:
+                if ( fbindcallback )
+					printf("Application: %s on %s add regexp %d : %s\n", 
+						IvyGetApplicationName( app ), IvyGetApplicationHost(app), id, regexp);
+                break;
+        case IvyRemoveBind:
+                if ( fbindcallback )
+					printf("Application: %s on %s remove regexp %d :%s\n",
+						IvyGetApplicationName( app ), IvyGetApplicationHost(app), id, regexp);
+                break;
+        case IvyFilterBind:
+                printf("Application: %s on %s as been filtred regexp %d :%s\n",
+					IvyGetApplicationName( app ), IvyGetApplicationHost(app), id, regexp);
+                break;
+        default:
+                printf("Application: %s unkown event %d\n",IvyGetApplicationName( app ), event);
+                break;
+        }
 }
 
 
@@ -286,7 +313,17 @@ void BindMsgOfFile( const char * regex_file )
 		}
 	}
 }
-
+void BuildFilterRegexp()
+{
+	char *word=strtok( classes, "," );
+	while ( word != NULL && (filter_count < 4096 ))
+	{
+	filter[filter_count++] = word;
+	word = strtok( NULL, ",");
+	}
+	if ( filter_count )
+	IvySetFilter( filter_count, filter );
+}
 int main(int argc, char *argv[])
 {
 	int c;
@@ -298,8 +335,17 @@ int main(int argc, char *argv[])
 	const char* agentname = DEFAULT_IVYPROBE_NAME;
 	char agentready [1024] = "";
 	const char* helpmsg =
-	  "[options] [regexps]\n\t-b bus\tdefines the Ivy bus to which to connect to, defaults to 127:2010\n\t-t\ttriggers the timer test\n\t-n name\tchanges the name of the agent, defaults to IVYPROBE\n\t-v\tprints the ivy relase number\n\nregexp is a Perl5 compatible regular expression (see ivyprobe(1) and pcrepattern(3) for more info\nuse .help within ivyprobe\n\t-s bindcall\tactive the interception of regexp's subscribing or unscribing\n";
-	while ((c = getopt(argc, argv, "vn:d:b:w:t:sf:")) != EOF)
+	  "[options] [regexps]\n\t-b bus\tdefines the Ivy bus to which to connect to, defaults to 127:2010\n"
+	  "\t-t\ttriggers the timer test\n"
+	  "\t-n name\tchanges the name of the agent, defaults to IVYPROBE\n"
+	  "\t-v\tprints the ivy relase number\n\n"
+	  "regexp is a Perl5 compatible regular expression (see ivyprobe(1) and pcrepattern(3) for more info\n"
+	  "use .help within ivyprobe\n"
+	  "\t-s bindcall\tactive the interception of regexp's subscribing or unscribing\n"
+	  "\t-f regexfile\tread list of regexp's from file one by line\n"
+	  "\t-c msg1,msg2,msg3,...\tfilter the regexp's not beginning with words\n"
+	  ;
+	while ((c = getopt(argc, argv, "vn:d:b:w:t:sf:c:")) != EOF)
 			switch (c) {
 			case 'b':
 				strcpy (busbuf, optarg);
@@ -321,8 +367,10 @@ int main(int argc, char *argv[])
 			        timer_test = 1;
 			        break;
 			case 's':
-			        IvySetBindCallback(IvyDefaultBindCallback, NULL);
 			        fbindcallback=1;
+				break;
+			case 'c':
+			        classes= strdup(optarg);
 				break;
 			default:
 				printf("usage: %s %s",argv[0],helpmsg);
@@ -343,7 +391,11 @@ int main(int argc, char *argv[])
 	glutDisplayFunc(display);
 #endif
 	IvyInit (agentname, agentready, ApplicationCallback,NULL,NULL,NULL);
+	IvySetBindCallback(IvyPrintBindCallback, NULL);
+			        
 	IvyBindDirectMsg( DirectCallback,NULL);
+	if ( classes )
+		BuildFilterRegexp();
 	if ( regex_file )
 		BindMsgOfFile( regex_file );
 	for  (; optind < argc; optind++)

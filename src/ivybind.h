@@ -19,8 +19,10 @@
 typedef struct _binding *IvyBinding;
 
 /* Mise en place des Filtrages */
+int IvyBindingGetFilterCount();
 void IvyBindingSetFilter( int argc, const char ** argv );
 int IvyBindingFilter( const char *expression );
+void IvyBindindFilterCheck( const char *message );
 
 /* Creation, Compilation */
 IvyBinding IvyBindingCompile( const char *expression, int *erroffset, const char **errmessage );

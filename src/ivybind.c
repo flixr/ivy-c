@@ -179,6 +179,10 @@ void IvyBindingMatch( IvyBinding bind, const char *message, int argnum, int *arg
 }
 
 //filter Expression Bind 
+int IvyBindingGetFilterCount()
+{
+return messages_classes_count;
+}
 void IvyBindingSetFilter( int argc, const char **argv)
 {
 	const char *errbuf;
@@ -221,4 +225,17 @@ int IvyBindingFilter(const char *expression)
 		}
  	}
 	return regexp_ok;
+}
+/* recherche si le message commence par un mot clef de la table */
+void IvyBindindFilterCheck( const char *message )
+{
+	int i;
+	for ( i = 0 ; i < messages_classes_count; i++ )
+	{
+	if (strcmp( messages_classes[i], message ) == 0)
+		{
+		return; 
+	    }
+	}
+	fprintf(stderr,"*** WARNING *** message '%s' not sent due to missing keyword in filter table!!!\n", message );    
 }
