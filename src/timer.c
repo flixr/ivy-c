@@ -137,6 +137,10 @@ void TimerModify( TimerId timer, long time )
 
 struct timeval *TimerGetSmallestTimeout()
 {
+	unsigned long stamp;
+	/* recalcul du prochain timeout */
+	stamp = currentTime();
+	AdjTimeout( stamp );
 	return timeoutptr;
 }
 
@@ -168,6 +172,5 @@ void TimerScan()
 			}
 		}
 	}
-	/* recalcul du prochain timeout */
-	AdjTimeout( stamp );
+	
 }
