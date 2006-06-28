@@ -165,7 +165,7 @@ void IvyChannelStop (void)
 	MainLoop = 0;
 }
 
-void IvyMainLoop()
+void IvyMainLoop(void)
 {
 
 	fd_set rdset;
