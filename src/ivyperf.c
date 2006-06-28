@@ -111,6 +111,6 @@ int main(int argc, char *argv[])
 	TimerRepeatAfter (TIMER_LOOP, time, TimerCall, (void*)1);
 	
 
-	IvyMainLoop (0,0);
+	IvyMainLoop ();
 	return 0;
 }

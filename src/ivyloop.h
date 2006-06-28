@@ -52,8 +52,12 @@ de la maniere suivante:
 	!!!! Attention donc l'appel des callbacks ivy se fait avec l'acces verrouille !
 */
 
-extern void IvyMainLoop(void(*BeforeSelect)(void),void(*AfterSelect)(void) );
+extern void IvyMainLoop(void);
 
+typedef void ( *IvyHookPtr) ( void *data );
+
+extern void IvySetBeforeSelectHook(IvyHookPtr before, void *data );
+extern void IvySetAfterSelectHook(IvyHookPtr after, void *data );
 
 #ifdef __cplusplus
 }

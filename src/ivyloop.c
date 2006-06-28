@@ -56,6 +56,13 @@ static int channel_initialized = 0;
 static fd_set open_fds;
 static int MainLoop = 1;
 
+/* Hook callback & data */
+static IvyHookPtr BeforeSelect = NULL;
+static IvyHookPtr AfterSelect = NULL;
+
+static void *BeforeSelectData = NULL;
+static void *AfterSelectData = NULL;
+
 #ifdef WIN32
 WSADATA WsaData;
 #endif
@@ -158,7 +165,7 @@ void IvyChannelStop (void)
 	MainLoop = 0;
 }
 
-void IvyMainLoop(void(*BeforeSelect)(void),void(*AfterSelect)(void))
+void IvyMainLoop()
 {
 
 	fd_set rdset;
@@ -166,20 +173,24 @@ void IvyMainLoop(void(*BeforeSelect)(void),void(*AfterSelect)(void))
 	int ready;
 
 	while (MainLoop) {
+		
 		ChannelDefferedDelete();
-	   	if (BeforeSelect) (*BeforeSelect)();
+	   	
+	   	if (BeforeSelect)
+			(*BeforeSelect)(BeforeSelectData);
 		rdset = open_fds;
 		exset = open_fds;
 		ready = select(64, &rdset, 0,  &exset, TimerGetSmallestTimeout());
-		/* for compatibility with older version we test also the first parameter */
-		if (BeforeSelect && AfterSelect) (*AfterSelect)();
+		
+		if (AfterSelect) 
+			(*AfterSelect)(AfterSelectData);
 		
 		if (ready < 0 && (errno != EINTR)) {
          		fprintf (stderr, "select error %d\n",errno);
 			perror("select");
 			return;
 		}
-		TimerScan();
+		TimerScan(); /* should be spliited in two part ( next timeout & callbacks */
 		if (ready > 0) {
 			IvyChannelHandleExcpt(&exset);
 			IvyChannelHandleRead(&rdset);
@@ -212,3 +223,14 @@ void IvyIdle()
 	
 }
 
+
+void IvySetBeforeSelectHook(IvyHookPtr before, void *data )
+{
+	BeforeSelect = before;
+	BeforeSelectData = data;
+}
+void IvySetAfterSelectHook(IvyHookPtr after, void *data )
+{
+	AfterSelect = after;
+	AfterSelectData = data;
+}

@@ -217,7 +217,7 @@ void ApplicationCallback (IvyClientPtr app, void *user_data, IvyApplicationEvent
 {
 	char *appname;
 	char *host;
-	char **msgList;
+/*	char **msgList;*/
 	appname = IvyGetApplicationName (app);
 	host = IvyGetApplicationHost (app);
 	switch  (event)  {
@@ -430,7 +430,7 @@ int main(int argc, char *argv[])
 #endif
 
 #ifdef IVYMAINLOOP
-	IvyMainLoop (0,0);
+	IvyMainLoop ();
 #endif
 	return 0;
 }
