@@ -1,3 +1,20 @@
+ivy-c (3.9.0-1) unstable; urgency=low
+
+  * Correction d'un petit pb dans la generation de l'appID ( signe - )
+  * Ajout test de controle des argument de IvySendMsg.
+  * Correction d'un BUG dans IvyGetMessages ( si nb > 200 ) ajout d'un
+    argument -f a ivyprobe pour passer des regexps dans un fichier.
+  * Ajout d'un warning si la variable IVY_DEBUG_FILTER est postionne et que le
+    message n'est pas emit , on controle la table des filtres ajout d'un flag
+    -c a ivyprobe pour la gestion des filtres de regexps.
+  * Modification API Hook sur IvyMainLoop.
+  * Mise en conformite avec prototype.
+  * Modification de l'emplacement du calcul du timer (juste avant le select )
+    la fonction TimerScan ne s'occupe que des callback la fonction
+    TimerGetSmallestTimeout recalcul le timeout en reprenant l'heure courante.
+
+ -- Olivier Fourdan <fourdan@lerak.tls.cena.fr>  Tue,  4 Jul 2006 16:03:58 +0200
+
 ivy-c (3.8.1-1) unstable; urgency=low
 
   * Bug fix in IvyBinding filtering with PCRE (bustico)

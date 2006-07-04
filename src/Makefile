@@ -17,7 +17,7 @@
 
 # change this in version.h too !!!!
 MAJOR=3
-MINOR=8
+MINOR=9
 
 PERHAPS64 := $(shell uname -m | perl -ne "print /64/ ? '64' : '';")
 LIB = /lib$(PERHAPS64)
