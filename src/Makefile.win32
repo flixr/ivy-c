@@ -17,7 +17,7 @@
 
 # change this in version.h too !!!!
 MAJOR=3
-MINOR=8
+MINOR=9
 
 PCREINC = -I "C:\Documents and Settings\fcolin\My Documents\Visual Studio 2005\Projects\pcre-6.4\\" 
 PCRELIB = Debug\pcre.lib
