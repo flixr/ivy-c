@@ -64,8 +64,9 @@ typedef enum {
 	EndRegexp,		/* end of the regexp list */
 	StartRegexp,		/* debut des expressions */
 	DirectMsg,		/* message direct a destination de l'appli */
-	Die			/* demande de terminaison de l'appli */
-
+	Die,			/* demande de terminaison de l'appli */
+	Ping,			/* message de controle ivy */
+	Pong			/* ivy doit renvoyer ce message à la reception d'un ping */
 } MsgType;	
 
 typedef struct _msg_snd *MsgSndPtr;
@@ -418,6 +419,18 @@ static void Receive( Client client, void *data, char *line )
 				(*application_die_callback)( clnt, application_die_user_data, id );
 			IvyCleanup();
 			exit(0);
+			break;
+
+		case Ping:
+			
+			TRACE("Ping Message\n");
+			MsgSendTo( client, Pong, 0, "" );
+			break;
+
+		case Pong:
+			
+			TRACE("Pong Message\n");
+			printf("Receive unhandled Pong message (ivy-c not able to send ping)\n");
 			break;
 
 		default:
