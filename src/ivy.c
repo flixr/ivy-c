@@ -424,7 +424,7 @@ static void Receive( Client client, void *data, char *line )
 		case Ping:
 			
 			TRACE("Ping Message\n");
-			MsgSendTo( client, Pong, 0, "" );
+			MsgSendTo( client, Pong, id, "" );
 			break;
 
 		case Pong:
