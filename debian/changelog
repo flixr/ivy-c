@@ -1,3 +1,10 @@
+ivy-c (3.9.0-2) unstable; urgency=low
+
+  * Build Debian Package with Alex's latest changes, implementing ping/pong
+    messages, and documentation update.
+
+ -- Olivier Fourdan <fourdan@lerak.tls.cena.fr>  Mon, 21 Aug 2006 10:11:47 +0200
+
 ivy-c (3.9.0-1) unstable; urgency=low
 
   * Correction d'un petit pb dans la generation de l'appID ( signe - )
