@@ -24,5 +24,5 @@ Suggests: tclsh, wish
 Conflicts: ivy-tcl
 Description: Ivy software bus. runtime Package
  Ivy is mostly a communication convention between processes, implemented
- through a collection of libraries in several languages and for several platforms,
+ through a collection of libraries in several languages and for several platforms:
  from  C to Perl, from Macintosh or WindowsNT to Linux or Unix.
