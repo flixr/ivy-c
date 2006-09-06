@@ -416,9 +416,9 @@ another library.
 <title>Channels</title>
 <para>
 You can get a channel to be managed from the Ivy main loop by using functions
-<function>IvyChannelSetUp</function> and <function>IvyChannelClose</function>.
+<function>IvyChannelAdd</function> and <function>IvyChannelRemove</function>.
 <programlisting>
-Channel IvyChannelSetUp (HANDLE fd,
+Channel IvyChannelAdd (HANDLE fd,
 			void* data,
 			ChannelHandleDelete handle_delete,
 			ChannelHandleRead handle_read);
@@ -428,7 +428,7 @@ descriptor <parameter>fd</parameter>, and function <parameter>handle_delete</par
 closed, and
 
 <programlisting>
-void IvyChannelClose (Channel ch);
+void IvyChannelRemove (Channel ch);
 </programlisting>
 terminates the management of channel <parameter>ch</parameter>.
 </para>
@@ -529,7 +529,7 @@ following ones:
   <listitem><para>IvyXtChannelAppContect(app_context) with an existing Xt
   context</para>
   <listitem><para>You can add channels to be handled by Ivy, for instance,
-  stdin, with the IvyXtChannelSetUp function
+  stdin, with the IvyChannelAdd function
   <listitem><para>IvyInit(char *name,char *readyMessage,IvyApplicationCallback
   cb,void *cbUserData,IvyDieCallback dieCb,void *dieCbUserdata)</para>
   <listitem><para>IvyBindMsg() for the behavior</para>
@@ -683,18 +683,21 @@ int main( int   argc, char *argv[] ) {
 <title>Functions to be provided</title>
 <para>
 You can decide to use the main loop from another toolkit than the X Toolkit
-or the Tk toolkit. If you do that, you'll have to define three functions that
-Ivy will use to get its own channels managed by the other toolkit. The three
-following global variables should be defined:
+or the Tk toolkit. If you do that, you'll have to define four functions that
+Ivy will use to get its own channels managed by the other toolkit.
+you should link ivy with your new module insted of the ivy(xxx)loop module.
+These functions are declared in ivychannel.h:
 <programlisting>
-ChannelInit channel_init;
-ChannelSetUp channel_setup;
-ChannelClose channel_close;
+IvyChannelInit
+IvyChannelStop
+IvyChannelAdd
+IvyChannelRemove
 </programlisting>
 
 They should point to functions that respectively:
 <itemizedlist>
 <listitem><para> make the necessary global initializations before entering the main loop</para>
+<listitem><para> make the necessary global finalizations before exiting the main loop</para>
 <listitem><para> initialize a channel and ensure that it is managed by the main loop</para>
 <listitem><para> close a channel</para>
 </itemizedlist>
@@ -704,13 +707,21 @@ The types <type>ChannelInit</type>, <type>ChannelSetUp</type> and <type>ChannelC
 as follows:
 
 <programlisting>
-typedef void (*ChannelInit)(void);
-typedef Channel (*ChannelSetUp)(
+extern void IvyChannelInit(void);
+
+extern void IvyChannelStop (void);
+
+/* function called by Ivy to set callback on the sockets */
+extern Channel IvyChannelAdd(
         HANDLE fd,
         void *data,
         ChannelHandleDelete handle_delete,
-        ChannelHandleRead handle_read);
-typedef void (*ChannelClose)( Channel channel );
+        ChannelHandleRead handle_read
+);
+
+/* function called by Ivy to remove callback on the sockets */
+extern void IvyChannelRemove( Channel channel );
+
 </programlisting>
 </para>
 </sect3>
