@@ -172,6 +172,13 @@ Message binding
 In this example the function \fBStartTimeCallback\fR will be called
 each time the string \fBCLOCK Start time=(.*)\fR will be emitted on
 the bus.
+There is a special syntax for specifying numeric interval, in this case
+the interval is locally transformed in a pcre regexp.
+syntax is \fB(?Imin#max[fi])\fR. min and max are the bounds,
+by default the regexp match decimal number, but if max bound is
+followed by 'i', the regexp match only integers ex : \fB(?I-10#20), (?I20#25i)\fR
+Note that due to the regexp generator limitation (which will perhaps be raised eventually)
+the bounds are always integers.
 .SH 
 \fBIvyUnbindMsg\fR:
 Message unbinding

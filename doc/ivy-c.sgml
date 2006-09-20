@@ -364,6 +364,13 @@ binds callback function <function>cb</function> to the regular expression specif
 <parameter>regex_format</parameter> and the optional following arguments. <parameter>regex_format</parameter> and
 the following arguments are handled as in <function>printf</function>. The return
 value is an identifier that can be used later for cancelling the subscription.
+There is a special syntax for specifying numeric interval, in this case
+the interval is locally transformed in a pcre regexp.
+syntax is (?Imin#max[fi]). min and max are the bounds,
+by default the regexp match decimal number, but if max bound is
+followed by 'i', the regexp match only integers ex : (?I-10#20), (?I20#25i)
+Note that due to the regexp generator limitation (which will perhaps be raised eventually)
+the bounds are always integers.
 
 <programlisting>
 void IvyUnbindMsg (MsgRcvPtr id);
