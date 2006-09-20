@@ -86,12 +86,12 @@ CHANNEL = -DTCL_CHANNEL_INTEGRATION
 CFLAGS = -g -Wall $(FPIC)
 
 
-OBJ = ivyloop.o timer.o ivysocket.o ivy.o ivybuffer.o ivybind.o
-GOBJ = ivyloop.o timer.o ivysocket.o givy.o ivybuffer.o ivybind.o
-XTOBJ = ivyxtloop.o ivysocket.o ivy.o ivybuffer.o ivybind.o
-GLIBOBJ = ivyglibloop.o ivysocket.o ivy.o ivybuffer.o ivybind.o
-GLUTOBJ = ivyglutloop.o ivysocket.o ivy.o ivybuffer.o ivybind.o
-TCLOBJ = ivytcl.o  timer.o ivysocket.o givy.o ivybuffer.o ivybind.o
+OBJ = ivyloop.o timer.o ivysocket.o ivy.o ivybuffer.o ivybind.o intervalRegexp.o
+GOBJ = ivyloop.o timer.o ivysocket.o givy.o ivybuffer.o ivybind.o intervalRegexp.o
+XTOBJ = ivyxtloop.o ivysocket.o ivy.o ivybuffer.o ivybind.o intervalRegexp.o
+GLIBOBJ = ivyglibloop.o ivysocket.o ivy.o ivybuffer.o ivybind.o intervalRegexp.o
+GLUTOBJ = ivyglutloop.o ivysocket.o ivy.o ivybuffer.o ivybind.o intervalRegexp.o
+TCLOBJ = ivytcl.o  timer.o ivysocket.o givy.o ivybuffer.o ivybind.o intervalRegexp.o
 
 # WINDOWS add ivyloop.o if TCL_CHANNEL_INTEGRATION is not set
 TARGETS = ivyprobe ivyperf ivyglibprobe ivyxtprobe 

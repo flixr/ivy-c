@@ -30,6 +30,7 @@
 
 #include <fcntl.h>
 
+#include "intervalRegexp.h"
 #include "ivychannel.h"
 #include "ivysocket.h"
 #include "list.h"
@@ -136,6 +137,7 @@ static MsgRcvPtr msg_recv = 0;
 static IvyClientPtr clients = 0;
 
 static const char *ready_message = 0;
+static void substituteInterval (IvyBuffer *src);
 
 /*
  * function like strok but do not eat consecutive separator
@@ -753,6 +755,8 @@ IvyBindMsg (MsgCallback callback, void *user_data, const char *fmt_regex, ... )
 	make_message( &buffer, fmt_regex, ap );
 	va_end  (ap );
 
+	substituteInterval (&buffer);
+
 	/* add Msg to the query list */
 	IVY_LIST_ADD_START( msg_recv, msg )
 		msg->id = recv_id++;
@@ -906,4 +910,45 @@ char **IvyGetApplicationMessages( IvyClientPtr app )
 		}
 	}
 	return messagelist;
+}
+
+static void substituteInterval (IvyBuffer *src)
+{
+  // pas de traitement couteux s'il n'y a rien à interpoler
+  if (strstr (src->data, "(?I") == NULL) {
+    return;
+  } else {
+    IvyBuffer dst = {NULL, 0, 0};
+    dst.size = 8192;
+    dst.data = malloc (dst.size);
+
+    char *curPos = src->data;
+    char *itvPos;
+    while ((itvPos = strstr (curPos, "(?I")) != NULL) {
+      // copie depuis la position courante jusqu'à l'intervalle
+      int lenCp, min,max;
+      char withDecimal;
+      lenCp = itvPos-curPos;
+      memcpy (&(dst.data[dst.offset]), curPos, lenCp);
+      curPos=itvPos;
+      dst.offset += lenCp;
+
+      // extraction des paramètres de l'intervalle
+      sscanf (itvPos, "(?I%d#%d%c", &min, &max, &withDecimal);
+
+      //      printf ("DBG> substituteInterval min=%d max=%d withDecimal=%d\n", 
+      //      min, max, (withDecimal != 'i'));   
+  
+      // generation et copie de l'intervalle
+      regexpGen (&(dst.data[dst.offset]), dst.size-dst.offset, min, max, (withDecimal != 'i'));
+      dst.offset = strlen (dst.data);
+
+      // consommation des caractères décrivant intervalle dans la chaine source
+      curPos = strstr (curPos, ")");
+      curPos++;
+    }
+    strncat (dst.data, curPos, dst.size-dst.offset);
+    free (src->data);
+    src->data = dst.data;
+  }
 }
