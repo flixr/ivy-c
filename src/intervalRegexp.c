@@ -192,7 +192,8 @@ static NextMax nextMax (const char *min, const char *max)
   NextMax nextMax ={0,0};
   char revMin[32], revMax[32];
   size_t nbDigitsMin, nbDigitsMax;
-  size_t rankRev=0, rankForw, rank=0, i;
+  size_t rankRev=0, rankForw, rank=0;
+  int i;
   int currMax; 
 
   nbDigitsMin = strlen (min);
@@ -385,7 +386,7 @@ static bool substr (char *substring, size_t buflen, const char* expr, size_t pos
 static char* reverse (char *string)
 {
   char *locBuf ;
-  size_t i;
+  int i;
   size_t len = strlen (string);
 
   locBuf = malloc (len+1);
