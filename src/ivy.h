@@ -29,7 +29,7 @@ extern "C" {
 typedef struct _clnt_lst *IvyClientPtr;
 
 typedef enum { IvyApplicationConnected, IvyApplicationDisconnected } IvyApplicationEvent;
-typedef enum { IvyAddBind, IvyRemoveBind, IvyFilterBind } IvyBindEvent;
+typedef enum { IvyAddBind, IvyRemoveBind, IvyFilterBind, IvyChangeBind } IvyBindEvent;
 
 extern void IvyDefaultApplicationCallback( IvyClientPtr app, void *user_data, IvyApplicationEvent event ) ;
 extern void IvyDefaultBindCallback( IvyClientPtr app, void *user_data, int id, char* regexp,  IvyBindEvent event ) ;
@@ -80,6 +80,8 @@ char *IvyGetApplicationList(const char *sep);
 char **IvyGetApplicationMessages( IvyClientPtr app); /* demande de reception d'un message */
 
 MsgRcvPtr IvyBindMsg( MsgCallback callback, void *user_data, const char *fmt_regexp, ... ); /* avec sprintf prealable */
+MsgRcvPtr IvyChangeMsg (MsgRcvPtr msg, const char *fmt_regex, ... ); /* avec sprintf prealable */
+
 void IvyUnbindMsg( MsgRcvPtr id );
 
 /* emission d'un message d'erreur */

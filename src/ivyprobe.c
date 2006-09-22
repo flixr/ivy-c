@@ -266,6 +266,11 @@ void IvyPrintBindCallback( IvyClientPtr app, void *user_data, int id, char* rege
                 printf("Application: %s on %s as been filtred regexp %d :%s\n",
 					IvyGetApplicationName( app ), IvyGetApplicationHost(app), id, regexp);
                 break;
+        case IvyChangeBind:
+                if ( fbindcallback )
+					printf("Application: %s on %s change regexp %d : %s\n", 
+						IvyGetApplicationName( app ), IvyGetApplicationHost(app), id, regexp);
+                break;
         default:
                 printf("Application: %s unkown event %d\n",IvyGetApplicationName( app ), event);
                 break;
@@ -276,8 +281,8 @@ void IvyPrintBindCallback( IvyClientPtr app, void *user_data, int id, char* rege
 #ifdef IVYMAINLOOP
 void TimerCall(TimerId id, void *user_data, unsigned long delta)
 {
-	printf("Timer callback: %d delta %lu ms\n", (int)user_data, delta);
-	IvySendMsg ("TEST TIMER %d", (int)user_data);
+	printf("Timer callback: %ld delta %lu ms\n", (long)user_data, delta);
+	IvySendMsg ("TEST TIMER %d", (long)user_data);
 	/*if  ((int)user_data == 5) TimerModify (id, 2000);*/
 }
 #endif
@@ -434,3 +439,4 @@ int main(int argc, char *argv[])
 #endif
 	return 0;
 }
+

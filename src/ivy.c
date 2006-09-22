@@ -320,16 +320,28 @@ static void Receive( Client client, void *data, char *line )
 			bind = IvyBindingCompile( arg, & erroffset, & errbuf );
 			if ( bind != NULL )
 				{
-				IVY_LIST_ADD_START( clnt->msg_send, snd )
-					snd->id = id;
-					snd->str_regexp = strdup( arg );
-					snd->binding = bind;
-					if ( application_bind_callback )
-					  {
-					    (*application_bind_callback)( clnt, application_bind_data, id, snd->str_regexp, IvyAddBind );
-					  }
-				IVY_LIST_ADD_END( clnt->msg_send, snd )
-				
+				  // On teste si c'est un change regexp : changement de regexp d'une id existante
+				  IVY_LIST_ITER( clnt->msg_send, snd, ( id != snd->id ));
+				  if ( snd )     {
+				    free (snd->str_regexp);
+				    snd->str_regexp = strdup( arg );
+				    snd->binding = bind;
+				    if ( application_bind_callback )
+				      {
+					(*application_bind_callback)( clnt, application_bind_data, id, snd->str_regexp, IvyChangeBind );
+				      }
+				  } else {
+				    IVY_LIST_ADD_START( clnt->msg_send, snd )
+				      snd->id = id;
+				    snd->str_regexp = strdup( arg );
+				    snd->binding = bind;
+				    if ( application_bind_callback )
+				      {
+					(*application_bind_callback)( clnt, application_bind_data, id, snd->str_regexp, IvyAddBind );
+				      }
+				    IVY_LIST_ADD_END( clnt->msg_send, snd )
+				      
+				      }
 				}
 			else
 			{
@@ -771,6 +783,32 @@ IvyBindMsg (MsgCallback callback, void *user_data, const char *fmt_regex, ... )
 	}
 	return msg;
 }
+
+/* changement de regexp d'un bind existant precedement fait avec IvyBindMsg */
+MsgRcvPtr
+IvyChangeMsg (MsgRcvPtr msg, const char *fmt_regex, ... )
+{
+	static IvyBuffer buffer = { NULL, 0, 0};
+	va_list ap;
+	IvyClientPtr clnt;
+
+	va_start (ap, fmt_regex );
+	buffer.offset = 0;
+	make_message( &buffer, fmt_regex, ap );
+	va_end  (ap );
+
+	substituteInterval (&buffer);
+
+	/* change Msg in the query list */
+	msg->regexp = strdup(buffer.data);
+	
+	/* Send to already connected clients */
+	/* recherche dans la liste des requetes recues de mes clients */
+	IVY_LIST_EACH( clients, clnt ) {
+	  MsgSendTo( clnt->client, AddRegexp,msg->id,msg->regexp);
+	}
+	return msg;
+}
 /* emmission d'un message avec formatage a la printf */
 int IvySendMsg(const char *fmt, ...)
 {
@@ -865,6 +903,10 @@ void IvyDefaultBindCallback( IvyClientPtr app, void *user_data, int id, char* re
 		break;
 	case IvyFilterBind:
 		printf("Application: %s on %s as been filtred regexp %d :%s\n", IvyGetApplicationName( app ), IvyGetApplicationHost(app), id, regexp);
+		break;
+	case IvyChangeBind:
+	        printf("Application: %s on %s change regexp %d : %s\n", IvyGetApplicationName( app ), IvyGetApplicationHost(app), id, regexp);
+		break;
 		break;
 	default:
 		printf("Application: %s unkown event %d\n",IvyGetApplicationName( app ), event);
