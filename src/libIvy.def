@@ -26,7 +26,8 @@ IvySendMsg
 IvyBindDirectMsg
 IvySendDirectMsg
 
-
+IvySetBeforeSelectHook
+IvySetAfterSelectHook
 IvyMainLoop
 IvyChannelInit
 IvyChannelRemove
