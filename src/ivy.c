@@ -918,12 +918,13 @@ static void substituteInterval (IvyBuffer *src)
   if (strstr (src->data, "(?I") == NULL) {
     return;
   } else {
+	char *curPos;
+    char *itvPos;
     IvyBuffer dst = {NULL, 0, 0};
     dst.size = 8192;
     dst.data = malloc (dst.size);
 
-    char *curPos = src->data;
-    char *itvPos;
+    curPos = src->data;
     while ((itvPos = strstr (curPos, "(?I")) != NULL) {
       // copie depuis la position courante jusqu'à l'intervalle
       int lenCp, min,max;

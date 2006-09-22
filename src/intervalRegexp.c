@@ -6,6 +6,14 @@
 
 #include "intervalRegexp.h"
 
+#ifdef __PRETTY_FUNCTION__
+#else
+#define __PRETTY_FUNCTION__ __FUNCTION__
+#endif
+
+
+#define MAXINT( a , b ) ((a) > (b) ? (a) : (b))
+#define MININT( a , b ) ((a) < (b) ? (a) : (b))
 
 #define Perr(...) (perr ( __PRETTY_FUNCTION__, __VA_ARGS__))
 #define CHECK_AND_RETURN(a)   if (strlen (locBuf) <= buflen) {	\
@@ -15,6 +23,9 @@
                             return Perr ("CHECK_AND_RETURN"); }
 
 #define EndLocBuf (&(locBuf[strlen(locBuf)]))
+#ifdef WIN32
+#define snprintf _snprintf
+#endif
 #define AddLocBuf(...) snprintf (EndLocBuf, sizeof (locBuf)-strlen(locBuf), __VA_ARGS__)
 
 typedef struct  {
@@ -35,16 +46,11 @@ static bool genAtRank (char *regexp, unsigned int buflen, const char *min, const
 static bool genPreRank (char *preRank, unsigned int buflen, const char *min, const char *max, int rank);
 static bool genRank (char *outRank, unsigned int buflen, const char *min, const char *max, int rank);
 static bool genPostRank (char *postRank, unsigned int buflen, int rank);
-static bool substr (char *substring, unsigned int buflen, const char* expr, int pos, int len);
+static bool substr (char *substring, unsigned int buflen, const char* expr, size_t pos, size_t len);
 static char* reverse (char *string);
-static char* ltoa (char *string, unsigned int buflen, long n);
+static char* longtoa (char *string, unsigned int buflen, long n);
 static NextMax nextMax (const char *min, const char *max);
 static bool perr (const char* func, const char *fmt, ...);
-
-static inline int maxint (int a, int b) {return ((a) > (b) ? (a) : (b));}
-static inline int minint (int a, int b) {return ((a) < (b) ? (a) : (b));}
-
-
 
 
 
@@ -127,8 +133,10 @@ int regexpGen (char *regexp, unsigned int buflen, long min, long max, int flotta
 static bool strictPosRegexpGen (char *regexp, unsigned int buflen, long min, long max, const char* decimalPart, 
 								   const char* boundDecimalPart)
 {
-  const int maxSubReg=64;
-  const int digitRegSize=128;
+
+#define maxSubReg 64
+#define digitRegSize 128
+
   char regList[maxSubReg][digitRegSize];
   char locBuf[maxSubReg*digitRegSize] ;
   int regIndex=0,i;
@@ -144,12 +152,12 @@ static bool strictPosRegexpGen (char *regexp, unsigned int buflen, long min, lon
       
     max--;
   
-    nbRank = strlen (ltoa (maxAsString, sizeof (maxAsString), max));
+    nbRank = strlen (longtoa (maxAsString, sizeof (maxAsString), max));
     do {
-      nMax = nextMax (ltoa (minAsString, sizeof (minAsString), min), 
-		      ltoa (maxAsString, sizeof (maxAsString), max));
+      nMax = nextMax (longtoa (minAsString, sizeof (minAsString), min), 
+		      longtoa (maxAsString, sizeof (maxAsString), max));
       if (genAtRank (regList[regIndex++], digitRegSize, minAsString, 
-		     ltoa (maxAsString, sizeof (maxAsString), 
+		     longtoa (maxAsString, sizeof (maxAsString), 
 			   nMax.max), nMax.rank) == fail) return fail;
       if (regIndex == maxSubReg) return Perr ("regIndex == maxSubReg");
       min = nMax.max +1;
@@ -165,7 +173,7 @@ static bool strictPosRegexpGen (char *regexp, unsigned int buflen, long min, lon
     }
     max++;
     sprintf (EndLocBuf, "|(?:%s%s)",  
-	     ltoa (maxAsString, sizeof (maxAsString), max), boundDecimalPart);
+	     longtoa (maxAsString, sizeof (maxAsString), max), boundDecimalPart);
   }
 
   CHECK_AND_RETURN (regexp);
@@ -278,7 +286,7 @@ static bool genPreRank (char *preRank, unsigned int buflen, const char *min, con
   if (substr (locBuf, sizeof (locBuf), lmin, 0, strlen (lmin) - rank) == fail) return fail;
   if (substr (locBufMax, sizeof (locBufMax), lmax, 0, strlen (lmax) - rank) == fail) return fail;
 
-  if (strncmp (locBuf, locBufMax, minint (sizeof (locBuf), sizeof (locBufMax))) != 0) 
+  if (strncmp (locBuf, locBufMax, MININT (sizeof (locBuf), sizeof (locBufMax))) != 0) 
     return Perr ("min=%s[%s] and max=%s[%s] should be invariants at rank %d", locBuf, min, locBufMax, max, rank);
   
   //  printf ("DBG> genPreRank ('%s', '%s', %d) = '%s'\n", min, max, rank, locBuf);
@@ -303,8 +311,8 @@ static bool genRank (char *outRank, unsigned int buflen, const char *min, const 
   a = min[strlen(min)-rank];
   b = max[strlen(max)-rank];
 
-  lmin = (char) minint (a,b);
-  lmax = (char) maxint (a,b);
+  lmin = MININT (a,b);
+  lmax = MAXINT (a,b);
   
   if ((lmin == '0') && (lmax == '9')) {
     strcpy (locBuf, "\\d");
@@ -351,12 +359,12 @@ static bool genPostRank (char *postRank, unsigned int buflen, int rank)
 #                \__ \  | |_| | | |_) | \__ \  \ |_   | |
 #                |___/   \__,_| |_.__/  |___/   \__|  |_|
 */
-static bool substr (char *substring, unsigned int buflen, const char* expr, int pos, int len)
+static bool substr (char *substring, unsigned int buflen, const char* expr, size_t pos, size_t len)
 {
   char locBuf [512];
-  int i, j=0;
+  size_t i, j=0;
 
-  len = maxint (0, minint (len, strlen (expr) - pos));
+  len = MAXINT (0, MININT (len, strlen (expr) - pos));
   for (i=pos; i<(pos+len); i++) {
     locBuf[j++]= expr[i];
   }
@@ -393,7 +401,7 @@ static char* reverse (char *string)
   return (string);
 }
 
-static char* ltoa (char *string, unsigned int buflen, long n)
+static char* longtoa (char *string, unsigned int buflen, long n)
 {
   snprintf (string, buflen, "%ld", n);
   return (string);
