@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-int regexpGen (char *regexp, unsigned int buflen, long min, long max, int flottant);
+int regexpGen (char *regexp, size_t buflen, long min, long max, int flottant);
 
 #ifdef __cplusplus
 }

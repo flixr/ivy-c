@@ -48,7 +48,7 @@ REGEXP= /DUSE_PCRE_REGEX /DPCRE_OPT=$(PCRE_OPT)
 # see below
 CHANNEL = -DTCL_CHANNEL_INTEGRATION 
 
-OBJ = ivyloop.obj timer.obj ivysocket.obj ivy.obj ivybuffer.obj ivybind.obj getopt.obj
+OBJ = intervalRegexp.obj ivyloop.obj timer.obj ivysocket.obj ivy.obj ivybuffer.obj ivybind.obj getopt.obj
 
 # WINDOWS add ivyloop.obj if TCL_CHANNEL_INTEGRATION is not set
 TARGETS = ivyprobe.exe ivyperf.exe 

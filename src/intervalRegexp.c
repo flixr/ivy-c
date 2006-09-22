@@ -40,15 +40,15 @@ const bool success = 1;
 const bool fail = 0;
 
 
-static bool strictPosRegexpGen (char *regexp, unsigned int buflen, long min, long max, const char* decimalPart, 
+static bool strictPosRegexpGen (char *regexp, size_t buflen, long min, long max, const char* decimalPart, 
 								   const char* boundDecimalPart);
-static bool genAtRank (char *regexp, unsigned int buflen, const char *min, const char *max, int rank);
-static bool genPreRank (char *preRank, unsigned int buflen, const char *min, const char *max, int rank);
-static bool genRank (char *outRank, unsigned int buflen, const char *min, const char *max, int rank);
-static bool genPostRank (char *postRank, unsigned int buflen, int rank);
-static bool substr (char *substring, unsigned int buflen, const char* expr, size_t pos, size_t len);
+static bool genAtRank (char *regexp, size_t buflen, const char *min, const char *max, int rank);
+static bool genPreRank (char *preRank, size_t buflen, const char *min, const char *max, int rank);
+static bool genRank (char *outRank, size_t buflen, const char *min, const char *max, int rank);
+static bool genPostRank (char *postRank, size_t buflen, int rank);
+static bool substr (char *substring, size_t buflen, const char* expr, size_t pos, size_t len);
 static char* reverse (char *string);
-static char* longtoa (char *string, unsigned int buflen, long n);
+static char* longtoa (char *string, size_t buflen, long n);
 static NextMax nextMax (const char *min, const char *max);
 static bool perr (const char* func, const char *fmt, ...);
 
@@ -62,7 +62,7 @@ static bool perr (const char* func, const char *fmt, ...);
 #                | |    |  __/   __/ | |  __/  >  <   | |     | |__| | |  __/ | | | |
 #                |_|     \___|  |___/   \___| /_/\_\  |_|      \_____|  \___| |_| |_|
 */
-int regexpGen (char *regexp, unsigned int buflen, long min, long max, int flottant)
+int regexpGen (char *regexp, size_t buflen, long min, long max, int flottant)
 {
   char *decimalPart = "";
   char *boundDecimalPart = "";
@@ -130,7 +130,7 @@ int regexpGen (char *regexp, unsigned int buflen, long min, long max, int flotta
 #                | | \ \  |  __/   __/ | |  __/  >  <   | |     | |__| | |  __/ | | | |
 #                |_|  \_\  \___|  |___/   \___| /_/\_\  |_|      \_____|  \___| |_| |_|
 */
-static bool strictPosRegexpGen (char *regexp, unsigned int buflen, long min, long max, const char* decimalPart, 
+static bool strictPosRegexpGen (char *regexp, size_t buflen, long min, long max, const char* decimalPart, 
 								   const char* boundDecimalPart)
 {
 
@@ -139,8 +139,8 @@ static bool strictPosRegexpGen (char *regexp, unsigned int buflen, long min, lon
 
   char regList[maxSubReg][digitRegSize];
   char locBuf[maxSubReg*digitRegSize] ;
-  int regIndex=0,i;
-  int nbRank;
+  size_t regIndex=0,i;
+  size_t nbRank;
   char maxAsString[32], minAsString[32];
   NextMax nMax;
 
@@ -191,8 +191,8 @@ static NextMax nextMax (const char *min, const char *max)
 {
   NextMax nextMax ={0,0};
   char revMin[32], revMax[32];
-  int nbDigitsMin, nbDigitsMax;
-  int rankRev=0, rankForw, rank=0, i;
+  size_t nbDigitsMin, nbDigitsMax;
+  size_t rankRev=0, rankForw, rank=0, i;
   int currMax; 
 
   nbDigitsMin = strlen (min);
@@ -248,7 +248,7 @@ static NextMax nextMax (const char *min, const char *max)
 #                  __/ | |  __/ | | | |  \ \__,_| | |    | (_| | | | | | |   <
 #                 |___/   \___| |_| |_|   \____/  |_|     \__,_| |_| |_| |_|\_\
 */
-static bool genAtRank (char *regexp, unsigned int buflen, const char *min, const char *max, int rank)
+static bool genAtRank (char *regexp, size_t buflen, const char *min, const char *max, int rank)
 {
   char locBuf [512];
 
@@ -268,7 +268,7 @@ static bool genAtRank (char *regexp, unsigned int buflen, const char *min, const
 #                  __/ | |  __/ | | | | | |      | |    |  __/ | | \ \  | (_| | | | | | |   <
 #                 |___/   \___| |_| |_| |_|      |_|     \___| |_|  \_\  \__,_| |_| |_| |_|\_\
 */
-static bool genPreRank (char *preRank, unsigned int buflen, const char *min, const char *max, int rank)
+static bool genPreRank (char *preRank, size_t buflen, const char *min, const char *max, int rank)
 {
   char locBuf [512], locBufMax[512];
   const char *lmin, *lmax;
@@ -303,7 +303,7 @@ static bool genPreRank (char *preRank, unsigned int buflen, const char *min, con
 #                  __/ | |  __/ | | | | | | \ \  | (_| | | | | | |   <
 #                 |___/   \___| |_| |_| |_|  \_\  \__,_| |_| |_| |_|\_\
 */
-static bool genRank (char *outRank, unsigned int buflen, const char *min, const char *max, int rank)
+static bool genRank (char *outRank, size_t buflen, const char *min, const char *max, int rank)
 {
   char locBuf [512];
 
@@ -336,7 +336,7 @@ static bool genRank (char *outRank, unsigned int buflen, const char *min, const 
 #                  __/ | |  __/ | | | | | |      | (_) | \__ \  \ |_   | | \ \  | (_| | | | | |
 #                 |___/   \___| |_| |_| |_|       \___/  |___/   \__|  |_|  \_\  \__,_| |_| |_|
 */
-static bool genPostRank (char *postRank, unsigned int buflen, int rank)
+static bool genPostRank (char *postRank, size_t buflen, int rank)
 {
  char locBuf [512];
 
@@ -359,7 +359,7 @@ static bool genPostRank (char *postRank, unsigned int buflen, int rank)
 #                \__ \  | |_| | | |_) | \__ \  \ |_   | |
 #                |___/   \__,_| |_.__/  |___/   \__|  |_|
 */
-static bool substr (char *substring, unsigned int buflen, const char* expr, size_t pos, size_t len)
+static bool substr (char *substring, size_t buflen, const char* expr, size_t pos, size_t len)
 {
   char locBuf [512];
   size_t i, j=0;
@@ -385,8 +385,8 @@ static bool substr (char *substring, unsigned int buflen, const char* expr, size
 static char* reverse (char *string)
 {
   char *locBuf ;
-  int i;
-  int len = strlen (string);
+  size_t i;
+  size_t len = strlen (string);
 
   locBuf = malloc (len+1);
   for (i=len-1; i >= 0; i--) {
@@ -401,7 +401,7 @@ static char* reverse (char *string)
   return (string);
 }
 
-static char* longtoa (char *string, unsigned int buflen, long n)
+static char* longtoa (char *string, size_t buflen, long n)
 {
   snprintf (string, buflen, "%ld", n);
   return (string);
