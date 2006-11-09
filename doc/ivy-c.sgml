@@ -47,7 +47,7 @@
 <abstract>
 <para>
 This document is a programmer's guide that describes how to use the Ivy C
-library to connect applications to an Ivy bus. This guide describes version 3.2
+library to connect applications to an Ivy bus. This guide describes version 3.9
 of the library.
 </para>
 </abstract>
