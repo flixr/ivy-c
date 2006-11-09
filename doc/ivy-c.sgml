@@ -195,7 +195,7 @@ main (int argc, char**argv)
 	IvyBindMsg (ByeCallback, 0, "^Bye$");
 
 	/* main loop */
-	IvyMainLoop (0);
+	IvyMainLoop();
 }
 
 </programlisting>
@@ -308,14 +308,14 @@ environment variable is not defined, the default value
 <parameter>"127:2010"</parameter> is used.
 
 <programlisting>
-void IvyMainLoop (void (*hook) (void));
+void IvyMainLoop ();
 </programlisting>
 makes your application enter the main loop in which it will handle asynchronous
 communications and signals. This is the default Ivy main loop, based on the
 <function>select</function> POSIX system call.
-If non-null, <parameter>hook</parameter> is called every time the main loop is
-about to enter <function>select</function>, and can be used (with care!) to
-extend the main loop.
+You can interact with the mainloop using hook before and after <function>select</function>
+ use the <function>IvySetBeforeSelectHook</function> and <function>IvySetAfterSelectHook</function>
+
 
 <programlisting>
 void IvyStop ();
