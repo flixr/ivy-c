@@ -31,7 +31,7 @@ ifndef PREFIX
     PREFIX=/usr/local
 endif
 
-X11_PREFIX = /usr/X11R6
+X11_PREFIX = /usr
 
 XTINC = -I$(X11_PREFIX)/include
 XTLIB = -L$(X11_PREFIX)$(LIB) -lXt -lX11 -lSM -lICE
