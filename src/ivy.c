@@ -41,7 +41,6 @@
 #include "ivy.h"
 
 #define VERSION 4
-
 #define DEFAULT_DOMAIN 127.255.255.255
 
 /* stringification et concatenation du domaine et du port en 2 temps :
