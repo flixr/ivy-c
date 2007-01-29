@@ -1,8 +1,8 @@
-#include <gtk/gtk.h>
-#include <ivy.h>
-#include <ivyglibloop.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <gtk/gtk.h>
+#include <Ivy/ivy.h>
+#include <Ivy/ivyglibloop.h>
 
 
 

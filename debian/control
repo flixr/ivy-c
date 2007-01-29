@@ -1,26 +1,28 @@
 Source: ivy-c
-Section: devel
 Priority: extra
-Maintainer: Yannick Jestin <jestin@cena.fr>
-Standards-Version: 3.1.1.1
-
-Package: ivy-c
-Architecture: any
-Depends: ${shlibs:Depends}
-Build-Depends: debhelper, libc6-dev, xlibs-dev, tcl8.4-dev, libgtk1.2-dev, libpcre3-dev
-Suggests: tclsh, wish
-Conflicts: ivy-tcl
-Description: Ivy software bus. runtime Package
- Ivy is mostly a communication convention between processes, implemented
- through a collection of libraries in several languages and for several platforms:
- from  C to Perl, from Macintosh or WindowsNT to Linux or Unix.
+Section: devel
+Maintainer: Alexandre Bustico <alexandre.bustico@cena.fr>
+Build-Depends: debhelper (>> 4.0.0), libc6-dev, xlibs-dev | libx11-dev | xorg-dev, tcl8.4-dev, libgtk1.2-dev, libglib2.0-dev, libpcre3-dev
+Standards-Version: 3.6.1
 
 Package: ivy-c-dev
+Section: libdevel
 Architecture: any
-Depends: ivy-c (>= 3.2-3), libc6-dev, xlibs-dev, libgtk1.2-dev
+Depends: ivy-c (= ${Source-Version}), libc6-dev, xlibs-dev | libx11-dev | xorg-dev, libgtk1.2-dev, libglib2.0-dev
 Suggests: tclsh, wish
 Description: Ivy software bus. development Package
  This package is needed for compiling applications using ivy-c.
+ Ivy is mostly a communication convention between processes, implemented
+ through a collection of libraries in several languages and for several platforms,
+ from  C to Perl, from Macintosh or WindowsNT to Linux or Unix.
+
+Package: ivy-c
+Section: libs
+Architecture: any
+Depends: ${shlibs:Depends}
+Suggests: tclsh, wish
+Conflicts: ivy-tcl
+Description: Ivy software bus. runtime Package
  Ivy is mostly a communication convention between processes, implemented
  through a collection of libraries in several languages and for several platforms:
  from  C to Perl, from Macintosh or WindowsNT to Linux or Unix.

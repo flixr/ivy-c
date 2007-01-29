@@ -6,7 +6,7 @@
  *
  * 	Basic I/O handling
  *
- *	Authors: François-Régis Colin <fcolin@cena.fr>
+ *	Authors: François-Régis Colin <fcolin@cena.dgac.fr>
  *
  *	$Id$
  * 
@@ -25,32 +25,33 @@ extern "C" {
 
 #ifdef WIN32
 #include <windows.h>
-#define IVY_HANDLE SOCKET
+#define HANDLE SOCKET
 #else
-#define IVY_HANDLE int
+#define HANDLE int
 #endif
 
 typedef struct _channel *Channel;
 /* callback declenche par la gestion de boucle  sur evenement exception sur le canal */
 typedef void (*ChannelHandleDelete)( void *data );
 /* callback declenche par la gestion de boucle sur donnees pretes sur le canal */
-typedef void (*ChannelHandleRead)( Channel channel, IVY_HANDLE fd, void *data);
+typedef void (*ChannelHandleRead)( Channel channel, HANDLE fd, void *data);
 
 /* fonction appele par le bus pour initialisation */
 extern void IvyChannelInit(void);
-/* fonction appele par le bus pour terminaison */
-extern void IvyChannelStop(void);
-						
+
+extern void IvyChannelStop (void);
+
 /* fonction appele par le bus pour mise en place des callback sur le canal */
 extern Channel IvyChannelAdd(
-	IVY_HANDLE fd,
+	HANDLE fd,
 	void *data,
 	ChannelHandleDelete handle_delete,
 	ChannelHandleRead handle_read
 );
 
-/* fonction appele par le bus pour fermeture du canal */
+/* fonction appele par le bus pour suppression des callback sur le canal */
 extern void IvyChannelRemove( Channel channel );
+
 
 #ifdef __cplusplus
 }

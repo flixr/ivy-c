@@ -6,7 +6,7 @@
  *
  *	Timers for select-based main loop
  *
- *	Authors: François-Régis Colin <fcolin@cena.fr>
+ *	Authors: François-Régis Colin <fcolin@cena.dgac.fr>
  *
  *	$Id$
  * 

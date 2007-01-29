@@ -14,15 +14,16 @@
  *	copyright notice regarding this software
  */
 
-
+#ifdef WIN32
+#include <windows.h>
+#endif
 #include <stdlib.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
+
 #ifdef WIN32
-#include <crtdbg.h>
-#include <windows.h>
 #define close closesocket
 /*#define perror (a ) printf(a" error=%d\n",WSAGetLastError());*/
 #else
@@ -39,45 +40,53 @@
 #include "list.h"
 #include "ivychannel.h"
 #include "ivysocket.h"
+#include "ivyloop.h"
+#include "ivybuffer.h"
+#include "ivydebug.h"
 
 #define BUFFER_SIZE 4096	/* taille buffer initiale on multiple pas deux a chaque realloc */
 
 struct _server {
 	Server next;
-	IVY_HANDLE fd;
+	HANDLE fd;
 	Channel channel;
 	unsigned short port;
-	SocketCreate create;
-	SocketDelete handle_delete;
+	void *(*create)(Client client);
+	void (*handle_delete)(Client client, void *data);
 	SocketInterpretation interpretation;
 };
 
 struct _client {
 	Client next;
-	IVY_HANDLE fd;
+	HANDLE fd;
 	Channel channel;
 	unsigned short port;
 	struct sockaddr_in from;
 	SocketInterpretation interpretation;
-	SocketDelete handle_delete;
-	/* input buffer */
-	int in_buffer_size;
-	char *in_buffer;		/* dynamicaly reallocated */
-	char *in_ptr;
-	/* output buffer */
-	int out_buffer_size;
-	char *out_buffer;		/* dynamicaly reallocated */
-	char *out_ptr;
-	
+	void (*handle_delete)(Client client, void *data);
+	char terminator;	/* character delimiter of the message */ 
+	/* Buffer de reception */
+	long buffer_size;
+	char *buffer;		/* dynamicaly reallocated */
+	char *ptr;
+  	/* user data */
 	void *data;
 };
 
 static Server servers_list = NULL;
 static Client clients_list = NULL;
 
+static int debug_send = 0;
+
 #ifdef WIN32
 WSADATA	WsaData;
 #endif
+
+void SocketInit()
+{
+	if ( getenv( "IVY_DEBUG_SEND" )) debug_send = 1;
+	IvyChannelInit();
+}
 
 static void DeleteSocket(void *data)
 {
@@ -86,8 +95,6 @@ static void DeleteSocket(void *data)
 		(*client->handle_delete) (client, client->data );
 	shutdown (client->fd, 2 );
 	close (client->fd );
-	free( client->in_buffer );
-	free( client->out_buffer );
 	IVY_LIST_REMOVE (clients_list, client );
 }
 
@@ -96,136 +103,116 @@ static void DeleteServerSocket(void *data)
         Server server = (Server )data;
 #ifdef BUGGY_END
         if (server->handle_delete )
-                (*server->handle_delete) (server->channel, NULL );
+                (*server->handle_delete) (server, NULL );
 #endif
         shutdown (server->fd, 2 );
         close (server->fd );
         IVY_LIST_REMOVE (servers_list, server);
 }
-static void HandleSocket (Channel channel, IVY_HANDLE fd, void *data)
+static void HandleSocket (Channel channel, HANDLE fd, void *data)
 {
 	Client client = (Client)data;
 	char *ptr;
-	char *ptr_end;
+	char *ptr_nl;
 	long nb_to_read = 0;
 	long nb;
 	socklen_t len;
 	
 	/* limitation taille buffer */
-	nb_to_read = client->in_buffer_size - (client->in_ptr - client->in_buffer );
+	nb_to_read = client->buffer_size - (client->ptr - client->buffer );
 	if (nb_to_read == 0 ) {
-		client->in_buffer_size *= 2; /* twice old size */
-		client->in_buffer = realloc( client->in_buffer, client->in_buffer_size );
-		if (!client->in_buffer )
+		client->buffer_size *= 2; /* twice old size */
+		client->buffer = realloc( client->buffer, client->buffer_size );
+		if (!client->buffer )
 		{
 		fprintf(stderr,"HandleSocket Buffer Memory Alloc Error\n");
 		exit(0);
 		}
-		fprintf(stderr, "Buffer Limit reached realloc new size %d\n", client->in_buffer_size );
-		nb_to_read = client->in_buffer_size - (client->in_ptr - client->in_buffer );
+		fprintf(stderr, "Buffer Limit reached realloc new size %ld\n", client->buffer_size );
+		nb_to_read = client->buffer_size - (client->ptr - client->buffer );
 	}
 	len = sizeof (client->from );
-	nb = recvfrom (fd, client->in_ptr, nb_to_read,0,(struct sockaddr *)&client->from,
+	nb = recvfrom (fd, client->ptr, nb_to_read,0,(struct sockaddr *)&client->from,
 		       &len);
 	if (nb  < 0) {
 		perror(" Read Socket ");
-		IvyChannelRemove(client->channel );
+		IvyChannelRemove (client->channel );
 		return;
 	}
 	if (nb == 0 ) {
-		IvyChannelRemove(client->channel );
+		IvyChannelRemove (client->channel );
 		return;
 	}
-	client->in_ptr += nb;
-	if (! client->interpretation )
-	{
-		client->in_ptr = client->in_buffer;
-		fprintf (stderr,"Socket No interpretation function ??? skipping data\n");
-		return;
-	}
-	ptr = client->in_buffer;
-	
-	while ( (client->in_ptr > ptr )&&(ptr_end = (*client->interpretation) (client, client->data, ptr, client->in_ptr - ptr )))
+	client->ptr += nb;
+	ptr = client->buffer;
+	while ((ptr_nl = memchr (ptr, client->terminator,  client->ptr - ptr )))
 		{
-		ptr = ptr_end;
+		*ptr_nl ='\0';
+		if (client->interpretation )
+			(*client->interpretation) (client, client->data, ptr );
+			else fprintf (stderr,"Socket No interpretation function ???\n");
+		ptr = ++ptr_nl;
 		}
-	if (ptr < client->in_ptr )
-		{ /* recopie message incomplet au debut du buffer */
-		len = client->in_ptr - ptr;
-		memcpy (client->in_buffer, ptr, len  );
-		client->in_ptr = client->in_buffer + len;
+	if (ptr < client->ptr )
+		{ /* recopie ligne incomplete au debut du buffer */
+		len = client->ptr - ptr;
+		memcpy (client->buffer, ptr, len  );
+		client->ptr = client->buffer + len;
 		}
 		else
 		{
-		client->in_ptr = client->in_buffer;
+		client->ptr = client->buffer;
 		}
 }
-static Client CreateClient(int handle)
-{
-	Client client;
-	IVY_LIST_ADD (clients_list, client );
-	if (!client )
-		{
-		fprintf(stderr,"NOK Memory Alloc Error\n");
-		close ( handle );
-		exit(-1);
-		}
-	client->in_buffer_size = BUFFER_SIZE;
-	client->in_buffer = malloc( client->in_buffer_size );
-	if (!client->in_buffer )
-		{
-		fprintf(stderr,"HandleSocket Buffer Memory Alloc Error\n");
-		exit(-1);
-		}
-	client->in_ptr = client->in_buffer;
-	client->out_buffer_size = BUFFER_SIZE;
-	client->out_buffer = malloc( client->out_buffer_size );
-	if (!client->in_buffer )
-		{
-		fprintf(stderr,"HandleSocket Buffer Memory Alloc Error\n");
-		exit(-1);
-		}
-	client->out_ptr = client->out_buffer;
-	client->fd = handle;
-	client->channel = IvyChannelAdd (client->fd, client,  DeleteSocket, HandleSocket );
 
-	return client;
-}
-
-static void HandleServer(Channel channel, IVY_HANDLE fd, void *data)
+static void HandleServer(Channel channel, HANDLE fd, void *data)
 {
 	Server server = (Server ) data;
 	Client client;
-	IVY_HANDLE ns;
+	HANDLE ns;
 	socklen_t addrlen;
 	struct sockaddr_in remote2;
-#ifdef DEBUG
-	printf( "Accepting Connection...\n");
-#endif //DEBUG
+
+	TRACE( "Accepting Connection...\n");
+
 	addrlen = sizeof (remote2 );
 	if ((ns = accept (fd, (struct sockaddr *)&remote2, &addrlen)) <0)
 		{
 		perror ("*** accept ***");
 		return;
 		};
-#ifdef DEBUG
-	printf( "Accepting Connection ret\n");
-#endif //DEBUG
-	client = CreateClient(ns);
+
+	TRACE( "Accepting Connection ret\n");
+
+	IVY_LIST_ADD_START (clients_list, client );
+	
+	client->buffer_size = BUFFER_SIZE;
+	client->buffer = malloc( client->buffer_size );
+	if (!client->buffer )
+		{
+		fprintf(stderr,"HandleSocket Buffer Memory Alloc Error\n");
+		exit(0);
+		}
+		client->terminator = '\n';
 	client->from = remote2;
+	client->fd = ns;
+	client->channel = IvyChannelAdd (ns, client,  DeleteSocket, HandleSocket );
 	client->interpretation = server->interpretation;
+	client->ptr = client->buffer;
 	client->handle_delete = server->handle_delete;
 	client->data = (*server->create) (client );
+
+	IVY_LIST_ADD_END (clients_list, client );
+	
 }
 
-
 Server SocketServer(unsigned short port, 
-	SocketCreate create,
-	SocketDelete handle_delete,
-	SocketInterpretation interpretation )
+	void*(*create)(Client client),
+	void(*handle_delete)(Client client, void *data),
+	void(*interpretation) (Client client, void *data, char *ligne))
 {
 	Server server;
-	IVY_HANDLE fd;
+	HANDLE fd;
 	int one=1;
 	struct sockaddr_in local;
 	socklen_t addrlen;
@@ -278,18 +265,15 @@ Server SocketServer(unsigned short port,
 		};
 	
 
-	IVY_LIST_ADD (servers_list, server );
-	if (!server )
-		{
-		fprintf(stderr,"NOK Memory Alloc Error\n");
-		exit(0);
-		}
+	IVY_LIST_ADD_START (servers_list, server );
 	server->fd = fd;
-	server->channel = IvyChannelAdd(fd, server, DeleteServerSocket, HandleServer );
+	server->channel =	IvyChannelAdd (fd, server, DeleteServerSocket, HandleServer );
 	server->create = create;
 	server->handle_delete = handle_delete;
 	server->interpretation = interpretation;
 	server->port = ntohs(local.sin_port);
+	IVY_LIST_ADD_END (servers_list, server );
+	
 	return server;
 }
 
@@ -302,8 +286,7 @@ void SocketServerClose (Server server )
 {
 	if (!server)
 		return;
-	IvyChannelRemove( server->channel );
-	IVY_LIST_REMOVE (servers_list, server );
+	IvyChannelRemove (server->channel );
 }
 
 char *SocketGetPeerHost (Client client )
@@ -348,44 +331,89 @@ void SocketClose (Client client )
 	if (client)
 		IvyChannelRemove (client->channel );
 }
+
+int SocketSendRaw (Client client, char *buffer, int len )
+{
+	int err;
+	int waiting= 0;
+
+	if (!client)
+		return waiting;
+
+	if ( debug_send )
+	{
+		/* try to determine if we are going to block */
+		fd_set wrset;
+		int ready;	
+		struct timeval timeout;
+		timeout.tv_usec = 0; 
+		timeout.tv_sec = 0;
+		FD_ZERO(&wrset);
+		FD_SET(  client->fd, &wrset );
+		ready = select(client->fd+1, 0, &wrset,  0, &timeout);
+		//fprintf(stderr,"Ivy: select ready=%d fd=%d\n",ready,FD_ISSET(  client->fd, &wrset ) );
+		if(ready < 0) {
+		perror("Ivy: SocketSendRaw select");
+		}
+		if ( !FD_ISSET(  client->fd, &wrset ) )
+		{
+			fprintf(stderr,"Ivy: Client Queue Full Waiting..........");
+			waiting = 1;
+		}
+
+	}
+
+	err = send (client->fd, buffer, len, 0 );
+	if (err != len )
+		perror ("*** send ***");
+	if ( debug_send && waiting )
+	{
+		fprintf(stderr,"... OK\n");		
+	}
+	return waiting;
+}
+
 void SocketSetData (Client client, void *data )
 {
 	if (client)
 		client->data = data;
 }
 
+int SocketSend (Client client, char *fmt, ... )
+{
+	int waiting = 0;
+	static IvyBuffer buffer = {NULL, 0, 0 }; /* Use satic mem to eliminate multiple call to malloc /free */
+	va_list ap;
+	int len;
+	if (!client)
+		return waiting;
+	va_start (ap, fmt );
+	buffer.offset = 0;
+	len = make_message (&buffer, fmt, ap );
+	waiting = SocketSendRaw (client, buffer.data, len );
+	va_end (ap );
+	return waiting;
+}
+
 void *SocketGetData (Client client )
 {
 	return client ? client->data : 0;
 }
-void SocketSend(Client client, const char *buffer, int len )
-{
-	unsigned long usedspace;
-	if (!client)
-		return;
-	usedspace = client->out_ptr - client->out_buffer;
-	if ( len >= client->out_buffer_size - usedspace )
-	{
-		/* not enought space */
-		client->out_buffer_size += len - usedspace +1;
-		client->out_buffer = realloc (client->out_buffer, client->out_buffer_size);
-	}
-	memcpy ( client->out_ptr, buffer, len );
-	client->out_ptr += len;
-}
 
-void SocketFlush (Client client)
+void SocketBroadcast ( char *fmt, ... )
 {
-	int err;
-	unsigned long len;
-
-	if (!client)
-		return;
-	len =  client->out_ptr - client->out_buffer;
-	err = send (client->fd, client->out_buffer, len, 0 );
-	if (err != len )
-		perror ("*** send ***");
-	client->out_ptr = client->out_buffer;
+	Client client;
+	static IvyBuffer buffer = {NULL, 0, 0 }; /* Use satic mem to eliminate multiple call to malloc /free */
+	va_list ap;
+	int len;
+	
+	va_start (ap, fmt );
+	len = make_message (&buffer, fmt, ap );
+	va_end (ap );
+	IVY_LIST_EACH (clients_list, client )
+		{
+		SocketSendRaw (client, buffer.data, len );
+		}
 }
 
 /*
@@ -394,7 +422,7 @@ Ouverture d'un canal TCP/IP en mode client
 Client SocketConnect (char * host, unsigned short port, 
 			void *data, 
 			SocketInterpretation interpretation,
-			SocketDelete handle_delete
+			void (*handle_delete)(Client client, void *data)
 			)
 {
 	struct hostent *rhost;
@@ -409,10 +437,10 @@ Client SocketConnect (char * host, unsigned short port,
 Client SocketConnectAddr (struct in_addr * addr, unsigned short port, 
 			  void *data, 
 			  SocketInterpretation interpretation,
-			  SocketDelete handle_delete
+			  void (*handle_delete)(Client client, void *data)
 			  )
 {
-	IVY_HANDLE handle;
+	HANDLE handle;
 	Client client;
 	struct sockaddr_in remote;
 
@@ -430,25 +458,91 @@ Client SocketConnectAddr (struct in_addr * addr, unsigned short port,
 		return NULL;
 	};
 
-	client = CreateClient(handle);
+	IVY_LIST_ADD_START(clients_list, client );
+	
+	client->buffer_size = BUFFER_SIZE;
+	client->buffer = malloc( client->buffer_size );
+	if (!client->buffer )
+		{
+		fprintf(stderr,"HandleSocket Buffer Memory Alloc Error\n");
+		exit(0);
+		}
+		client->terminator = '\n';
+	client->fd = handle;
+	client->channel = IvyChannelAdd (handle, client,  DeleteSocket, HandleSocket );
 	client->interpretation = interpretation;
-	client->handle_delete = handle_delete;
+	client->ptr = client->buffer;
 	client->data = data;
+	client->handle_delete = handle_delete;
 	client->from.sin_family = AF_INET;
 	client->from.sin_addr = *addr;
 	client->from.sin_port = htons (port);
+	IVY_LIST_ADD_END(clients_list, client );
+	
 	return client;
+}
+// TODO factoriser avec HandleRead !!!!
+int SocketWaitForReply (Client client, char *buffer, int size, int delai)
+{
+	fd_set rdset;
+	struct timeval timeout;
+	struct timeval *timeoutptr = &timeout;
+	int ready;
+	char *ptr;
+	char *ptr_nl;
+	long nb_to_read = 0;
+	long nb;
+	HANDLE fd;
+
+	fd = client->fd;
+	ptr = buffer;
+	timeout.tv_sec = delai;
+	timeout.tv_usec = 0;
+   	do {
+		/* limitation taille buffer */
+		nb_to_read = size - (ptr - buffer );
+		if (nb_to_read == 0 )
+			{
+			fprintf(stderr, "Erreur message trop long sans LF\n");
+			ptr  = buffer;
+			return -1;
+			}
+		FD_ZERO (&rdset );
+		FD_SET (fd, &rdset );
+		ready = select(fd+1, &rdset, 0,  0, timeoutptr);
+		if (ready < 0 )
+			{
+			perror("select");
+			return -1;
+			}
+		if (ready == 0 )
+			{
+			return -2;
+			}
+		if ((nb = recv (fd , ptr, nb_to_read, 0 )) < 0)
+			{
+			perror(" Read Socket ");
+			return -1;
+			}
+		if (nb == 0 )
+			return 0;
+
+		ptr += nb;
+		*ptr = '\0';
+		ptr_nl = strchr (buffer, client->terminator );
+	} while (!ptr_nl );
+	*ptr_nl = '\0';
+	return (ptr_nl - buffer);
 }
 
 /* Socket UDP */
 
-Client SocketBroadcastCreate (
-				unsigned short port, 
+Client SocketBroadcastCreate (unsigned short port, 
 				void *data, 
 				SocketInterpretation interpretation
 			)
 {
-	IVY_HANDLE handle;
+	HANDLE handle;
 	Client client;
 	struct sockaddr_in local;
 	int on = 1;
@@ -489,43 +583,51 @@ Client SocketBroadcastCreate (
 			return NULL;
 		};
 
-	client = CreateClient(handle);
+	IVY_LIST_ADD_START(clients_list, client );
+	
+	client->buffer_size = BUFFER_SIZE;
+	client->buffer = malloc( client->buffer_size );
+	if (!client->buffer )
+		{
+		perror("HandleSocket Buffer Memory Alloc Error: ");
+		exit(0);
+		}
+	client->terminator = '\n';
+	client->fd = handle;
+	client->channel = IvyChannelAdd (handle, client,  DeleteSocket, HandleSocket );
 	client->interpretation = interpretation;
+	client->ptr = client->buffer;
 	client->data = data;
+	IVY_LIST_ADD_END(clients_list, client );
+	
 	return client;
 }
 
-void SocketSendBroadcast(Client client, unsigned long host, unsigned short port, char *buffer, int len )
+void SocketSendBroadcast (Client client, unsigned long host, unsigned short port, char *fmt, ... )
 {
 	struct sockaddr_in remote;
-	int err;
+	static IvyBuffer buffer = { NULL, 0, 0 }; /* Use satic mem to eliminate multiple call to malloc /free */
+	va_list ap;
+	int err,len;
 
 	if (!client)
 		return;
 
+	va_start (ap, fmt );
+	buffer.offset = 0;
+	len = make_message (&buffer, fmt, ap );
 	/* Send UDP packet to the dest */
 	remote.sin_family = AF_INET;
 	remote.sin_addr.s_addr = htonl (host );
 	remote.sin_port = htons(port);
 	err = sendto (client->fd, 
-			buffer, len,0,
+			buffer.data, len,0,
 			(struct sockaddr *)&remote,sizeof(remote));
 	if (err != len) {
 		perror ("*** send ***");
-	}
+	}	va_end (ap );
 }
-void SocketKeepAlive( Client client,int keepalive )
-{
-	int alive = keepalive;
-	if (setsockopt(client->fd,SOL_SOCKET,SO_KEEPALIVE,(char*)&alive,sizeof(alive)) < 0)
-		{
-#ifdef WIN32
-		fprintf(stderr," setsockopt %d\n",WSAGetLastError());
-#endif
-		perror ("*** set socket option SO_KEEPALIVE ***");
-		exit(0);
-		} 
-}
+
 /* Socket Multicast */
 
 int SocketAddMember(Client client, unsigned long host )

@@ -1,7 +1,7 @@
 '\"
 '\" Ivy, C interface \- library managing connexions to a software bus
 '\"
-'\" Copyright (C) 1997-1999
+'\" Copyright (C) 1997-2006
 '\" Centre d'Études de la Navigation Aérienne
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
@@ -42,16 +42,15 @@
 '\"	# BS - start boxed text
 '\"	# ^y = starting y location
 '\"	# ^b = 1
-.TH Ivy-c-3.0 1 3.0  "Ivy-c-3.0 Library Functions"
+.TH Ivy-c-3.9 1 3.9  "Ivy-c-3.9 Library Functions"
 .SH NAME
 IvyInit, IvyStart, IvyStop, IvyBindMsg, IvyUnbindMsg, IvyBindDirectMsg,
 IvySendMsg, IvySendDirectMsg, IvySendDieMsg, IvySendError, IvyGetApplicationName,
 IvyGetApplicationHost, IvyGetApplication, IvyGetApplicationList,
-IvyGetApplicationMessages, IvyDefaultApplicationCallback, IvyClasses,
-IvyChannelInit, IvyChannelSetUp, IvyMainLoop, IvyChannelClose,
-IvyChannelDelete, IvyChannelHandleRead,
-IvyChannelHandleExcpt,  IvyXtChannelInit, IvyXtChannelSetUp
-IvyXtChannelClose, IvyXtHandleChannelRead, IvyXtHandleChannelDelete,
+IvyGetApplicationMessages, IvyDefaultApplicationCallback, IvySetFilter, IvySetBindCallback,
+IvyChannelInit, IvyChannelStop, IvyChannelAdd, IvyChannelRemove, IvyMainLoop,
+IvyChannelDelete, IvyChannelHandleRead, IvyChannelHandleExcpt,
+IvySetBeforeSelectHook, IvySetAfterSelectHook,
 IvyXtChannelAppContext, 
 .SH SYNOPSIS
 useful set of library functions for communicating between different
@@ -105,22 +104,19 @@ char**
 char*
 \fBIvyDefaultApplicationCallback(\fIapp, user_data, Event\fB)\fR
 char*
-\fBIvyClasses(\fIargc, argv\fB)\fR
+\fBIvySetFilter(\fIargc, argv\fB)\fR
 .sp
 void
 \fBIvyChannelInit(\fIvoid\fB)\fR
 .sp
 Channel
-\fBIvyChannelSetUp(\fIfd, data, handle_delete, handle_read\fB)\fR
+\fBIvyChannelAdd(\fIfd, data, handle_delete, handle_read\fB)\fR
 .sp
 void
-\fBIvyMainLoop(\fIhook\fB)\fR
+\fBIvyChannelRemove(\fIchannel\fB)\fR
 .sp
 void
-\fBIvyChannelClose(\fIchannel\fB)\fR
-.sp
-static void
-\fBIvyChannelDelete(\fIchannel\fB)\fR
+\fBIvyMainLoop()\fR
 .sp
 static void
 \fBIvyChannelHandleRead(\fIcurrent\fB)\fR
@@ -128,23 +124,8 @@ static void
 static void
 \fBIvyChannelHandleExcpt(\fIcurrent\fB)\fR
 .sp
-static void
-\fBIvyXtChannelInit(\fIvoid\fB)\fR
-.sp
-static void
-\fBIvyXtChannelSetUp(\fIfd, data, handle_delete, handle_read\fB)\fR
-.sp
 void
-\fBIvyXtChannelClose(\fIchannel\fB)\fR
-.sp
-static void
-\fBIvyXtHandleChannelRead(\fIclosure, source, id\fB)\fR
-.sp
-static void
-\fBIvyXtHandleChannelDelete(\fIclosure, source, id\fB)\fR
-.sp
-void
-\fBIvyChannelAppContext(\fIcntx\fB)\fR
+\fBIvyXtChannelAppContext(\fIcntx\fB)\fR
 .SH ARGUMENTS
 Only main functions are detailed in this section
 .SH
@@ -191,6 +172,13 @@ Message binding
 In this example the function \fBStartTimeCallback\fR will be called
 each time the string \fBCLOCK Start time=(.*)\fR will be emitted on
 the bus.
+There is a special syntax for specifying numeric interval, in this case
+the interval is locally transformed in a pcre regexp.
+syntax is \fB(?Imin#max[fi])\fR. min and max are the bounds,
+by default the regexp match decimal number, but if max bound is
+followed by 'i', the regexp match only integers ex : \fB(?I-10#20), (?I20#25i)\fR
+Note that due to the regexp generator limitation (which will perhaps be raised eventually)
+the bounds are always integers.
 .SH 
 \fBIvyUnbindMsg\fR:
 Message unbinding
@@ -204,14 +192,14 @@ String to be sent on the bus
 .SH Example:
 \fBIvySendMsg ("SECTOR:%s.AIRCRAFT:%s Entered", sectorname, pln->indicatif);\fR
 .SH
-\fBIvyChannelSetUp\fR:
+\fBIvyChannelAdd\fR:
 .AP HANDLE fd in
 .AP void *data in
 .AP ChannelHandleDelete handle_delete in
 .AP ChannelHandleRead handle_read in
 .AP Channel out out
 .SH Example:
-\fBIvyChannelSetUp (0, NULL, NULL, HandleStdin);\fR:
+\fBIvyChannelAdd (0, NULL, NULL, HandleStdin);\fR:
 .VE 
 .BE
 .SH DESCRIPTION
@@ -245,11 +233,11 @@ Connection of the application \fBIVYPROBE\fR on a given bus
 		 NULL,
 		 NULL);
 /* keyboard's inputs management */
-	IvyChannelSetUp(0, NULL, NULL, HandleStdin);
+	IvyChannelAdd(0, NULL, NULL, HandleStdin);
 /* starting the connection */
 	IvyStart (bus);
 /* Main loop */
-	IvyMainLoop(0);
+	IvyMainLoop();
 };
 .DE
 
@@ -268,13 +256,13 @@ error messages displayed
 .SH BUGS
 none reported yet!
 .SH AUTHORS
-Francois-Regis Colin <fcolin@cenatoulouse.dgac.fr>
-Stephane Chatty <chatty@cenatoulouse.dgac.fr>
+Francois-Regis Colin
+Stephane Chatty
 .SH SEE ALSO
 ivyprobe (1)
 .sp
-For further details, please refer to the Ivy html page at http://www.cenatls.cena.dgac.fr/pii/produits/Ivy.html
+For further details, please refer to the Ivy html page at http://www.tls.cena.fr/pii/produits/Ivy.html
 .SH NOTES
 In case of any comment or bug report on this library, please contact
-fcolin@cenatoulouse.dgac.fr, chatty@cenatoulouse.dgac.fr, jacomi@cenatoulouse.dgac.fr
+ivy@tls.cena.fr
 

@@ -39,6 +39,9 @@ extern int optind;
 #include "ivyloop.h"
 #define MILLISEC 1000.0
 
+const char *mymessages[] = { "IvyPerf", "ping", "pong" };
+static double origin = 0;
+
 static double currentTime()
 {
         double current;
@@ -52,64 +55,62 @@ static double currentTime()
         return  current;
 }
 
-void Reply (IvyClientPtr app, void *user_data, IvyArgument args)
+void Reply (IvyClientPtr app, void *user_data, int argc, char *argv[])
 {
-	IvyArgument arg;
-	int len;
-	const void* val;
-	arg = IvyArgumentGetChildrens( args );
-	IvyArgumentGetValue( arg , &len, &val);
-	IvySendMsg ("pong ts=%.*s tr=%f", len, (char*)val, currentTime());
+	IvySendMsg ("pong ts=%s tr=%f", *argv, currentTime()- origin);
 }
-void Pong (IvyClientPtr app, void *user_data, IvyArgument args)
+void Pong (IvyClientPtr app, void *user_data, int argc, char *argv[])
 {
-	double current, ts, tr, roundtrip1, roundtrip2, roundtrip3;
-	IvyArgument arg;
-	int len;
-	const void* val;
-	/* TODO  bug atof non limite a la longeur de la valeur !!!*/
-	
-	current = currentTime();
-	arg = IvyArgumentGetChildrens( args );
-	IvyArgumentGetValue( arg , &len, &val);
-	ts = atof( (char*)val );
-	arg = IvyArgumentGetNextChild( arg );
-	IvyArgumentGetValue( arg , &len, &val);
-	tr = atof( (char*)val );
-	roundtrip1 = tr-ts;
-	roundtrip2 = current - tr;
-	roundtrip3 = current - ts;
+	double current = currentTime() - origin ;
+	double ts = atof( *argv++ );
+	double tr = atof( *argv++ );
+	double roundtrip1 = tr-ts;
+	double roundtrip2 = current - tr;
+	double roundtrip3 = current - ts;
 	fprintf(stderr,"roundtrip %f %f %f \n", roundtrip1, roundtrip2, roundtrip3 );
 }
 
 void TimerCall(TimerId id, void *user_data, unsigned long delta)
 {
-	int count = IvySendMsg ("ping ts=%f", currentTime() );
+	int count = IvySendMsg ("ping ts=%f", currentTime() - origin );
 	if ( count == 0 ) fprintf(stderr, "." );
 }
 
+void binCB( IvyClientPtr app, void *user_data, int id, char* regexp,  IvyBindEvent event ) 
+{
+	char *app_name = IvyGetApplicationName( app );
+	switch ( event )
+	{
+	case IvyAddBind:
+		printf("Application:%s bind '%s' ADDED\n", app_name, regexp );
+		break;
+	case IvyRemoveBind:
+		printf("Application:%s bind '%s' REMOVED\n", app_name, regexp );
+		break;
+	case IvyFilterBind:
+		printf("Application:%s bind '%s' FILTRED\n", app_name, regexp );
+		break;
 
+	}
+}
 int main(int argc, char *argv[])
 {
-	
+	long time=200;
 
 	/* Mainloop management */
+	if ( argc > 1 ) time = atol( argv[1] );
 
 	IvyInit ("IvyPerf", "IvyPerf ready", NULL,NULL,NULL,NULL);
-
-#ifdef USE_REGEXP
+	IvySetFilter( sizeof( mymessages )/ sizeof( char *),mymessages );
+	IvySetBindCallback( binCB, 0 ),
 	IvyBindMsg (Reply, NULL, "^ping ts=(.*)");
 	IvyBindMsg (Pong, NULL, "^pong ts=(.*) tr=(.*)");
-#else
-	IvyBindSimpleMsg (Reply, NULL, "ping ts");
-	IvyBindSimpleMsg (Pong, NULL, "pong ts tr");
-#endif
-
+	origin = currentTime();
 	IvyStart (0);
 
-	TimerRepeatAfter (TIMER_LOOP, 200, TimerCall, (void*)1);
+	TimerRepeatAfter (TIMER_LOOP, time, TimerCall, (void*)1);
 	
 
-	IvyMainLoop (0);
+	IvyMainLoop ();
 	return 0;
 }

@@ -6,8 +6,8 @@
  *
  * 	Main loop based on GLUT ( OpenGL ) Toolkit
  *
- *	Authors: François-Régis Colin <colin@cena.fr>
- *		 Stéphane Chatty <chatty@cena.fr>
+ *	Authors: François-Régis Colin <colin@cenatoulouse.dgac.fr>
+ *		 Stéphane Chatty <chatty@cenatoulouse.dgac.fr>
  *
  *	$Id$
  * 
@@ -24,8 +24,8 @@ extern "C" {
 
 #include <GL/Glut.h>
 
+/* general Handle */
 
-#include "ivychannel.h"
 
 #ifdef __cplusplus
 }

@@ -6,8 +6,8 @@
  *
  * 	Main loop based on the X Toolkit
  *
- *	Authors: François-Régis Colin <colin@cena.fr>
- *		 Stéphane Chatty <chatty@cena.fr>
+ *	Authors: François-Régis Colin <colin@cena.dgac.fr>
+ *		 Stéphane Chatty <chatty@cena.dgac.fr>
  *
  *	$Id$
  * 
@@ -23,10 +23,6 @@ extern "C" {
 #endif
 
 #include <X11/Intrinsic.h>
-
-#include "ivychannel.h"
-
-
 
 extern void IvyXtChannelAppContext( XtAppContext cntx );
 

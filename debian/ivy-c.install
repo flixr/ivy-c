@@ -1,0 +1,4 @@
+usr/X11R6/lib/*.so.*
+usr/lib/*.so.*
+usr/bin/*
+usr/man/man1/*

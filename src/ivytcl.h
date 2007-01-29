@@ -6,7 +6,7 @@
  *
  * 	Main loop based on Tcl
  *
- *	Authors: François-Régis Colin <fcolin@cena.fr>
+ *	Authors: François-Régis Colin <fcolin@cena.dgac.fr>
  *
  *	$Id$
  * 
@@ -20,10 +20,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-
-#include "ivychannel.h"
-
 
 #ifdef __cplusplus
 }

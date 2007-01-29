@@ -1,6 +1,4 @@
-
 /*
- * \ingroup Ivy
  *	Ivy, C interface
  *
  *	Copyright (C) 1997-2000
@@ -8,17 +6,13 @@
  *
  * 	Main functions
  *
- *	\author Authors: François-Régis Colin <fcolin@cena.fr>
- *		 Stéphane Chatty <chatty@cena.fr>
+ *	Authors: François-Régis Colin <fcolin@cena.dgac.fr>
+ *		 Stéphane Chatty <chatty@cena.dgac.fr>
  *
  *	$Id$
  * 
  *	Please refer to file version.h for the
  *	copyright notice regarding this software
- * \todo 
- *	many things TODO
- * \bug 
- *  many introduced 
  */
 
 #ifndef IVY_H
@@ -28,86 +22,67 @@
 extern "C" {
 #endif
 
-#include "IvyArgument.h"
-
 /* numero par default du bus */
 
 #define DEFAULT_BUS 2010
-#define DEFAULT_PRIORITY 100;
 
 typedef struct _clnt_lst *IvyClientPtr;
 
 typedef enum { IvyApplicationConnected, IvyApplicationDisconnected } IvyApplicationEvent;
-typedef enum { IvyAddBind, IvyRemoveBind } IvyBindEvent;
+typedef enum { IvyAddBind, IvyRemoveBind, IvyFilterBind, IvyChangeBind } IvyBindEvent;
 
 extern void IvyDefaultApplicationCallback( IvyClientPtr app, void *user_data, IvyApplicationEvent event ) ;
-extern void IvyDefaultBindCallback( IvyClientPtr app, void *user_data, IvyBindEvent event, char* regexp ) ;
+extern void IvyDefaultBindCallback( IvyClientPtr app, void *user_data, int id, char* regexp,  IvyBindEvent event ) ;
 
 
 /* callback callback appele sur connexion deconnexion d'une appli */
 typedef void (*IvyApplicationCallback)( IvyClientPtr app, void *user_data, IvyApplicationEvent event ) ;
 
 /* callback callback appele sur ajout ou suppression d'un bind */
-typedef void (*IvyBindCallback)( IvyClientPtr app, void *user_data, IvyBindEvent event, char* regexp ) ;
+typedef void (*IvyBindCallback)( IvyClientPtr app, void *user_data, int id, char* regexp,  IvyBindEvent event ) ;
 
 /* callback appele sur reception de die */
 typedef void (*IvyDieCallback)( IvyClientPtr app, void *user_data, int id ) ;
 
 /* callback appele sur reception de messages normaux */
-typedef void (*MsgCallback)( IvyClientPtr app, void *user_data, IvyArgument args ) ;
+typedef void (*MsgCallback)( IvyClientPtr app, void *user_data, int argc, char **argv ) ;
 
 /* callback appele sur reception de messages directs */
-typedef void (*MsgDirectCallback)( IvyClientPtr app, void *user_data, int id, int len, void *msg ) ;
+typedef void (*MsgDirectCallback)( IvyClientPtr app, void *user_data, int id, char *msg ) ;
 
 /* identifiant d'une expression reguliere ( Bind/Unbind ) */
 typedef struct _msg_rcv *MsgRcvPtr;
 
 /* filtrage des regexps */
-void IvySetMyMessagesStart( int argc, const char **argv);
+void IvySetFilter( int argc, const char **argv);
 
-/**
- *
- * \param AppName 
- * \param ready 
- * \param callback 
- * \param data 
- * \param die_callback 
- * \param die_data 
- */
 void IvyInit(
-	 const char * AppName,		/* nom de l'application */
-	 const char * ready,		/* ready Message peut etre NULL */
+	 const char *AppName,		/* nom de l'application */
+	 const char *ready,		/* ready Message peut etre NULL */
 	 IvyApplicationCallback callback, /* callback appele sur connection deconnection d'une appli */
-	 void * data,			/* user data passe au callback */
+	 void *data,			/* user data passe au callback */
 	 IvyDieCallback die_callback,	/* last change callback before die */
-	 void * die_data 		/* user data */
+	 void *die_data 		/* user data */
 	 );
+  
+void IvySetBindCallback(	 
+			  IvyBindCallback bind_callback,
+			  void *bind_data );
 
-/**
- *
- * \param priority prioritie de traitement des clients
- */
-void IvySetApplicationPriority( int priority );
-void IvySetBindCallback( IvyBindCallback bind_callback, void *bind_data ); 
-/**
- *
- * \param bus 
- */
-void IvyStart (const char* bus);
+void IvyStart (const char*);
 void IvyStop ();
 
 /* query sur les applications connectees */
 char *IvyGetApplicationName( IvyClientPtr app );
 char *IvyGetApplicationHost( IvyClientPtr app );
-char *IvyGetApplicationId( IvyClientPtr app );
 IvyClientPtr IvyGetApplication( char *name );
-char ** IvyGetApplicationList();
+char *IvyGetApplicationList(const char *sep);
 char **IvyGetApplicationMessages( IvyClientPtr app); /* demande de reception d'un message */
 
 MsgRcvPtr IvyBindMsg( MsgCallback callback, void *user_data, const char *fmt_regexp, ... ); /* avec sprintf prealable */
-void IvyUnbindMsg( MsgRcvPtr id );
+MsgRcvPtr IvyChangeMsg (MsgRcvPtr msg, const char *fmt_regex, ... ); /* avec sprintf prealable */
 
-MsgRcvPtr IvyBindSimpleMsg( MsgCallback callback, void *user_data, const char *fmt_regexp, ... ); /* avec sprintf prealable */
+void IvyUnbindMsg( MsgRcvPtr id );
 
 /* emission d'un message d'erreur */
 void IvySendError( IvyClientPtr app, int id, const char *fmt, ... );
@@ -122,11 +97,7 @@ int IvySendMsg( const char *fmt_message, ... );		/* avec sprintf prealable */
 /* Message Direct Inter-application */
 
 void IvyBindDirectMsg( MsgDirectCallback callback, void *user_data);
-void IvySendDirectMsg( IvyClientPtr app, int id, int len, void *msg );
-
-/* boucle principale d'Ivy */
-/* use of internal MainLoop or XtMainLoop, or other MainLoop integration */
-extern void IvyMainLoop(void(*hook)(void));
+void IvySendDirectMsg( IvyClientPtr app, int id, char *msg );
 
 #ifdef __cplusplus
 }

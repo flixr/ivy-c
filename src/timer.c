@@ -6,7 +6,7 @@
  *
  *	Timers used in select based main loop
  *
- *	Authors: François-Régis Colin <fcolin@cena.fr>
+ *	Authors: François-Régis Colin <fcolin@cena.dgac.fr>
  *
  *	$Id$
  * 
@@ -15,20 +15,16 @@
  */
 
 /* Module de gestion des timers autour d'un select */
-
 #include <stdio.h>
 #include <sys/types.h>
 #include <time.h>
 #include <stdlib.h>
 #include <memory.h> 
-
 #ifdef WIN32
-#include <crtdbg.h>
 #include <windows.h>
 #else
 #include <sys/time.h>
 #endif
-
 #include "list.h"
 #include "timer.h"
 
@@ -107,18 +103,16 @@ TimerId TimerRepeatAfter( int count, long time, TimerCb cb, void *user_data )
 	/* si y a rien a faire et ben on fait rien */
 	if ( cb == NULL ) return NULL;
 
-	IVY_LIST_ADD( timers, timer )
-	if ( timer )
-	{
-	timer->repeat = count;
-	timer->callback = cb;
-	timer->user_data = user_data;
-	stamp = currentTime();
-	timer->period = time;
-	timer->when =  stamp + time;
-	if ( (timer->when < nextTimeout) || (timeoutptr == NULL))
-		SetNewTimeout( stamp, timer->when );
-	}
+	IVY_LIST_ADD_START( timers, timer )
+		timer->repeat = count;
+		timer->callback = cb;
+		timer->user_data = user_data;
+		stamp = currentTime();
+		timer->period = time;
+		timer->when =  stamp + time;
+		if ( (timer->when < nextTimeout) || (timeoutptr == NULL))
+			SetNewTimeout( stamp, timer->when );
+	IVY_LIST_ADD_END( timers, timer )
 	return timer;
 }
 void TimerRemove( TimerId timer )
@@ -143,6 +137,10 @@ void TimerModify( TimerId timer, long time )
 
 struct timeval *TimerGetSmallestTimeout()
 {
+	unsigned long stamp;
+	/* recalcul du prochain timeout */
+	stamp = currentTime();
+	AdjTimeout( stamp );
 	return timeoutptr;
 }
 
@@ -174,6 +172,5 @@ void TimerScan()
 			}
 		}
 	}
-	/* recalcul du prochain timeout */
-	AdjTimeout( stamp );
+	
 }

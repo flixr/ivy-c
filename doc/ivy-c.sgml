@@ -6,7 +6,7 @@
 
 	SGML source file
 
-	Authors: Stéphane Chatty <chatty@cena.dgac.fr>
+	Authors: Stéphane Chatty <chatty@cena.fr>
 
 	$Id$
 
@@ -37,17 +37,17 @@
 <affiliation><address><email>jestin@cena.fr</email></address></affiliation>
 </author>
 </authorgroup>
-<date>December 11, 2002</date>
+<date>November 09, 2006</date>
 
 <copyright>
-<year>1998-2006</year>
+<year>1998-2002</year>
 <holder>Centre d'Études de la Navigation Aérienne</holder>
 </copyright>
 
 <abstract>
 <para>
 This document is a programmer's guide that describes how to use the Ivy C
-library to connect applications to an Ivy bus. This guide describes version 3.8
+library to connect applications to an Ivy bus. This guide describes version 3.9
 of the library.
 </para>
 </abstract>
@@ -90,7 +90,7 @@ library, please refer to <citetitle>The Ivy sofware bus: a white
 paper</citetitle>. If you want more details about the internals of Ivy, have a
 look at <citetitle>The Ivy architecture and protocol</citetitle>. And finally,
 if you are more interested in other languages, refer to other guides such as
-<citetitle>The Ivy Java library guide</citetitle>. All those documents should be 
+<citetitle>The Ivy Perl library guide</citetitle>. All those documents should be 
 available from the Ivy Web site at <ulink URL="http://www.tls.cena.fr/products/ivy/">http://www.tls.cena.fr/products/ivy/</ulink>.
 </para>
 </sect1>
@@ -108,7 +108,7 @@ Ivy bus. This guide is here to help you do that.
 </para>
 
 <para>
-The Ivy C library is known to compile and work in Win32, Linux, and MacOSX
+The Ivy C library is known to compile and work in WindowsNT and Linux
 environments. It should be easy to use on most Posix environments. 
 </para>
 
@@ -125,8 +125,8 @@ is maintained by a group at CENA (Toulouse, France)
 You can get the latest versions of the Ivy C library from CENA
 (<ulink URL="http://www.tls.cena.fr/products/ivy/">http://www.tls.cena.fr/products/ivy/</ulink>). Depending on whether you
 use a supported binary distribution, you can retrieve binary RPM or
-Debian packages for Linux. Do not forget to get the development package as well as the
-run-time package, or retrieve the source files and compile them.
+Debian packages for Linux (do not forget to get the development package as well as the
+run-time package), or retrieve the source files and compile them.
 </para>
 </sect2>
 
@@ -151,8 +151,8 @@ Here is the code of "hellotranslater.c":
 #include &lt;stdlib.h&gt;
 #include &lt;stdio.h&gt;
 #include &lt;getopt.h&gt;
-#include &lt;Ivy/ivy.h&gt;
-#include &lt;Ivy/ivyloop.h&gt;
+#include &lt;ivy.h&gt;
+#include &lt;ivyloop.h&gt;
 
 /* callback associated to "Hello" messages */
 void HelloCallback (IvyClientPtr app, void *data, int argc, char **argv)
@@ -195,7 +195,7 @@ main (int argc, char**argv)
 	IvyBindMsg (ByeCallback, 0, "^Bye$");
 
 	/* main loop */
-	IvyMainLoop (0,0);
+	IvyMainLoop();
 }
 
 </programlisting>
@@ -308,15 +308,14 @@ environment variable is not defined, the default value
 <parameter>"127:2010"</parameter> is used.
 
 <programlisting>
-void IvyMainLoop (void (*beforehook) (void),void (*afterhook) (void));
+void IvyMainLoop ();
 </programlisting>
 makes your application enter the main loop in which it will handle asynchronous
 communications and signals. This is the default Ivy main loop, based on the
 <function>select</function> POSIX system call.
-If non-null, <parameter>beforehook</parameter> is called every time the main loop is
-about to enter <function>select</function>, and can be used (with care!) to
-extend the main loop. <parameter>afterhook</parameter> is called each time the
-main loop exits <function>select</function>.
+You can interact with the mainloop using hook before and after <function>select</function>
+ use the <function>IvySetBeforeSelectHook</function> and <function>IvySetAfterSelectHook</function>
+
 
 <programlisting>
 void IvyStop ();
@@ -347,9 +346,7 @@ sends a message on the bus. This function has exactly the same behaviour as
 <title>Subscribing to messages</title>
 <para>
 Subscribing to messages consists in binding a callback function to a message
-pattern. Patterns are described by regular expressions with captures. Since
-the 3.6 library, we use <ulink url="http://www.pcre.org/">Perl Compatible Regular
-Expression</ulink>. When a
+pattern. Patterns are described by regular expressions with captures. When a
 message matching the regular expression is detected on the bus, the callback
 function is called. The captures (ie the bits of the message that match the
 parts of regular expression delimited by brackets) are passed to the callback
@@ -367,6 +364,13 @@ binds callback function <function>cb</function> to the regular expression specif
 <parameter>regex_format</parameter> and the optional following arguments. <parameter>regex_format</parameter> and
 the following arguments are handled as in <function>printf</function>. The return
 value is an identifier that can be used later for cancelling the subscription.
+There is a special syntax for specifying numeric interval, in this case
+the interval is locally transformed in a pcre regexp.
+syntax is (?Imin#max[fi]). min and max are the bounds,
+by default the regexp match decimal number, but if max bound is
+followed by 'i', the regexp match only integers ex : (?I-10#20), (?I20#25i)
+Note that due to the regexp generator limitation (which will perhaps be raised eventually)
+the bounds are always integers.
 
 <programlisting>
 void IvyUnbindMsg (MsgRcvPtr id);
@@ -400,10 +404,7 @@ typedef void (*MsgCallback)(IvyClientPtr app, void *data, int argc, char **argv)
 <sect2>
 <title>Direct messages</title>
 <para>
-There are cases when we don't want to send messages to every other subscribee
-on the bus. Direct messages allow peer to peer communication, and thus kind of
-break the software bus metaphor. We strongly discourage you to use them, and
-thus won't provide handy documentation.
+[to be written]
 </para>
 </sect2>
 
@@ -422,9 +423,9 @@ another library.
 <title>Channels</title>
 <para>
 You can get a channel to be managed from the Ivy main loop by using functions
-<function>IvyChannelSetUp</function> and <function>IvyChannelClose</function>.
+<function>IvyChannelAdd</function> and <function>IvyChannelRemove</function>.
 <programlisting>
-Channel IvyChannelSetUp (HANDLE fd,
+Channel IvyChannelAdd (HANDLE fd,
 			void* data,
 			ChannelHandleDelete handle_delete,
 			ChannelHandleRead handle_read);
@@ -434,7 +435,7 @@ descriptor <parameter>fd</parameter>, and function <parameter>handle_delete</par
 closed, and
 
 <programlisting>
-void IvyChannelClose (Channel ch);
+void IvyChannelRemove (Channel ch);
 </programlisting>
 terminates the management of channel <parameter>ch</parameter>.
 </para>
@@ -535,7 +536,7 @@ following ones:
   <listitem><para>IvyXtChannelAppContect(app_context) with an existing Xt
   context</para>
   <listitem><para>You can add channels to be handled by Ivy, for instance,
-  stdin, with the IvyXtChannelSetUp function
+  stdin, with the IvyChannelAdd function
   <listitem><para>IvyInit(char *name,char *readyMessage,IvyApplicationCallback
   cb,void *cbUserData,IvyDieCallback dieCb,void *dieCbUserdata)</para>
   <listitem><para>IvyBindMsg() for the behavior</para>
@@ -593,11 +594,21 @@ int main(int argc,char *argv[]){
 
 <sect2>
 <title>Using Ivy with Tcl/Tk</title>
-<para>
+<para>Just load the libtclivy.so package, and use the following commands
+<programlisting>
+#!/usr/bin/tclsh
+Ivy::init $name $hellomessge connectproc dieproc
+Ivy::start $domain
+Ivy::bind $regexp ballback
+Ivy::applist
+Ivy::send $message
+Ivy::applist
+mainloop
+</programlisting>
 A full example in Tcl/Tk is provided here:
 <programlisting>
 #!/usr/bin/wish
-load libtclivy.so.3
+load libtclivy.so.3.4
 proc connect {args} { }
 proc send { } {
   global tosend
@@ -618,12 +629,12 @@ pack .send
 </sect2>
 
 <sect2>
-<title>Using Ivy with Gtk/Gdk</title>
+<title>Using Ivy with Gtk</title>
 <para>There is little to do to make your gtk applications Ivy aware: just add
 the following lines into your code:
 <programlisting>
-#include &lt;Ivy/ivy.h&gt;
-#include &lt;Ivy/ivyglibloop.h&gt;
+#include &lt;ivy.h&gt;
+#include &lt;ivygtkloop.h&gt;
 ...
 IvyInit ("IvyGtkButton", "IvyGtkButton READY",NULL,NULL,NULL,NULL);
 IvyBindMsg(textCallback,&amp;tosend,"^Ivy Button text=(.*)");
@@ -632,12 +643,12 @@ IvyStart (bus);
 </para>
 
 <para>A full example: gtkIvyButton.c  is provided below, compile it with the
-appropriate flags for your gtk distribution ( `pkg-config --cflags --libs
-gtk+-x11-2.0 `) and -lglibivy . 
+-lgtkivy flag. The other flags depend on your system installation ( replace
+pkg-config with gtk-config for older gnome1 libs)
 <programlisting>
 #include &lt;gtk/gtk.h&gt;
-#include &lt;Ivy/ivy.h&gt;
-#include &lt;Ivy/ivyglibloop.h&gt;
+#include &lt;ivy.h&gt;
+#include &lt;ivygtkloop.h&gt;
 #include &lt;stdio.h&gt;
 #include &lt;stdlib.h&gt;
 
@@ -679,18 +690,21 @@ int main( int   argc, char *argv[] ) {
 <title>Functions to be provided</title>
 <para>
 You can decide to use the main loop from another toolkit than the X Toolkit
-or the Tk toolkit. If you do that, you'll have to define three functions that
-Ivy will use to get its own channels managed by the other toolkit. The three
-following global variables should be defined:
+or the Tk toolkit. If you do that, you'll have to define four functions that
+Ivy will use to get its own channels managed by the other toolkit.
+you should link ivy with your new module insted of the ivy(xxx)loop module.
+These functions are declared in ivychannel.h:
 <programlisting>
-ChannelInit channel_init;
-ChannelSetUp channel_setup;
-ChannelClose channel_close;
+IvyChannelInit
+IvyChannelStop
+IvyChannelAdd
+IvyChannelRemove
 </programlisting>
 
 They should point to functions that respectively:
 <itemizedlist>
 <listitem><para> make the necessary global initializations before entering the main loop</para>
+<listitem><para> make the necessary global finalizations before exiting the main loop</para>
 <listitem><para> initialize a channel and ensure that it is managed by the main loop</para>
 <listitem><para> close a channel</para>
 </itemizedlist>
@@ -700,13 +714,21 @@ The types <type>ChannelInit</type>, <type>ChannelSetUp</type> and <type>ChannelC
 as follows:
 
 <programlisting>
-typedef void (*ChannelInit)(void);
-typedef Channel (*ChannelSetUp)(
+extern void IvyChannelInit(void);
+
+extern void IvyChannelStop (void);
+
+/* function called by Ivy to set callback on the sockets */
+extern Channel IvyChannelAdd(
         HANDLE fd,
         void *data,
         ChannelHandleDelete handle_delete,
-        ChannelHandleRead handle_read);
-typedef void (*ChannelClose)( Channel channel );
+        ChannelHandleRead handle_read
+);
+
+/* function called by Ivy to remove callback on the sockets */
+extern void IvyChannelRemove( Channel channel );
+
 </programlisting>
 </para>
 </sect3>

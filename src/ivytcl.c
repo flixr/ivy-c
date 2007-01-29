@@ -6,7 +6,7 @@
  *
  * 	Main loop based on Tcl
  *
- *	Authors: François-Régis Colin <fcolin@cena.fr>
+ *	Authors: François-Régis Colin <fcolin@cena.dgac.fr>
  *
  *	$Id$
  * 
@@ -29,6 +29,7 @@
 
 #include "ivytcl.h"
 #include "ivysocket.h"
+#include "ivychannel.h"
 #include "ivy.h"
 #include "timer.h"
 
@@ -37,7 +38,6 @@
 // On utilisa la boucle Standard TCL 
 // mais il y a des problemes sur les socket server 
 // Il n'y a pas de Tcl_MakeTCPserver
-
 
 struct _channel {
 	HANDLE fd;
@@ -74,15 +74,6 @@ void IvyChannelInit(void)
 	  }
 #endif
 	channel_initialized = 1;
-}
-void IvyChannelStop(void)
-{
-	channel_initialized = 0;
-
-#ifndef TCL_CHANNEL_INTEGRATION
-	Tcl_CancelIdleCall(IvyIdleProc,0);
-#endif
-
 }
 static void
 IvyHandleFd(ClientData	cd,
@@ -143,6 +134,14 @@ void IvyIdleProc(ClientData clientData)
 }
 #endif
 
+void
+IvyChannelStop ()
+{
+  /* To be implemented */
+#ifndef TCL_CHANNEL_INTEGRATION
+	Tcl_CancelIdleCall(IvyIdleProc,0);
+#endif
+}
 /* Code from PLC */
 
 #define INTEGER_SPACE 30

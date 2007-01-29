@@ -21,8 +21,7 @@
 extern "C" {
 #endif
 
-#include "ivychannel.h"
-
+/* Nothnig special */
 #ifdef __cplusplus
 }
 #endif

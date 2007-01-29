@@ -26,7 +26,8 @@
 #endif
 
 #include <glib.h>
-
+#include "ivydebug.h"
+#include "ivychannel.h"
 #include "ivyglibloop.h"
 
 struct _channel {
@@ -58,13 +59,9 @@ void IvyChannelInit(void) {
   channel_initialized = 1;
 }
 
-void IvyChannelStop( )
-{
-	channel_initialized = 0;
-}
 
 
-Channel IvyChannelAdd(IVY_HANDLE fd, void *data,
+Channel IvyChannelAdd(HANDLE fd, void *data,
 			   ChannelHandleDelete handle_delete,
 			   ChannelHandleRead handle_read
 			   ) {
@@ -95,14 +92,13 @@ void IvyChannelRemove( Channel channel ) {
   g_source_remove( channel->id_read );
   g_source_remove( channel->id_delete );
 }
+ 
 
 static gboolean IvyGlibHandleChannelRead(GIOChannel *source,
 					 GIOCondition condition,
 					 gpointer data) {
   Channel channel = (Channel)data;
-#ifdef DEBUG
-  printf("Handle Channel read %d\n",source );
-#endif
+  TRACE("Handle Channel read %d\n",source );
   (*channel->handle_read)(channel, g_io_channel_unix_get_fd(source), channel->data);
   return TRUE;
 }
@@ -111,15 +107,15 @@ static gboolean IvyGlibHandleChannelDelete(GIOChannel *source,
 					 GIOCondition condition,
 					 gpointer data) {
   Channel channel = (Channel)data;
-#ifdef DEBUG
-  printf("Handle Channel delete %d\n",source );
-#endif
+  TRACE("Handle Channel delete %d\n",source );
   (*channel->handle_delete)(channel->data);
   return TRUE;
 }
 
-void IvyMainLoop(void(*hook)(void))
+
+void
+IvyChannelStop ()
 {
-	GMainLoop *ml =  g_main_loop_new(NULL, FALSE);
-	g_main_loop_run(ml);
+  /* To be implemented */
 }
+

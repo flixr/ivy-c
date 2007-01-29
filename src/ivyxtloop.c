@@ -6,8 +6,8 @@
  *
  * 	Main loop based on the X Toolkit
  *
- *	Authors: François-Régis Colin <fcolin@cena.fr>
- *		 Stéphane Chatty <chatty@cena.fr>
+ *	Authors: François-Régis Colin <fcolin@cena.dgac.fr>
+ *		 Stéphane Chatty <chatty@cena.dgac.fr>
  *
  *	$Id$
  * 
@@ -39,6 +39,7 @@
 
 #include <X11/Intrinsic.h>
 
+#include "ivydebug.h"
 #include "ivychannel.h"
 #include "ivyxtloop.h"
 
@@ -83,25 +84,19 @@ void IvyChannelRemove( Channel channel )
 	XtRemoveInput( channel->id_read );
 	XtRemoveInput( channel->id_delete );
 }
-void IvyChannelStop()
-{
-}
+
 
 static void IvyXtHandleChannelRead( XtPointer closure, int* source, XtInputId* id )
 {
 	Channel channel = (Channel)closure;
-#ifdef DEBUG
-	printf("Handle Channel read %d\n",*source );
-#endif
+	TRACE("Handle Channel read %d\n",*source );
 	(*channel->handle_read)(channel,*source,channel->data);
 }
 
 static void IvyXtHandleChannelDelete( XtPointer closure, int* source, XtInputId* id )
 {
 	Channel channel = (Channel)closure;
-#ifdef DEBUG
-	printf("Handle Channel delete %d\n",*source );
-#endif
+	TRACE("Handle Channel delete %d\n",*source );
 	(*channel->handle_delete)(channel->data);
 }
 
@@ -111,7 +106,7 @@ void IvyXtChannelAppContext( XtAppContext cntx )
 	app = cntx;
 }
 
-Channel IvyChannelAdd(IVY_HANDLE fd, void *data,
+Channel IvyChannelAdd(HANDLE fd, void *data,
 				ChannelHandleDelete handle_delete,
 				ChannelHandleRead handle_read
 				)						
@@ -134,7 +129,11 @@ Channel IvyChannelAdd(IVY_HANDLE fd, void *data,
 
 	return channel;
 }
-void IvyMainLoop(void(*hook)(void))
+
+
+void
+IvyChannelStop ()
 {
-	XtAppMainLoop (app);
+  /* To be implemented */
 }
+

@@ -6,8 +6,8 @@
  *
  * 	Main loop based on GLUT ( OpenGL ) Toolkit
  *
- *	Authors: François-Régis Colin <colin@cena.fr>
- *		 Stéphane Chatty <chatty@cena.fr>
+ *	Authors: François-Régis Colin <colin@cenatoulouse.dgac.fr>
+ *		 Stéphane Chatty <chatty@cenatoulouse.dgac.fr>
  *
  *	$Id$
  * 
@@ -39,6 +39,7 @@
 
 #include <GL/glut.h>
 
+#include "ivydebug.h"
 #include "ivychannel.h"
 #include "ivyglutloop.h"
 
@@ -53,8 +54,6 @@ struct _channel {
 
 static int channel_initialized = 0;
 
-
-
 void IvyChannelInit(void)
 {
 
@@ -66,10 +65,7 @@ void IvyChannelInit(void)
 #endif
 	channel_initialized = 1;
 }
-void IvyChannelStop(void)
-{
-	channel_initialized = 0;
-}
+
 void IvyChannelRemove( Channel channel )
 {
 
@@ -83,22 +79,18 @@ void IvyChannelRemove( Channel channel )
 static void IvyGlutHandleChannelRead( int source, GLUTInputId id, void *data )
 {
 	Channel channel = (Channel)data;
-#ifdef DEBUG
-	printf("Handle Channel read %d\n",source );
-#endif
+	TRACE("Handle Channel read %d\n",source );
 	(*channel->handle_read)(channel,source,channel->data);
 }
 
 static void IvyGlutHandleChannelDelete( int source, GLUTInputId id, void *data )
 {
 	Channel channel = (Channel)data;
-#ifdef DEBUG
-	printf("Handle Channel delete %d\n",source );
-#endif
+	TRACE("Handle Channel delete %d\n",source );
 	(*channel->handle_delete)(channel->data);
 }
 
-Channel IvyChannelAdd(IVY_HANDLE fd, void *data,
+Channel IvyChannelAdd(HANDLE fd, void *data,
 				ChannelHandleDelete handle_delete,
 				ChannelHandleRead handle_read
 				)						
@@ -122,8 +114,10 @@ Channel IvyChannelAdd(IVY_HANDLE fd, void *data,
 	return channel;
 }
 
-extern void IvyMainLoop(void(*hook)(void))
+
+void
+IvyChannelStop ()
 {
-	glutMainLoop();
+  /* To be implemented */
 }
 

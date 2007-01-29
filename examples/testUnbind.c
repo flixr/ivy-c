@@ -13,8 +13,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ivyloop.h>
-#include <ivy.h>
+#include <Ivy/ivyloop.h>
+#include <Ivy/ivy.h>
+#include <Ivy/version.h>
 #define REGEXP "^ub"
 
 void Callback (IvyClientPtr app, void *user_data, int argc, char *argv[]) {
@@ -30,6 +31,10 @@ int main(int argc, char *argv[]) {
   ptr=IvyBindMsg(Callback,&ptr,REGEXP);
   printf("bound to %s\n",REGEXP);
   IvyStart(NULL);
-  IvyMainLoop(0);
+#if (IVYMAJOR_VERSION == 3) && (IVYMINOR_VERSION < 9)
+  IvyMainLoop(NULL, NULL);
+#else
+  IvyMainLoop();
+#endif
   return 0;
 }

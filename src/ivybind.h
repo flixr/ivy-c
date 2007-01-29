@@ -1,7 +1,7 @@
 /*
  *	Ivy, C interface
  *
- *	Copyright (C) 1997-2000
+ *	Copyright (C) 1997-2006
  *	Centre d'Études de la Navigation Aérienne
  *
  *	Bind syntax for extracting message comtent 
@@ -14,18 +14,22 @@
  *	Please refer to file version.h for the
  *	copyright notice regarding this software
  */
-#include "ivyargument.h"
-
 /* Module de gestion de la syntaxe des messages Ivy */
 
 typedef struct _binding *IvyBinding;
 
-typedef enum  { IvyBindRegexp, IvyBindSimple } IvyBindingType;
-void IvyBindingParseMessage( const char *msg );
+/* Mise en place des Filtrages */
+int IvyBindingGetFilterCount();
 void IvyBindingSetFilter( int argc, const char ** argv );
-int IvyBindingFilter( IvyBindingType typ, int len, const char *exp );
-IvyBinding IvyBindingCompile( IvyBindingType typ, const char * expression );
-void IvyBindingGetCompileError( int *erroffset, const char **errmessage );
+int IvyBindingFilter( const char *expression );
+void IvyBindindFilterCheck( const char *message );
+
+/* Creation, Compilation */
+IvyBinding IvyBindingCompile( const char *expression, int *erroffset, const char **errmessage );
 void IvyBindingFree( IvyBinding bind );
+
+/* Execution , extraction */
 int IvyBindingExec( IvyBinding bind, const char * message );
-IvyArgument IvyBindingMatch( IvyBinding bind, const char *message );
+/* Get Argument */
+void IvyBindingMatch( IvyBinding bind, const char *message, int argnum, int *arglen, const char **arg );
+

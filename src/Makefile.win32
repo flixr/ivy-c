@@ -16,11 +16,14 @@
 
 
 # change this in version.h too !!!!
-MAJOR=4
-MINOR=0
+MAJOR=3
+MINOR=9
 
-PCREINC = -I "C:\Program Files\GnuWin32\include" #`pcre-config --cflags`
-PCRELIB = "C:\Program Files\GnuWin32\lib\libpcre.lib" #`pcre-config --libs`
+PCREINC = -I "C:\Documents and Settings\fcolin\My Documents\Visual Studio 2005\Projects\pcre-6.4\\" 
+PCRELIB = Debug\pcre.lib
+
+#PCREINC = -I "C:\Program Files\GnuWin32\include" #`pcre-config --cflags`
+#PCRELIB = "C:\Program Files\GnuWin32\lib\libpcre.lib" #`pcre-config --libs`
 
 PCRE_OPT = PCRE_CASELESS
 REGCOMP_OPT = REG_ICASE
@@ -34,61 +37,57 @@ PCREOBJ =
 
 #CC=gcc
 #CFLAGS = -g -Wall
-CFLAGS = -DWIN32 -D_CRTDBG_MAP_ALLOC -nologo -GS -Zi -MDd #-DDEBUG
+CFLAGS = /W3 /DWIN32 /D_CRT_SECURE_NO_DEPRECATE /nologo
 #LIBTOOL=ar q # linux and solaris
 #LIBTOOL=libtool -static -o
-LIBTOOL=lib -nologo /out:
+LIBTOOL=lib /nologo /out:
 
 #REGEXP = -DGNU_REGEXP  -DREGCOMP_OPT=$(REGCOMP_OPT) # deprecated !
-REGEXP= -DUSE_PCRE_REGEX -DPCRE_OPT=$(PCRE_OPT)
+REGEXP= /DUSE_PCRE_REGEX /DPCRE_OPT=$(PCRE_OPT)
 # on activeTCL , set #define CHANNEL to null, and add ivyloop.obj in the ivytcl target,
 # see below
 CHANNEL = -DTCL_CHANNEL_INTEGRATION 
 
-
-OBJ = hash.obj ivyloop.obj timer.obj ivysocket.obj ivy.obj ivybind.obj ivyargument.obj
+OBJ = intervalRegexp.obj ivyloop.obj timer.obj ivysocket.obj ivy.obj ivybuffer.obj ivybind.obj getopt.obj
 
 # WINDOWS add ivyloop.obj if TCL_CHANNEL_INTEGRATION is not set
 TARGETS = ivyprobe.exe ivyperf.exe 
-TARGETLIBS=ivy.dll
+TARGETLIBS=libivy.dll
 
 .c.obj:
-	$(CC) $(CFLAGS) -c $*.c
+	$(CC) $(CFLAGS) /c $*.c
 
 all: static-libs commands shared-libs
 
-static-libs: ivy-static.lib
+static-libs: libivy.lib
 
 shared-libs: $(TARGETLIBS)
 
 commands: $(TARGETS)
 
 ivybind.obj: ivybind.c
-	$(CC) -c $(CFLAGS) $(REGEXP) $(PCREINC) ivybind.c
+	$(CC) $(CFLAGS) $(REGEXP) $(PCREINC) /c ivybind.c
 
 
-ivyprobe.exe: ivyprobe.obj  getopt.obj ivy.dll
-	$(CC)  $(CFLAGS) -o $@ ivyprobe.obj getopt.obj ivy.lib wsock32.lib $(PCRELIB)
+ivyprobe.exe: ivyprobe.obj libivy.lib
+	$(CC)  $(CFLAGS) /Fe$@ ivyprobe.obj libivy.lib wsock32.lib $(PCRELIB)
 
 ivyprobe.obj : ivyprobe.c 
-	$(CC) -c $(CFLAGS) $(REGEXP) $(PCREINC) ivyprobe.c
+	$(CC) $(CFLAGS) $(REGEXP) $(PCREINC) /c ivyprobe.c
 	
-ivyperf.exe: ivyperf.obj  getopt.obj ivy.dll
-	$(CC)  $(CFLAGS) -o $@ ivyperf.obj getopt.obj ivy.lib wsock32.lib $(PCRELIB)
-
-ivyperf.obj : ivyperf.c
-	$(CC) -c $(CFLAGS) $(REGEXP) $(PCREINC)  ivyperf.c
+ivyperf.exe: ivyperf.obj libivy.lib
+	$(CC) $(CFLAGS) /Fe$@ ivyperf.obj libivy.lib wsock32.lib $(PCRELIB)
 
 
-ivy-static.lib: $(OBJ)
+libivy.lib: $(OBJ)
 	del /f $@
 	$(LIBTOOL)$@ $(OBJ)
 
-ivy.dll: $(OBJ) 
-	$(CC) -nologo /LD  -o $@ $(OBJ) wsock32.lib $(PCRELIB) /link /debug /def:libIvy.def /version:$(MAJOR).$(MINOR)
+libivy.dll: $(OBJ)
+	$(CC) /dll /out: $@ $(OBJ) $(PCRELIB)
 
 clean:
-	-del /f $(TARGETS) $(TARGETLIBS) *.obj *.a *.dll *.lib *.pdb *~
+	-del /f $(TARGETS) $(TARGETLIBS) *.obj *.lib *.dll *~
 
 
 
