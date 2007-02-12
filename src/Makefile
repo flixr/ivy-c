@@ -28,10 +28,12 @@ else
 endif
 
 ifndef PREFIX
-    PREFIX=/usr/local
+	PREFIX=/usr/local
 endif
 
-X11_PREFIX = /usr
+ifndef X11_PREFIX
+	X11_PREFIX = /usr
+endif
 
 XTINC = -I$(X11_PREFIX)/include
 XTLIB = -L$(X11_PREFIX)$(LIB) -lXt -lX11 -lSM -lICE
@@ -71,8 +73,11 @@ endif
 #PCREOBJ = `pcre-config --prefix`/lib/libpcre.a
 PCREOBJ = 
 
-EXTRALIB=
-#EXTRALIB=-lsocket -lnsl # for solaris
+ifeq ($(shell uname -s),SunOS)
+	EXTRALIB=-lsocket -lnsl # for solaris
+else
+	EXTRALIB=
+endif
 
 CC=gcc
 LIBTOOL=ar q # linux and solaris
