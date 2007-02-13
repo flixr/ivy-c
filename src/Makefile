@@ -215,6 +215,7 @@ libtclivy.so.$(MAJOR).$(MINOR): $(TCLOBJ)
 #	$(CC) -G -Wl,-h,libtclivy.so.$(MAJOR) -o $@ $(TCLOBJ) $(TCLLIB) $(PCREOBJ) # solaris
 #	libtool -dynamic -o $@ $(TCLOBJ) $(TCLLIB) $(PCREOBJ) $(PCRELIB) -lc
 
+distclean: clean
 clean:
 	-rm -f $(TARGETS) $(TARGETLIBS) *.o *.a *.so *.so.* *~
 
