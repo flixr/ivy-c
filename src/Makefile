@@ -31,8 +31,9 @@ ifndef PREFIX
 	PREFIX=/usr/local
 endif
 
+X11_PREFIX:= $(shell pkg-config --variable=prefix x11)
 ifndef X11_PREFIX
-	X11_PREFIX = /usr
+	X11_PREFIX = /usr/X11R6
 endif
 
 XTINC = -I$(X11_PREFIX)/include
@@ -88,7 +89,7 @@ REGEXP= -DUSE_PCRE_REGEX -DPCRE_OPT=$(PCRE_OPT)
 # on activeTCL , set #define CHANNEL to null, and add ivyloop.o in the ivytcl target,
 # see below
 CHANNEL = -DTCL_CHANNEL_INTEGRATION 
-CFLAGS = -g -Wall $(FPIC)
+CFLAGS = -g -Wall -std=gnu89 $(FPIC)
 
 
 OBJ = ivyloop.o timer.o ivysocket.o ivy.o ivybuffer.o ivybind.o intervalRegexp.o
@@ -185,32 +186,32 @@ libtclivy.a: $(TCLOBJ)
 # TODO this PCREOBJ is a dirty hack
 
 libivy.so.$(MAJOR).$(MINOR): $(OBJ)
-	$(CC) -shared -Wl,-soname,libivy.so.$(MAJOR) -o $@ $(OBJ) $(PCRELIB)
+	$(CC) $(LDFLAGS) -shared -Wl,-soname,libivy.so.$(MAJOR) -o $@ $(OBJ) $(PCRELIB)
 #	$(CC) -G -Wl,-h,libivy.so.$(MAJOR) -o $@ $(OBJ)		#solaris
 #	libtool -dynamic -o $@ $(OBJ) $(PCRELIB) -lc
 
 libgivy.so.$(MAJOR).$(MINOR): $(GOBJ)
-	$(CC) -shared -Wl,-soname,libgivy.so.$(MAJOR) -o $@ $(GOBJ) $(PCRELIB)
+	$(CC) $(LDFLAGS) -shared -Wl,-soname,libgivy.so.$(MAJOR) -o $@ $(GOBJ) $(PCRELIB)
 #	$(CC) -G -Wl,-h,libgivy.so.$(MAJOR) -o $@ $(GOBJ) #solaris
 #	libtool -dynamic -o $@ $(GOBJ) $(PCRELIB) -lc
 
 libxtivy.so.$(MAJOR).$(MINOR): $(XTOBJ)
-	$(CC) -shared -Wl,-soname,libxtivy.so.$(MAJOR) -o $@ $(XTOBJ) $(XTLIB) $(PCRELIB)
+	$(CC) $(LDFLAGS) -shared -Wl,-soname,libxtivy.so.$(MAJOR) -o $@ $(XTOBJ) $(XTLIB) $(PCRELIB)
 #	$(CC) -G -Wl,-h,libxtivy.so.$(MAJOR) -o $@ $(XTOBJ) $(XTLIB) #solaris
 #	libtool -dynamic -o $@ $(XTOBJ) $(XTLIB) $(PCRELIB) -lc
 
 libglibivy.so.$(MAJOR).$(MINOR): $(GLIBOBJ)
-	$(CC) -shared -Wl,-soname,libglibivy.so.$(MAJOR) -o $@ $(GLIBOBJ) $(GLIBLIB) $(PCRELIB)
+	$(CC) $(LDFLAGS) -shared -Wl,-soname,libglibivy.so.$(MAJOR) -o $@ $(GLIBOBJ) $(GLIBLIB) $(PCRELIB)
 #	$(CC) -G -Wl,-h,libglibivy.so.$(MAJOR) -o $@ $(GLIBOBJ) $(GLIBLIB) #solaris
 #	libtool -dynamic -o $@ $(GLIBOBJ) $(GLIBLIB) $(PCRELIB) -lc
 
 libglutivy.so.$(MAJOR).$(MINOR): $(GLIBOBJ)
-	$(CC) -shared -Wl,-soname,libglutivy.so.$(MAJOR) -o $@ $(GLUTOBJ) $(GLUTLIB) $(PCRELIB)
+	$(CC) $(LDFLAGS) -shared -Wl,-soname,libglutivy.so.$(MAJOR) -o $@ $(GLUTOBJ) $(GLUTLIB) $(PCRELIB)
 #	$(CC) -G -Wl,-h,libglutivy.so.$(MAJOR) -o $@ $(GLUTOBJ) $(GLUTLIB) #	solaris
 #	libtool -dynamic -o $@ $(GLUTOBJ) $(GLUTLIB) $(PCRELIB) -lc
 
 libtclivy.so.$(MAJOR).$(MINOR): $(TCLOBJ)
-	$(CC) -shared -Wl,-soname,libtclivy.so.$(MAJOR) -o $@ $(TCLOBJ) $(TCLLIB) $(PCREOBJ) $(PCRELIB)
+	$(CC) $(LDFLAGS) -shared -Wl,-soname,libtclivy.so.$(MAJOR) -o $@ $(TCLOBJ) $(TCLLIB) $(PCREOBJ) $(PCRELIB)
 #	$(CC) -G -Wl,-h,libtclivy.so.$(MAJOR) -o $@ $(TCLOBJ) $(TCLLIB) $(PCREOBJ) # solaris
 #	libtool -dynamic -o $@ $(TCLOBJ) $(TCLLIB) $(PCREOBJ) $(PCRELIB) -lc
 
