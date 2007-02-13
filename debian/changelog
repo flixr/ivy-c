@@ -1,3 +1,14 @@
+ivy-c (3.9.2-1) unstable; urgency=low
+
+  * Apply patch from Michel Estienne <estienne@cena.fr> for Solaris,
+  * Change Makefile and debian rules build to be able to build on Sarge and 
+    on Etch
+  * Use LDFLAGS in Makefile, use pkg-config if available to get X11 installation
+    path so that the Xt lib gets installed in the correct location even on newer 
+    Xorg 7.x.
+
+ -- Olivier Fourdan <fourdan@cena.fr>  Mon, 12 Feb 2007 17:36:06 +0100
+
 ivy-c (3.9.1-2) unstable; urgency=low
 
   * Update package for Debian Etch

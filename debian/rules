@@ -18,7 +18,7 @@ configure-stamp:
 build: build-stamp
 build-stamp: configure-stamp 
 	dh_testdir
-	cd src && $(MAKE) all MAJOR=$(MAJOR) MINOR=$(MINOR) TCLINC=$(-I/usr/include/tcl8.4/) TCLLIB=$(-ltcl8.4) CFLAGS="-g -fPIC -D_REENTRANT"
+	cd src && $(MAKE) all MAJOR=$(MAJOR) MINOR=$(MINOR) TCLINC=$(-I/usr/include/tcl8.4/) TCLLIB=$(-ltcl8.4) CFLAGS="-g -fPIC -D_REENTRANT" LDFLAGS="-L/usr/X11R6/lib"
 	touch build-stamp
 
 clean:
