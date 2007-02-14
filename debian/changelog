@@ -1,3 +1,9 @@
+ivy-c (3.9.3-1) unstable; urgency=low
+
+  * Include patches from Michel Estienne <estienne@cena.fr> for older gcc
+
+ -- Olivier Fourdan <fourdan@lerak.tls.cena.fr>  Wed, 14 Feb 2007 13:48:28 +0100
+
 ivy-c (3.9.2-1) unstable; urgency=low
 
   * Apply patch from Michel Estienne <estienne@cena.fr> for Solaris,

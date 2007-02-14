@@ -351,7 +351,7 @@ int SocketSendRaw (Client client, char *buffer, int len )
 		FD_ZERO(&wrset);
 		FD_SET(  client->fd, &wrset );
 		ready = select(client->fd+1, 0, &wrset,  0, &timeout);
-		//fprintf(stderr,"Ivy: select ready=%d fd=%d\n",ready,FD_ISSET(  client->fd, &wrset ) );
+		/* fprintf(stderr,"Ivy: select ready=%d fd=%d\n",ready,FD_ISSET(  client->fd, &wrset ) ); */
 		if(ready < 0) {
 		perror("Ivy: SocketSendRaw select");
 		}
@@ -481,7 +481,7 @@ Client SocketConnectAddr (struct in_addr * addr, unsigned short port,
 	
 	return client;
 }
-// TODO factoriser avec HandleRead !!!!
+/* TODO factoriser avec HandleRead !!!! */
 int SocketWaitForReply (Client client, char *buffer, int size, int delai)
 {
 	fd_set rdset;
@@ -641,7 +641,7 @@ Multicast datagrams with initial TTL 64 are restricted to the same region.
 Multicast datagrams with initial TTL 128 are restricted to the same continent. 
 Multicast datagrams with initial TTL 255 are unrestricted in scope. 
 */
-	unsigned char ttl = 64 ; // Arbitrary TTL value.
+	unsigned char ttl = 64 ; /* Arbitrary TTL value. */
 	/* wee need to broadcast */
 
 	imr.imr_multiaddr.s_addr = htonl( host );

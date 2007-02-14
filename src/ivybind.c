@@ -170,7 +170,7 @@ void IvyBindingMatch( IvyBinding bind, const char *message, int argnum, int *arg
 	if ( p->rm_so != -1 ) {
 			*arglen = p->rm_eo - p->rm_so;
 			*arg = message + p->rm_so;
-	} else { // ARG VIDE
+	} else { /* ARG VIDE */
 			*arglen = 0;
 			*arg = NULL;
 	}
@@ -178,7 +178,7 @@ void IvyBindingMatch( IvyBinding bind, const char *message, int argnum, int *arg
 
 }
 
-//filter Expression Bind 
+/*filter Expression Bind  */
 int IvyBindingGetFilterCount()
 {
 return messages_classes_count;
@@ -219,9 +219,9 @@ int IvyBindingFilter(const char *expression)
 		{
 		  if (strncmp( messages_classes[i], token, tokenlen ) == 0) {
 		    return 1; }
-		  //		  else {
-		  //printf ("DBG> %s eliminé [%s]\n", token, expression);
-		  //}
+		  /*		  else { */
+		  /*printf ("DBG> %s eliminé [%s]\n", token, expression); */
+		  /*} */
 		}
  	}
 	return regexp_ok;

@@ -33,11 +33,11 @@
 #include "ivy.h"
 #include "timer.h"
 
-// defined or not in the Makefile only
+/* defined or not in the Makefile only */
 #ifdef TCL_CHANNEL_INTEGRATION
-// On utilisa la boucle Standard TCL 
-// mais il y a des problemes sur les socket server 
-// Il n'y a pas de Tcl_MakeTCPserver
+/* On utilisa la boucle Standard TCL  */
+/* mais il y a des problemes sur les socket server  */
+/* Il n'y a pas de Tcl_MakeTCPserver */
 
 struct _channel {
 	HANDLE fd;
@@ -126,7 +126,7 @@ Channel IvyChannelAdd(HANDLE fd, void *data,
 }
 
 #else
-// On utilisa la procedure Idle et la boucle Standard Ivy
+/* On utilisa la procedure Idle et la boucle Standard Ivy */
 void IvyIdleProc(ClientData clientData)
 {
 	IvyIdle();
@@ -397,11 +397,11 @@ IvyBindCmd(ClientData	clientData,
   }
 
   filter = (filter_struct *) ckalloc(sizeof(filter_struct));
-  filter->filter = ckalloc(strlen(argv[1])+1);  // regexp
+  filter->filter = ckalloc(strlen(argv[1])+1);  /* regexp */
   strcpy(filter->filter, argv[1]);
-  filter->script = ckalloc(strlen(argv[2])+1);  // callback proc name
+  filter->script = ckalloc(strlen(argv[2])+1);  /* callback proc name */
   strcpy(filter->script, argv[2]);
-  filter->id = IvyBindMsg(IvyMsgCB, (void *) filter, filter->filter, NULL); // MsgPtr id
+  filter->id = IvyBindMsg(IvyMsgCB, (void *) filter, filter->filter, NULL); /* MsgPtr id */
   filter->interp = interp;
   entry = Tcl_CreateHashEntry(&filter_table, (char *) filter_id, &dummy);
   Tcl_SetHashValue(entry, (ClientData) filter);

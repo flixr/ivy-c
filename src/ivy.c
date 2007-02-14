@@ -198,9 +198,9 @@ static int MsgCall (const char *message, MsgSndPtr msg,  IvyClientPtr client)
 	TRACE( "Sending message id=%d '%s'\n",msg->id,message);
 
 	buffer.offset = 0;
-	// il faut essayer d'envoyer le message en une seule fois sur la socket
-	// pour eviter au maximun de passer dans le select plusieur fois par message du protocole Ivy
-	// pour eviter la latence ( PB de perfo detecte par ivyperf ping roudtrip )
+	/* il faut essayer d'envoyer le message en une seule fois sur la socket */
+	/* pour eviter au maximun de passer dans le select plusieur fois par message du protocole Ivy */
+	/* pour eviter la latence ( PB de perfo detecte par ivyperf ping roudtrip ) */
 	err = make_message_var( &buffer, "%d %d" ARG_START ,Msg, msg->id);
 
 	TRACE( "Send matching args count %d\n",rc);
@@ -320,7 +320,7 @@ static void Receive( Client client, void *data, char *line )
 			bind = IvyBindingCompile( arg, & erroffset, & errbuf );
 			if ( bind != NULL )
 				{
-				  // On teste si c'est un change regexp : changement de regexp d'une id existante
+				  /* On teste si c'est un change regexp : changement de regexp d'une id existante */
 				  IVY_LIST_ITER( clnt->msg_send, snd, ( id != snd->id ));
 				  if ( snd )     {
 				    free (snd->str_regexp);
@@ -493,7 +493,7 @@ static void ClientDelete( Client client, void *data )
 	/* probably bogus call, but this is for debug only anyway */
 	SocketGetRemoteHost( client, &remotehost, &remoteport );
 	TRACE("Deconnexion de %s:%hu\n", remotehost, remoteport );
-#endif //DEBUG
+#endif /*DEBUG */
 
 	if ( clnt->app_name ) free( clnt->app_name );
 	IVY_LIST_EACH( clnt->msg_send, msg)
@@ -513,7 +513,7 @@ static void *ClientCreate( Client client )
 	unsigned short remoteport;
 	SocketGetRemoteHost( client, &remotehost, &remoteport );
 	TRACE("Connexion de %s:%hu\n", remotehost, remoteport );
-#endif //DEBUG
+#endif /*DEBUG */
 
 	return SendService (client, "Unknown");
 }
@@ -558,7 +558,7 @@ static void BroadcastReceive( Client client, void *data, char *line )
 #ifdef DEBUG
 	SocketGetRemoteHost (client, &remotehost, &remoteport );
 	TRACE(" Broadcast de %s:%hu port %hu\n", remotehost, remoteport, serviceport );
-#endif //DEBUG
+#endif /*DEBUG */
 
 	/* connect to the service and send the regexp */
 	app = SocketConnectAddr(SocketGetRemoteAddr(client), serviceport, 0, Receive, ClientDelete );
@@ -701,7 +701,7 @@ void IvyStart (const char* bus)
 
 				baddr.s_addr = htonl(mask);
 				printf ("Broadcasting on network %s, port %d\n", inet_ntoa(baddr), SupervisionPort);
-				// test mask value agaisnt CLASS D
+				/* test mask value agaisnt CLASS D */
 				if ( IN_MULTICAST( mask ) )
 					SocketAddMember (broadcast , mask );
 
@@ -956,7 +956,7 @@ char **IvyGetApplicationMessages( IvyClientPtr app )
 
 static void substituteInterval (IvyBuffer *src)
 {
-  // pas de traitement couteux s'il n'y a rien à interpoler
+  /* pas de traitement couteux s'il n'y a rien à interpoler */
   if (strstr (src->data, "(?I") == NULL) {
     return;
   } else {
@@ -968,7 +968,7 @@ static void substituteInterval (IvyBuffer *src)
 
     curPos = src->data;
     while ((itvPos = strstr (curPos, "(?I")) != NULL) {
-      // copie depuis la position courante jusqu'à l'intervalle
+      /* copie depuis la position courante jusqu'à l'intervalle */
       int lenCp, min,max;
       char withDecimal;
       lenCp = itvPos-curPos;
@@ -976,17 +976,17 @@ static void substituteInterval (IvyBuffer *src)
       curPos=itvPos;
       dst.offset += lenCp;
 
-      // extraction des paramètres de l'intervalle
+      /* extraction des paramètres de l'intervalle */
       sscanf (itvPos, "(?I%d#%d%c", &min, &max, &withDecimal);
 
-      //      printf ("DBG> substituteInterval min=%d max=%d withDecimal=%d\n", 
-      //      min, max, (withDecimal != 'i'));   
+      /*      printf ("DBG> substituteInterval min=%d max=%d withDecimal=%d\n",  */
+      /*      min, max, (withDecimal != 'i'));    */
   
-      // generation et copie de l'intervalle
+      /* generation et copie de l'intervalle */
       regexpGen (&(dst.data[dst.offset]), dst.size-dst.offset, min, max, (withDecimal != 'i'));
       dst.offset = strlen (dst.data);
 
-      // consommation des caractères décrivant intervalle dans la chaine source
+      /* consommation des caractères décrivant intervalle dans la chaine source */
       curPos = strstr (curPos, ")");
       curPos++;
     }

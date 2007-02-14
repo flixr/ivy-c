@@ -27,7 +27,7 @@
 
 #define BUFFER_SIZE 4096	/* taille buffer initiale on multiple par deux a chaque realloc */
 
-// fonction de formtage a la printf d'un buffer avec reallocation dynamique  
+/* fonction de formtage a la printf d'un buffer avec reallocation dynamique   */
 int make_message(IvyBuffer* buffer, const char *fmt, va_list ap)
 {
     /* Guess we need no more than BUFFER_INIT_SIZE bytes. */
