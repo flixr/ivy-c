@@ -1,0 +1,91 @@
+PERHAPS64 := $(shell uname -m | perl -ne "print /64/ ? '64' : '';")
+LIB = /lib$(PERHAPS64)
+ifeq ($(PERHAPS64), "64")
+	FPIC=
+else
+	FPIC=-fPIC
+endif
+
+ifndef PREFIX
+    PREFIX=/opt/rosx
+endif
+
+PCREINC = `pcre-config --cflags`
+PCRELIB = `pcre-config --libs`
+CASESENSITIVE = "yes"
+ifeq ($(CASESENSITIVE), "no")
+	PCRE_OPT=PCRE_CASELESS
+	REGCOMP_OPT=REG_ICASE
+else
+	PCRE_OPT=0
+	REGCOMP_OPT=REG_EXTENDED	
+endif
+REGEXP= -DUSE_PCRE_REGEX -DPCRE_OPT=$(PCRE_OPT)
+
+OBJ = ivyloop.o timer.o ivysocket.o ivy.o ivybuffer.o ivybind.o intervalRegexp.o
+CC=gcc
+LIBTOOL=ar q # linux and solaris
+CFLAGS = -g -Wall $(FPIC)
+
+TARGETS = ivyprobe ivyperf
+
+# ------------------------------------------------------------------------------------------
+
+.c.o:
+	$(CC) $(CFLAGS) -c $*.c
+
+all: static-libs commands shared-libs
+
+static-libs: libivy.a
+
+shared-libs: libivy.dylib
+
+commands: $(TARGETS)
+
+ivybind.o: ivybind.c
+	$(CC) -c $(CFLAGS) $(REGEXP) $(PCREINC) ivybind.c
+
+libivy.a: $(OBJ)
+	rm -f $@
+	$(LIBTOOL) $@ $(OBJ)
+
+libivy.dylib: $(OBJ)
+	$(CC) -dynamiclib -o $@ $(OBJ) $(PCRELIB)
+
+ivyprobe: ivyprobe.o libivy.a
+	$(CC)  $(CFLAGS) -o $@ ivyprobe.o -L. -livy $(PCRELIB) $(EXTRALIB)
+
+ivyperf: ivyperf.o libivy.a
+	$(CC)  $(CFLAGS) -o $@ ivyperf.o -L. -livy $(PCRELIB) $(EXTRALIB)
+
+# ------------------------------------------------------------------------------------------
+
+installlibs: static-libs shared-libs
+	test -d $(DESTDIR)$(PREFIX)$(LIB)  || mkdir -p $(DESTDIR)$(PREFIX)$(LIB)
+	install -m644 libivy.a		$(DESTDIR)$(PREFIX)$(LIB)
+	install -m644 libivy.dylib	$(DESTDIR)$(PREFIX)$(LIB)
+
+includes:
+	test -d $(DESTDIR)$(PREFIX)/include/Ivy || mkdir -p $(DESTDIR)$(PREFIX)/include/Ivy
+	install -m644 ivy.h			$(DESTDIR)$(PREFIX)/include/Ivy/
+	install -m644 ivybind.h		$(DESTDIR)$(PREFIX)/include/Ivy/
+	install -m644 ivybuffer.h	$(DESTDIR)$(PREFIX)/include/Ivy/
+	install -m644 ivychannel.h	$(DESTDIR)$(PREFIX)/include/Ivy/
+	install -m644 ivydebug.h	$(DESTDIR)$(PREFIX)/include/Ivy/
+	install -m644 ivyloop.h		$(DESTDIR)$(PREFIX)/include/Ivy/
+	install -m644 ivysocket.h	$(DESTDIR)$(PREFIX)/include/Ivy/
+	install -m644 list.h		$(DESTDIR)$(PREFIX)/include/Ivy/
+	install -m644 timer.h		$(DESTDIR)$(PREFIX)/include/Ivy/
+	install -m644 version.h		$(DESTDIR)$(PREFIX)/include/Ivy/
+
+installbins: commands
+	test -d $(DESTDIR)$(PREFIX)/bin || mkdir -p $(DESTDIR)$(PREFIX)/bin
+	install -m755 ivyprobe $(DESTDIR)$(PREFIX)/bin
+	install -m755 ivyperf $(DESTDIR)$(PREFIX)/bin
+
+install: installlibs installbins includes
+
+# ------------------------------------------------------------------------------------------
+
+clean:
+	-rm -f $(TARGETS) *.o *.a *.dylib *.dylib.* *~
