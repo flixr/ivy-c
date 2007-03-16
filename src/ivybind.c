@@ -29,7 +29,7 @@
 
 
 #ifdef USE_PCRE_REGEX
-#define OVECSIZE 60 /* must be multiple of 3, for regexp return */
+#define OVECSIZE 120 /* must be multiple of 3, for regexp return */
 #include <pcre.h>
 #else  /* we don't USE_PCRE_REGEX */
 #define MAX_MSG_FIELDS 200
