@@ -60,8 +60,8 @@ TCLLIB = -ltcl$(TCLVERS)
 # use these if you want to use Aqua Tcl on macOSX
 #TCLINC = -I/Library/Frameworks/Tcl.framework/Headers
 #TCLLIB = -framework Tcl
-PCREINC = `pcre-config --cflags`
-PCRELIB = `pcre-config --libs`
+PCREINC = $(shell pcre-config --cflags)
+PCRELIB = $(shell pcre-config --libs)
 CASESENSITIVE = "yes"
 ifeq ($(CASESENSITIVE), "no")
 	PCRE_OPT=PCRE_CASELESS
@@ -107,7 +107,7 @@ TARGETLIBS=libivy.so.$(MAJOR).$(MINOR) libgivy.so.$(MAJOR).$(MINOR) libxtivy.so.
 .c.o:
 	$(CC) $(CFLAGS) -c $*.c
 
-all: static-libs commands shared-libs
+all: static-libs commands shared-libs pkgconf
 
 static-libs: libivy.a libgivy.a libxtivy.a libglibivy.a libtclivy.a 
 # not yet need Modified Glut libglutivy.a
@@ -218,20 +218,21 @@ libtclivy.so.$(MAJOR).$(MINOR): $(TCLOBJ)
 distclean: clean
 clean:
 	-rm -f $(TARGETS) $(TARGETLIBS) *.o *.a *.so *.so.* *~
+	-rm -f ivy-glib.pc
 
 installlibs: static-libs shared-libs
 	test -d $(DESTDIR)$(PREFIX)$(LIB)  || mkdirhier $(DESTDIR)$(PREFIX)$(LIB)
-	test -d $(DESTDIR)$(X11_PREFIX)$(LIB)  || mkdirhier $(DESTDIR)$(X11_PREFIX)$(LIB)
+	-test -d $(DESTDIR)$(X11_PREFIX)$(LIB)  || mkdirhier $(DESTDIR)$(X11_PREFIX)$(LIB)
 
 	install -m644 libivy.a						$(DESTDIR)$(PREFIX)$(LIB)
 	install -m644 libgivy.a						$(DESTDIR)$(PREFIX)$(LIB)
-	install -m644 libxtivy.a					$(DESTDIR)$(X11_PREFIX)$(LIB)
+	-install -m644 libxtivy.a					$(DESTDIR)$(X11_PREFIX)$(LIB)
 	install -m644 libtclivy.a					$(DESTDIR)$(PREFIX)$(LIB)
 	install -m644 libglibivy.a					$(DESTDIR)$(PREFIX)$(LIB)
 
 	install -m644 libivy.so.$(MAJOR).$(MINOR)			$(DESTDIR)$(PREFIX)$(LIB)
 	install -m644 libgivy.so.$(MAJOR).$(MINOR)			$(DESTDIR)$(PREFIX)$(LIB)
-	install -m644 libxtivy.so.$(MAJOR).$(MINOR)			$(DESTDIR)$(X11_PREFIX)$(LIB)
+	-install -m644 libxtivy.so.$(MAJOR).$(MINOR)			$(DESTDIR)$(X11_PREFIX)$(LIB)
 	install -m644 libtclivy.so.$(MAJOR).$(MINOR)			$(DESTDIR)$(PREFIX)$(LIB)
 	install -m644 libglibivy.so.$(MAJOR).$(MINOR)			$(DESTDIR)$(PREFIX)$(LIB)
 
@@ -257,8 +258,8 @@ installliblinks: installlibs
 	ln -fs $(PREFIX)$(LIB)/libivy.so.$(MAJOR).$(MINOR)		$(DESTDIR)$(PREFIX)$(LIB)/libivy.so.$(MAJOR)
 	ln -fs $(PREFIX)$(LIB)/libgivy.so.$(MAJOR).$(MINOR)		$(DESTDIR)$(PREFIX)$(LIB)/libgivy.so
 	ln -fs $(PREFIX)$(LIB)/libgivy.so.$(MAJOR).$(MINOR)		$(DESTDIR)$(PREFIX)$(LIB)/libgivy.so.$(MAJOR)
-	ln -fs $(X11_PREFIX)$(LIB)/libxtivy.so.$(MAJOR).$(MINOR)	$(DESTDIR)$(X11_PREFIX)$(LIB)/libxtivy.so
-	ln -fs $(X11_PREFIX)$(LIB)/libxtivy.so.$(MAJOR).$(MINOR)	$(DESTDIR)$(X11_PREFIX)$(LIB)/libxtivy.so.$(MAJOR)
+	-ln -fs $(X11_PREFIX)$(LIB)/libxtivy.so.$(MAJOR).$(MINOR)	$(DESTDIR)$(X11_PREFIX)$(LIB)/libxtivy.so
+	-ln -fs $(X11_PREFIX)$(LIB)/libxtivy.so.$(MAJOR).$(MINOR)	$(DESTDIR)$(X11_PREFIX)$(LIB)/libxtivy.so.$(MAJOR)
 	ln -fs $(PREFIX)$(LIB)/libtclivy.so.$(MAJOR).$(MINOR)		$(DESTDIR)$(PREFIX)$(LIB)/libtclivy.so
 	ln -fs $(PREFIX)$(LIB)/libtclivy.so.$(MAJOR).$(MINOR)		$(DESTDIR)$(PREFIX)$(LIB)/libtclivy.so.$(MAJOR)
 
@@ -286,8 +287,14 @@ installdocs:
 	install -m 766 ../examples/button.tk				$(DESTDIR)$(PREFIX)/share/doc/ivy-c/examples
 	install -m 766 ../examples/unBind.tcl				$(DESTDIR)$(PREFIX)/share/doc/ivy-c/examples
 
-install: installlibs installbins installliblinks installdocs includes
+install: installlibs installbins installliblinks installdocs includes installpkgconf
 
 rpm::
 	/usr/bin/rpmize
 
+pkgconf: 
+	sed -e 's,@PREFIX@,$(PREFIX),; s,@DESTDIR@,$(DESTDIR),; s,@MAJOR@,$(MAJOR),; s,@MINOR@,$(MINOR),; s,@PCREINC@,$(PCREINC),; s,@REGEXP@,$(REGEXP),; s,@PCRELIB@,$(PCRELIB),; s,@EXTRALIB@,$(EXTRALIB),' ivy-glib.pc.in > ivy-glib.pc
+
+installpkgconf:
+	test -d $(DESTDIR)$(PREFIX)/lib/pkgconfig || mkdirhier $(DESTDIR)$(PREFIX)/lib/pkgconfig
+	install -m 644 ivy-glib.pc						$(DESTDIR)$(PREFIX)/lib/pkgconfig
