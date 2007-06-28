@@ -13,7 +13,14 @@
  *	Please refer to file version.h for the
  *	copyright notice regarding this software
  */
+#ifndef IVYTIMER_H
+#define IVYTIMER_H
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+	
 /* Module de gestion des timers autour d'un select */
 
 typedef struct _timer *TimerId;
@@ -32,3 +39,8 @@ void TimerRemove( TimerId id );
 struct timeval *TimerGetSmallestTimeout();
 
 void TimerScan();
+#ifdef __cplusplus
+}
+#endif
+#endif
+
