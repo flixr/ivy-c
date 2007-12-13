@@ -116,10 +116,12 @@ static void HandleSocket (Channel channel, HANDLE fd, void *data)
 	char *ptr_nl;
 	long nb_to_read = 0;
 	long nb;
+	long nb_occuped;
 	socklen_t len;
 	
 	/* limitation taille buffer */
-	nb_to_read = client->buffer_size - (client->ptr - client->buffer );
+	nb_occuped = client->ptr - client->buffer;
+	nb_to_read = client->buffer_size - nb_occuped;
 	if (nb_to_read == 0 ) {
 		client->buffer_size *= 2; /* twice old size */
 		client->buffer = realloc( client->buffer, client->buffer_size );
@@ -129,7 +131,8 @@ static void HandleSocket (Channel channel, HANDLE fd, void *data)
 		exit(0);
 		}
 		fprintf(stderr, "Buffer Limit reached realloc new size %ld\n", client->buffer_size );
-		nb_to_read = client->buffer_size - (client->ptr - client->buffer );
+		nb_to_read = client->buffer_size - nb_occuped;
+		client->ptr = client->buffer + nb_occuped; 
 	}
 	len = sizeof (client->from );
 	nb = recvfrom (fd, client->ptr, nb_to_read,0,(struct sockaddr *)&client->from,
