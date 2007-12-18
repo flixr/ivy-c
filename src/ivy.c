@@ -98,6 +98,9 @@ struct _clnt_lst {
 /* flag pour le debug en cas de Filter de regexp */
 int debug_filter = 0;
 
+/* flag pour le debug en cas de Filter de regexp */
+int debug_binary_msg = 0;
+
 /* server  pour la socket application */
 static Server server;
 
@@ -604,6 +607,8 @@ void IvyInit (const char *appname, const char *ready,
 	application_die_callback = die_callback;
 	application_die_user_data = die_data;
 	ready_message = ready;
+
+	if ( getenv( "IVY_DEBUG_BINARY" )) debug_binary_msg = 1;
 }
 
 void IvySetBindCallback( IvyBindCallback bind_callback, void *bind_data )
@@ -809,6 +814,21 @@ IvyChangeMsg (MsgRcvPtr msg, const char *fmt_regex, ... )
 	}
 	return msg;
 }
+/* teste de la presence de binaire dans les message Ivy */
+static int IvyCheckBuffer( const char* buffer )
+{
+	char * ptr = buffer;
+	while ( *ptr )
+	{
+		if ( *ptr++ < ' ' ) 
+		{
+			fprintf(stderr," IvySendMsg bad msg to send binary data not allowed ignored %s\n",
+				buffer );
+			return 1;
+		}
+	}
+	return 0;
+}
 /* emmission d'un message avec formatage a la printf */
 int IvySendMsg(const char *fmt, ...)
 {
@@ -822,7 +842,13 @@ int IvySendMsg(const char *fmt, ...)
 	buffer.offset = 0;
 	make_message( &buffer, fmt, ap );
 	va_end ( ap );
-
+	/* test du contenu du message */
+	if ( debug_binary_msg  )
+	{
+		if ( IvyCheckBuffer( buffer.data ) )
+			return 0;
+	}
+	
 	/* recherche dans la liste des requetes recues de mes clients */
 	IVY_LIST_EACH (clients, clnt) {
 		match_count += ClientCall (clnt, buffer.data);
