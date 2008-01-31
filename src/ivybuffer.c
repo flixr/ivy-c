@@ -32,7 +32,7 @@ int make_message(IvyBuffer* buffer, const char *fmt, va_list ap)
 {
     /* Guess we need no more than BUFFER_INIT_SIZE bytes. */
     int n;
-	if ( buffer->size == 0 || buffer->data == NULL )
+    if ( buffer->size == 0 || buffer->data == NULL )
 		{
 		buffer->size = BUFFER_SIZE;
 		buffer->offset = 0;
@@ -51,14 +51,14 @@ int make_message(IvyBuffer* buffer, const char *fmt, va_list ap)
     n = vsnprintf (buffer->data + buffer->offset, buffer->size - buffer->offset, fmt, ap);
 #endif
     /* If that worked, return the string size. */
-    if (n > -1 && n < buffer->size)
+    if (n > -1 && n < (buffer->size - buffer->offset))
 	{
 		buffer->offset += n;
-        return n;
+		return n;
 	}
     /* Else try again with more space. */
     if (n > -1)    /* glibc 2.1 */
-        buffer->size = n+1; /* precisely what is needed */
+        buffer->size = buffer->offset + n+1; /* precisely what is needed */
     else           /* glibc 2.0 */
         buffer->size *= 2;  /* twice the old size */
     if ((buffer->data = realloc (buffer->data, buffer->size)) == NULL)
