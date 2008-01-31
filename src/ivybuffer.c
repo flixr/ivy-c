@@ -32,6 +32,7 @@ int make_message(IvyBuffer* buffer, const char *fmt, va_list ap)
 {
     /* Guess we need no more than BUFFER_INIT_SIZE bytes. */
     int n;
+	va_list ap_copy;
     if ( buffer->size == 0 || buffer->data == NULL )
 		{
 		buffer->size = BUFFER_SIZE;
@@ -45,11 +46,13 @@ int make_message(IvyBuffer* buffer, const char *fmt, va_list ap)
 		}
     while (1) {
     /* Try to print in the allocated space. */
+	va_copy( ap_copy, ap );
 #ifdef WIN32
-	n = _vsnprintf (buffer->data + buffer->offset, buffer->size - buffer->offset, fmt, ap);
+	n = _vsnprintf (buffer->data + buffer->offset, buffer->size - buffer->offset, fmt, ap_copy);
 #else
-    n = vsnprintf (buffer->data + buffer->offset, buffer->size - buffer->offset, fmt, ap);
+    n = vsnprintf (buffer->data + buffer->offset, buffer->size - buffer->offset, fmt, ap_copy);
 #endif
+	va_end(ap_copy);
     /* If that worked, return the string size. */
     if (n > -1 && n < (buffer->size - buffer->offset))
 	{
