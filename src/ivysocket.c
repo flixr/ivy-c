@@ -14,6 +14,10 @@
  *	copyright notice regarding this software
  */
 
+#ifdef OPENMP
+#include <omp.h>
+#endif
+
 #ifdef WIN32
 #include <windows.h>
 #endif
@@ -71,6 +75,9 @@ struct _client {
 	char *ptr;
   	/* user data */
 	void *data;
+#ifdef OPENMP
+	omp_lock_t fdLock;
+#endif
 };
 
 static Server servers_list = NULL;
@@ -95,6 +102,10 @@ static void DeleteSocket(void *data)
 		(*client->handle_delete) (client, client->data );
 	shutdown (client->fd, 2 );
 	close (client->fd );
+#ifdef OPENMP
+	omp_destroy_lock (&(client->fdLock));
+#endif
+
 	IVY_LIST_REMOVE (clients_list, client );
 }
 
@@ -204,6 +215,10 @@ static void HandleServer(Channel channel, HANDLE fd, void *data)
 	client->ptr = client->buffer;
 	client->handle_delete = server->handle_delete;
 	client->data = (*server->create) (client );
+#ifdef OPENMP
+	omp_init_lock (&(client->fdLock));
+#endif
+
 
 	IVY_LIST_ADD_END (clients_list, client );
 	
@@ -335,13 +350,17 @@ void SocketClose (Client client )
 		IvyChannelRemove (client->channel );
 }
 
-int SocketSendRaw (Client client, char *buffer, int len )
+int SocketSendRaw (const Client client, const char *buffer, const int len )
 {
 	int err;
 	int waiting= 0;
 
 	if (!client)
 		return waiting;
+	
+#ifdef OPENMP
+	omp_set_lock (&(client->fdLock));
+#endif
 
 	if ( debug_send )
 	{
@@ -373,6 +392,67 @@ int SocketSendRaw (Client client, char *buffer, int len )
 	{
 		fprintf(stderr,"... OK\n");		
 	}
+#ifdef OPENMP
+	omp_unset_lock (&(client->fdLock));
+#endif
+	// GROS DEBUG
+/* 	{ */
+/* 	  char *toPrint = strndup (buffer, len); */
+/* 	  printf ("DBG> SocketSendRaw [%d] -> '%s'\n", len, toPrint); */
+/* 	  free (toPrint); */
+/* 	} */
+	// END DEBUG
+
+	return waiting;
+}
+
+int SocketSendRawWithId( const Client client, const char *id, const char *buffer, const int len )
+{
+	int err;
+	int waiting= 0;
+
+	if (!client)
+		return waiting;
+	
+#ifdef OPENMP
+	omp_set_lock (&(client->fdLock));
+#endif
+
+	if ( debug_send )
+	{
+		/* try to determine if we are going to block */
+		fd_set wrset;
+		int ready;	
+		struct timeval timeout;
+		timeout.tv_usec = 0; 
+		timeout.tv_sec = 0;
+		FD_ZERO(&wrset);
+		FD_SET(  client->fd, &wrset );
+		ready = select(client->fd+1, 0, &wrset,  0, &timeout);
+		/* fprintf(stderr,"Ivy: select ready=%d fd=%d\n",ready,FD_ISSET(  client->fd, &wrset ) ); */
+		if(ready < 0) {
+		perror("Ivy: SocketSendRaw select");
+		}
+		if ( !FD_ISSET(  client->fd, &wrset ) )
+		{
+			fprintf(stderr,"Ivy: Client Queue Full Waiting..........");
+			waiting = 1;
+		}
+
+	}
+
+	send (client->fd, id, strlen (id), 0 );
+	err = send (client->fd, buffer, len, 0 );
+	if (err != len )
+		perror ("*** send ***");
+	if ( debug_send && waiting )
+	{
+		fprintf(stderr,"... OK\n");		
+	}
+#ifdef OPENMP
+	omp_unset_lock (&(client->fdLock));
+#endif
+
 	return waiting;
 }
 
@@ -386,6 +466,10 @@ int SocketSend (Client client, char *fmt, ... )
 {
 	int waiting = 0;
 	static IvyBuffer buffer = {NULL, 0, 0 }; /* Use satic mem to eliminate multiple call to malloc /free */
+#ifdef OPENMP
+#pragma omp threadprivate (buffer)
+#endif
+
 	va_list ap;
 	int len;
 	if (!client)
@@ -407,6 +491,9 @@ void SocketBroadcast ( char *fmt, ... )
 {
 	Client client;
 	static IvyBuffer buffer = {NULL, 0, 0 }; /* Use satic mem to eliminate multiple call to malloc /free */
+#ifdef OPENMP
+#pragma omp threadprivate (buffer)
+#endif
 	va_list ap;
 	int len;
 	
@@ -480,8 +567,13 @@ Client SocketConnectAddr (struct in_addr * addr, unsigned short port,
 	client->from.sin_family = AF_INET;
 	client->from.sin_addr = *addr;
 	client->from.sin_port = htons (port);
+
+#ifdef OPENMP
+	omp_init_lock (&(client->fdLock));
+#endif
 	IVY_LIST_ADD_END(clients_list, client );
 	
+
 	return client;
 }
 /* TODO factoriser avec HandleRead !!!! */
@@ -601,6 +693,9 @@ Client SocketBroadcastCreate (unsigned short port,
 	client->interpretation = interpretation;
 	client->ptr = client->buffer;
 	client->data = data;
+#ifdef OPENMP
+	omp_init_lock (&(client->fdLock));
+#endif
 	IVY_LIST_ADD_END(clients_list, client );
 	
 	return client;
@@ -610,6 +705,9 @@ void SocketSendBroadcast (Client client, unsigned long host, unsigned short port
 {
 	struct sockaddr_in remote;
 	static IvyBuffer buffer = { NULL, 0, 0 }; /* Use satic mem to eliminate multiple call to malloc /free */
+#ifdef OPENMP
+#pragma omp threadprivate (buffer)
+#endif
 	va_list ap;
 	int err,len;
 

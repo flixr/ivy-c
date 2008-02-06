@@ -1,3 +1,14 @@
+ivy-c (3.10.0) unstable; urgency=low
+
+  * fix realloc buffer size when big message
+  * complete change of internal structures for performance optimisation
+  * experimental parralelized version for performance optimisation (use
+	and need openmp) which scale well for regexp matching on 
+	multicore/multi processor gear.
+	
+
+ -- Alexandre Bustico <bustico@cena.fr>  Wed, 06 Feb 2008 17:17:54 +0100
+
 ivy-c (3.9.3-2) unstable; urgency=low
 
   * Do not strip symbols from lib

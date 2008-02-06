@@ -66,7 +66,8 @@ extern void SocketServerClose( Server server );
 
 extern void SocketClose( Client client );
 extern int SocketSend( Client client, char *fmt, ... );
-extern int SocketSendRaw( Client client, char *buffer, int len );
+extern int SocketSendRaw( const Client client, const char *buffer, const int len );
+extern int SocketSendRawWithId( const Client client, const char *id, const char *buffer, const int len );
 extern char *SocketGetPeerHost( Client client );
 extern void SocketSetData( Client client, void *data );
 extern void *SocketGetData( Client client );

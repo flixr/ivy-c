@@ -54,6 +54,9 @@
 on place le code d'initialisation de l'objet entre START et END 
 pour eviter de chainer un objet non initialise
 */
+
+		  /*		printf ("sizeof (*"#p") = %d\n", sizeof( *p )); \ */ \
+
 #define IVY_LIST_ADD_START(list, p ) \
         if ((p = (TYPEOF(p)) (malloc( sizeof( *p ))))) \
 		{ \
@@ -74,6 +77,9 @@ pour eviter de chainer un objet non initialise
 
 #define IVY_LIST_EACH_SAFE( list, p, next )\
 for ( p = list ; (next = p ? p->next: p ),p ; p = next )
+
+#define IVY_LIST_IS_EMPTY( list ) \
+  list == NULL
 
 #define IVY_LIST_EMPTY( list ) \
 	{ \

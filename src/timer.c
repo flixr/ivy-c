@@ -63,7 +63,7 @@ static long currentTime()
 static void SetNewTimeout( unsigned long current, unsigned long when )
 {
 	unsigned long time;
-	time = when - current;
+	time = (when <= current) ? 0 : when - current;
 	nextTimeout = when;
 	selectTimeout.tv_sec = time / MILLISEC;
 	selectTimeout.tv_usec = (time - selectTimeout.tv_sec* MILLISEC) * MILLISEC;

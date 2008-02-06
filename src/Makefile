@@ -1,4 +1,4 @@
-#
+
 #	Ivy, C interface
 #
 #	Copyright (C) 1997-2002
@@ -17,7 +17,7 @@
 
 # change this in version.h too !!!!
 MAJOR=3
-MINOR=9
+MINOR=10
 
 PERHAPS64 := $(shell uname -m | perl -ne "print /64/ ? '64' : '';")
 LIB = /lib$(PERHAPS64)
@@ -81,6 +81,7 @@ else
 endif
 
 CC=gcc
+CPP='g++'
 LIBTOOL=ar q # linux and solaris
 #LIBTOOL=libtool -static -o
 
@@ -90,9 +91,12 @@ REGEXP= -DUSE_PCRE_REGEX -DPCRE_OPT=$(PCRE_OPT)
 # see below
 CHANNEL = -DTCL_CHANNEL_INTEGRATION 
 
-CFLAGS += -g -Wall $(FPIC)
+CFLAGS += -g -Wall -Wshadow $(FPIC)
+OMPCFLAGS = $(CFLAGS) -fopenmp -DOPENMP=1 # -DDEBUG
+OMPLIB = -lgomp -lpthread
 
 OBJ = ivyloop.o timer.o ivysocket.o ivy.o ivybuffer.o ivybind.o intervalRegexp.o
+OMPOBJ = ivyloop.o timer.o ivysocket_omp.o ivy_omp.o ivybuffer.o ivybind.o intervalRegexp.o
 GOBJ = ivyloop.o timer.o ivysocket.o givy.o ivybuffer.o ivybind.o intervalRegexp.o
 XTOBJ = ivyxtloop.o ivysocket.o ivy.o ivybuffer.o ivybind.o intervalRegexp.o
 GLIBOBJ = ivyglibloop.o ivysocket.o ivy.o ivybuffer.o ivybind.o intervalRegexp.o
@@ -100,14 +104,19 @@ GLUTOBJ = ivyglutloop.o ivysocket.o ivy.o ivybuffer.o ivybind.o intervalRegexp.o
 TCLOBJ = ivytcl.o  timer.o ivysocket.o givy.o ivybuffer.o ivybind.o intervalRegexp.o
 
 # WINDOWS add ivyloop.o if TCL_CHANNEL_INTEGRATION is not set
-TARGETS = ivyprobe ivyperf ivyglibprobe ivyxtprobe 
+TARGETS = ivyprobe ivythroughput ivyperf ivyglibprobe ivyxtprobe ivyprobe_efence 
 TARGETLIBS=libivy.so.$(MAJOR).$(MINOR) libgivy.so.$(MAJOR).$(MINOR) libxtivy.so.$(MAJOR).$(MINOR) libglibivy.so.$(MAJOR).$(MINOR) libtclivy.so.$(MAJOR).$(MINOR)
+OMP_TARGET= libivy_omp.so.$(MAJOR).$(MINOR) libivy_omp.a ivyprobe_omp ivythroughput_omp 
 # not yet need Modified Glut ivyglutprobe
 
 .c.o:
 	$(CC) $(CFLAGS) -c $*.c
+.cpp.o:
+	$(CPP) $(CFLAGS) -c $*.cpp
 
 all: static-libs commands shared-libs pkgconf
+
+omp: $(OMP_TARGET)
 
 static-libs: libivy.a libgivy.a libxtivy.a libglibivy.a libtclivy.a 
 # not yet need Modified Glut libglutivy.a
@@ -127,6 +136,12 @@ ivytcl.o: ivytcl.c
 givy.o: ivy.c
 	$(CC) -c $(CFLAGS) -DDEBUG -o givy.o ivy.c
 
+ivy_omp.o: ivy.c
+	$(CC) -c $(OMPCFLAGS)  -o ivy_omp.o ivy.c
+
+ivysocket_omp.o: ivysocket.c
+	$(CC) -c $(OMPCFLAGS)  -o ivysocket_omp.o ivysocket.c
+
 ivyglutloop.o: ivyglutloop.c ivyglutloop.h
 	$(CC) -c $(CFLAGS) $(GLUTINC) ivyglutloop.c
 
@@ -134,7 +149,21 @@ ivyglibloop.o: ivyglibloop.c ivyglibloop.h
 	$(CC) -c $(CFLAGS) $(GLIBINC) ivyglibloop.c
 
 ivyprobe: ivyprobe.o libivy.a
-	$(CC)  $(CFLAGS) -o $@ ivyprobe.o -L. -livy $(PCRELIB) $(EXTRALIB)
+	$(CC)  $(CFLAGS) -o $@ ivyprobe.o -L. -livy $(PCRELIB) $(EXTRALIB) 
+
+ivythroughput: ivythroughput.o libivy.a
+	$(CPP)  $(CFLAGS) -o $@ ivythroughput.o -L. -livy -lpcrecpp $(PCRELIB) $(EXTRALIB) 
+
+ivyprobe_efence: ivyprobe.o libivy.a
+	$(CPP)  $(CFLAGS) -o $@ ivyprobe.o -L. -livy -lpcrecpp $(PCRELIB) $(EXTRALIB) -lefence
+
+
+
+ivyprobe_omp: ivyprobe.o libivy_omp.a
+	$(CC)  $(CFLAGS) -o $@ ivyprobe.o -L. -livy_omp $(PCRELIB) $(EXTRALIB) $(OMPLIB)
+
+ivythroughput_omp: ivythroughput.o libivy_omp.a
+	$(CPP)  $(CFLAGS) -o $@ ivythroughput.o -L. -livy_omp -lpcrecpp $(PCRELIB) $(EXTRALIB) $(OMPLIB)
 
 ivyprobe.o : ivyprobe.c 
 	$(CC)  $(CFLAGS) $(REGEXP) -c ivyprobe.c -o $@
@@ -162,7 +191,11 @@ ivyglutprobe: ivyglutprobe.o libglutivy.a
 
 libivy.a: $(OBJ)
 	rm -f $@
-	$(LIBTOOL) $@ $(OBJ)
+	$(LIBTOOL) $@ $(OBJ) 
+
+libivy_omp.a: $(OMPOBJ)
+	rm -f $@
+	$(LIBTOOL) $@ $(OMPOBJ)
 
 libgivy.a: $(GOBJ)
 	rm -f $@
@@ -187,6 +220,11 @@ libtclivy.a: $(TCLOBJ)
 
 libivy.so.$(MAJOR).$(MINOR): $(OBJ)
 	$(CC) $(LDFLAGS) -shared -Wl,-soname,libivy.so.$(MAJOR) -o $@ $(OBJ) $(PCRELIB)
+#	$(CC) -G -Wl,-h,libivy.so.$(MAJOR) -o $@ $(OBJ)		#solaris
+#	libtool -dynamic -o $@ $(OBJ) $(PCRELIB) -lc
+
+libivy_omp.so.$(MAJOR).$(MINOR): $(OMPOBJ)
+	$(CC) $(LDFLAGS) -shared -Wl,-soname,libivy.so.$(MAJOR) -o $@ $(OMPOBJ) $(PCRELIB) $(OMPLIB)
 #	$(CC) -G -Wl,-h,libivy.so.$(MAJOR) -o $@ $(OBJ)		#solaris
 #	libtool -dynamic -o $@ $(OBJ) $(PCRELIB) -lc
 
@@ -217,7 +255,7 @@ libtclivy.so.$(MAJOR).$(MINOR): $(TCLOBJ)
 
 distclean: clean
 clean:
-	-rm -f $(TARGETS) $(TARGETLIBS) *.o *.a *.so *.so.* *~
+	-rm -f $(TARGETS) $(TARGETLIBS) $(OMP_TARGET) *.o *.a *.so *.so.* *~
 	-rm -f ivy-glib.pc
 
 installlibs: static-libs shared-libs
@@ -225,6 +263,7 @@ installlibs: static-libs shared-libs
 	-test -d $(DESTDIR)$(X11_PREFIX)$(LIB)  || mkdirhier $(DESTDIR)$(X11_PREFIX)$(LIB)
 
 	install -m644 libivy.a						$(DESTDIR)$(PREFIX)$(LIB)
+	install -m644 libivy_omp.a					$(DESTDIR)$(PREFIX)$(LIB)
 	install -m644 libgivy.a						$(DESTDIR)$(PREFIX)$(LIB)
 	-install -m644 libxtivy.a					$(DESTDIR)$(X11_PREFIX)$(LIB)
 	install -m644 libtclivy.a					$(DESTDIR)$(PREFIX)$(LIB)
@@ -235,6 +274,7 @@ installlibs: static-libs shared-libs
 	-install -m644 libxtivy.so.$(MAJOR).$(MINOR)			$(DESTDIR)$(X11_PREFIX)$(LIB)
 	install -m644 libtclivy.so.$(MAJOR).$(MINOR)			$(DESTDIR)$(PREFIX)$(LIB)
 	install -m644 libglibivy.so.$(MAJOR).$(MINOR)			$(DESTDIR)$(PREFIX)$(LIB)
+	install -m644 libivy_omp.so.$(MAJOR).$(MINOR)			$(DESTDIR)$(PREFIX)$(LIB)
 
 includes:
 	test -d $(DESTDIR)$(PREFIX)/include/Ivy || mkdirhier $(DESTDIR)$(PREFIX)/include/Ivy
@@ -262,10 +302,12 @@ installliblinks: installlibs
 	-ln -fs $(X11_PREFIX)$(LIB)/libxtivy.so.$(MAJOR).$(MINOR)	$(DESTDIR)$(X11_PREFIX)$(LIB)/libxtivy.so.$(MAJOR)
 	ln -fs $(PREFIX)$(LIB)/libtclivy.so.$(MAJOR).$(MINOR)		$(DESTDIR)$(PREFIX)$(LIB)/libtclivy.so
 	ln -fs $(PREFIX)$(LIB)/libtclivy.so.$(MAJOR).$(MINOR)		$(DESTDIR)$(PREFIX)$(LIB)/libtclivy.so.$(MAJOR)
+	ln -fs $(PREFIX)$(LIB)/libivy_omp.so.$(MAJOR).$(MINOR)		$(DESTDIR)$(PREFIX)$(LIB)/libivy_omp.so
 
 installbins: commands
 	test -d $(DESTDIR)$(PREFIX)/bin || mkdirhier $(DESTDIR)$(PREFIX)/bin
 	install -m755 ivyprobe $(DESTDIR)$(PREFIX)/bin
+	install -m755 ivyprobe_omp $(DESTDIR)$(PREFIX)/bin
 	#install -m755 ivyxtprobe $(DESTDIR)$(PREFIX)/bin
 	#install -m755 ivyglibprobe $(DESTDIR)$(PREFIX)/bin
 	#install -m755 ivyglutprobe $(DESTDIR)$(PREFIX)/bin

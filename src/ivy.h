@@ -26,7 +26,7 @@ extern "C" {
 
 #define DEFAULT_BUS 2010
 
-typedef struct _clnt_lst *IvyClientPtr;
+typedef struct _clnt_lst_dict *IvyClientPtr;
 
 typedef enum { IvyApplicationConnected, IvyApplicationDisconnected } IvyApplicationEvent;
 typedef enum { IvyAddBind, IvyRemoveBind, IvyFilterBind, IvyChangeBind } IvyBindEvent;
