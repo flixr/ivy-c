@@ -92,6 +92,7 @@ REGEXP= -DUSE_PCRE_REGEX -DPCRE_OPT=$(PCRE_OPT)
 CHANNEL = -DTCL_CHANNEL_INTEGRATION 
 
 CFLAGS += -g -Wall -Wshadow $(FPIC)
+BUGGY_DEBIAN_OPTION = -DPCRECPP_EXP_DEFN="" -DPCRECPP_EXP_DECL=""
 OMPCFLAGS = $(CFLAGS) -fopenmp -DOPENMP=1 # -DDEBUG
 OMPLIB = -lgomp -lpthread
 
@@ -104,7 +105,7 @@ GLUTOBJ = ivyglutloop.o ivysocket.o ivy.o ivybuffer.o ivybind.o intervalRegexp.o
 TCLOBJ = ivytcl.o  timer.o ivysocket.o givy.o ivybuffer.o ivybind.o intervalRegexp.o
 
 # WINDOWS add ivyloop.o if TCL_CHANNEL_INTEGRATION is not set
-TARGETS = ivyprobe ivythroughput ivyperf ivyglibprobe ivyxtprobe ivyprobe_efence 
+TARGETS = ivyprobe ivythroughput ivyperf ivyglibprobe ivyxtprobe #ivyprobe_efence 
 TARGETLIBS=libivy.so.$(MAJOR).$(MINOR) libgivy.so.$(MAJOR).$(MINOR) libxtivy.so.$(MAJOR).$(MINOR) libglibivy.so.$(MAJOR).$(MINOR) libtclivy.so.$(MAJOR).$(MINOR)
 OMP_TARGET= libivy_omp.so.$(MAJOR).$(MINOR) libivy_omp.a ivyprobe_omp ivythroughput_omp 
 # not yet need Modified Glut ivyglutprobe
@@ -112,7 +113,7 @@ OMP_TARGET= libivy_omp.so.$(MAJOR).$(MINOR) libivy_omp.a ivyprobe_omp ivythrough
 .c.o:
 	$(CC) $(CFLAGS) -c $*.c
 .cpp.o:
-	$(CPP) $(CFLAGS) -c $*.cpp
+	$(CPP) $(CFLAGS) $(BUGGY_DEBIAN_OPTION) -c $*.cpp
 
 all: static-libs commands shared-libs pkgconf
 
