@@ -26,7 +26,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
-#include <fcntl.h>
+//#include <fcntl.h>
 
 #ifdef WIN32
 #define close closesocket
@@ -187,7 +187,7 @@ static void HandleServer(Channel channel, HANDLE fd, void *data)
 	HANDLE ns;
 	socklen_t addrlen;
 	struct sockaddr_in remote2;
-	long   socketFlag;
+	//	long   socketFlag;
 
 	TRACE( "Accepting Connection...\n");
 
@@ -213,10 +213,10 @@ static void HandleServer(Channel channel, HANDLE fd, void *data)
 	client->from = remote2;
 	client->fd = ns;
 
-	socketFlag = fcntl (client->fd, F_GETFD);
-	if (fcntl (client->fd, F_SETFD, socketFlag|O_NONBLOCK)) {
-	  fprintf(stderr,"Warning : Setting socket in nonblock mode FAILED\n");
-	}
+/*  	socketFlag = fcntl (client->fd, F_GETFD); */
+/* 	if (fcntl (client->fd, F_SETFD, socketFlag|O_NONBLOCK)) { */
+/* 	  fprintf(stderr,"Warning : Setting socket in nonblock mode FAILED\n"); */
+/* 	} */
 
 
 	client->channel = IvyChannelAdd (ns, client,  DeleteSocket, HandleSocket );
@@ -544,7 +544,7 @@ Client SocketConnectAddr (struct in_addr * addr, unsigned short port,
 	HANDLE handle;
 	Client client;
 	struct sockaddr_in remote;
-	long   socketFlag;
+	//	long   socketFlag;
 
 	remote.sin_family = AF_INET;
 	remote.sin_addr = *addr;
@@ -559,10 +559,10 @@ Client SocketConnectAddr (struct in_addr * addr, unsigned short port,
 		perror ("*** client connect ***");
 		return NULL;
 	};
-	socketFlag = fcntl (handle, F_GETFD);
-	if (fcntl (handle, F_SETFD, socketFlag|O_NONBLOCK)) {
-	  fprintf(stderr,"Warning : Setting socket in nonblock mode FAILED\n");
-	}
+/* 	socketFlag = fcntl (handle, F_GETFD); */
+/* 	if (fcntl (handle, F_SETFD, socketFlag|O_NONBLOCK)) { */
+/* 	  fprintf(stderr,"Warning : Setting socket in nonblock mode FAILED\n"); */
+/* 	} */
 
 	IVY_LIST_ADD_START(clients_list, client );
 	
