@@ -1,7 +1,13 @@
+ivy-c (3.10.0-2) unstable; urgency=low
+
+  * fix makefile for non omp target
+	
+ -- Alexandre Bustico <bustico@cena.fr>  Wed, 08 Feb 2008 10:32:54 +0100
+
 ivy-c (3.10.0-1) unstable; urgency=low
 
-  * change Makefile to get around a debian Bug : debian pcrecpp package is
-	broken, (as debian itself)
+  * change Makefile to get around a debian Bug : debian pcrecpp 
+  	package is broken, (as debian itself)
   * a repertory testivy with test file for the ivythroughput test tool
 	
  -- Alexandre Bustico <bustico@cena.fr>  Wed, 06 Feb 2008 17:17:54 +0100

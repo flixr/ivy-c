@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
+#include <fcntl.h>
 
 #ifdef WIN32
 #define close closesocket
@@ -186,6 +187,7 @@ static void HandleServer(Channel channel, HANDLE fd, void *data)
 	HANDLE ns;
 	socklen_t addrlen;
 	struct sockaddr_in remote2;
+	long   socketFlag;
 
 	TRACE( "Accepting Connection...\n");
 
@@ -210,6 +212,13 @@ static void HandleServer(Channel channel, HANDLE fd, void *data)
 		client->terminator = '\n';
 	client->from = remote2;
 	client->fd = ns;
+
+	socketFlag = fcntl (client->fd, F_GETFD);
+	if (fcntl (client->fd, F_SETFD, socketFlag|O_NONBLOCK)) {
+	  fprintf(stderr,"Warning : Setting socket in nonblock mode FAILED\n");
+	}
+
+
 	client->channel = IvyChannelAdd (ns, client,  DeleteSocket, HandleSocket );
 	client->interpretation = server->interpretation;
 	client->ptr = client->buffer;
@@ -490,7 +499,8 @@ void *SocketGetData (Client client )
 void SocketBroadcast ( char *fmt, ... )
 {
 	Client client;
-	static IvyBuffer buffer = {NULL, 0, 0 }; /* Use satic mem to eliminate multiple call to malloc /free */
+	static IvyBuffer buffer = {NULL, 0, 0 }; /* Use satic mem to eliminate 
+						    multiple call to malloc /free */
 #ifdef OPENMP
 #pragma omp threadprivate (buffer)
 #endif
@@ -521,7 +531,8 @@ Client SocketConnect (char * host, unsigned short port,
 		fprintf(stderr, "Erreur %s Calculateur inconnu !\n",host);
 		 return NULL;
 	}
-	return SocketConnectAddr ((struct in_addr*)(rhost->h_addr), port, data, interpretation, handle_delete);
+	return SocketConnectAddr ((struct in_addr*)(rhost->h_addr), port, data, 
+				  interpretation, handle_delete);
 }
 
 Client SocketConnectAddr (struct in_addr * addr, unsigned short port, 
@@ -533,6 +544,7 @@ Client SocketConnectAddr (struct in_addr * addr, unsigned short port,
 	HANDLE handle;
 	Client client;
 	struct sockaddr_in remote;
+	long   socketFlag;
 
 	remote.sin_family = AF_INET;
 	remote.sin_addr = *addr;
@@ -547,6 +559,10 @@ Client SocketConnectAddr (struct in_addr * addr, unsigned short port,
 		perror ("*** client connect ***");
 		return NULL;
 	};
+	socketFlag = fcntl (handle, F_GETFD);
+	if (fcntl (handle, F_SETFD, socketFlag|O_NONBLOCK)) {
+	  fprintf(stderr,"Warning : Setting socket in nonblock mode FAILED\n");
+	}
 
 	IVY_LIST_ADD_START(clients_list, client );
 	

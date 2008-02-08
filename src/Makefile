@@ -264,7 +264,6 @@ installlibs: static-libs shared-libs
 	-test -d $(DESTDIR)$(X11_PREFIX)$(LIB)  || mkdirhier $(DESTDIR)$(X11_PREFIX)$(LIB)
 
 	install -m644 libivy.a						$(DESTDIR)$(PREFIX)$(LIB)
-	install -m644 libivy_omp.a					$(DESTDIR)$(PREFIX)$(LIB)
 	install -m644 libgivy.a						$(DESTDIR)$(PREFIX)$(LIB)
 	-install -m644 libxtivy.a					$(DESTDIR)$(X11_PREFIX)$(LIB)
 	install -m644 libtclivy.a					$(DESTDIR)$(PREFIX)$(LIB)
@@ -275,6 +274,12 @@ installlibs: static-libs shared-libs
 	-install -m644 libxtivy.so.$(MAJOR).$(MINOR)			$(DESTDIR)$(X11_PREFIX)$(LIB)
 	install -m644 libtclivy.so.$(MAJOR).$(MINOR)			$(DESTDIR)$(PREFIX)$(LIB)
 	install -m644 libglibivy.so.$(MAJOR).$(MINOR)			$(DESTDIR)$(PREFIX)$(LIB)
+
+installlibs_omp: static-libs shared-libs
+	test -d $(DESTDIR)$(PREFIX)$(LIB)  || mkdirhier $(DESTDIR)$(PREFIX)$(LIB)
+	-test -d $(DESTDIR)$(X11_PREFIX)$(LIB)  || mkdirhier $(DESTDIR)$(X11_PREFIX)$(LIB)
+
+	install -m644 libivy_omp.a					$(DESTDIR)$(PREFIX)$(LIB)
 	install -m644 libivy_omp.so.$(MAJOR).$(MINOR)			$(DESTDIR)$(PREFIX)$(LIB)
 
 includes:
@@ -308,10 +313,10 @@ installliblinks: installlibs
 installbins: commands
 	test -d $(DESTDIR)$(PREFIX)/bin || mkdirhier $(DESTDIR)$(PREFIX)/bin
 	install -m755 ivyprobe $(DESTDIR)$(PREFIX)/bin
+
+installbins_omp: commands
+	test -d $(DESTDIR)$(PREFIX)/bin || mkdirhier $(DESTDIR)$(PREFIX)/bin
 	install -m755 ivyprobe_omp $(DESTDIR)$(PREFIX)/bin
-	#install -m755 ivyxtprobe $(DESTDIR)$(PREFIX)/bin
-	#install -m755 ivyglibprobe $(DESTDIR)$(PREFIX)/bin
-	#install -m755 ivyglutprobe $(DESTDIR)$(PREFIX)/bin
 
 installdocs:
 	test -d $(DESTDIR)$(PREFIX)/share/doc/ivy-c || mkdirhier $(DESTDIR)$(PREFIX)/share/doc/ivy-c
@@ -331,6 +336,7 @@ installdocs:
 	install -m 766 ../examples/unBind.tcl				$(DESTDIR)$(PREFIX)/share/doc/ivy-c/examples
 
 install: installlibs installbins installliblinks installdocs includes installpkgconf
+install_omp: installlibs_omp installbins_omp
 
 rpm::
 	/usr/bin/rpmize

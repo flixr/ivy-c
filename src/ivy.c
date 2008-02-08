@@ -21,6 +21,8 @@
 	  ° mesures de perfo
 	  ° compil rejeu en monothread et omp et tests
 	  ° compil sur mac et windows pour portabilité
+	  ° faire un repertoire exemple avec tous les executables
+	  ° faire un configure
  */
 
 #ifdef OPENMP
@@ -695,7 +697,8 @@ static void BroadcastReceive( Client client, void *data, char *line )
 #endif /*DEBUG */
 
 	/* connect to the service and send the regexp */
-	app = SocketConnectAddr(SocketGetRemoteAddr(client), serviceport, 0, Receive, ClientDelete );
+	app = SocketConnectAddr(SocketGetRemoteAddr(client), serviceport, 0, Receive, 
+				ClientDelete );
 	if (app) {
 		IvyClientPtr clnt;
 		clnt = SendService( app, appname );

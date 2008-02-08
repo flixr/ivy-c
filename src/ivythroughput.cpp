@@ -500,7 +500,7 @@ void startOfSeqCB (IvyClientPtr app, void *user_data, int argc, char *argv[])
 
 void endOfSeqCB (IvyClientPtr app, void *user_data, int argc, char *argv[])
 {
-  nbMess--;
+  //nbMess--;
   printf ("recepteur %d a recu %d messages\n", globalInst, nbMess);
 }
 
