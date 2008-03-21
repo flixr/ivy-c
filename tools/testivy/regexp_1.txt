@@ -1,0 +1,3 @@
+Application: Rejeu on eptw5 add regexp 75 : ^GetRadarRefresh
+Application: Rejeu on eptw5 add regexp 75 : ^GetRadarRefresh
+
