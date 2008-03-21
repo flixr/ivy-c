@@ -45,9 +45,12 @@ extern "C" {
 #define socklen_t int
 #endif
 
+typedef enum {SendOk, SendStillCongestion, SendStateChangeToCongestion, 
+	      SendStateChangeToDecongestion, SendStateFifoFull, SendError, 
+	      SendParamError} SendState;
+
 /* General Init */
 extern void SocketInit();
-
 
 /* Forward def */
 typedef struct _client *Client;
@@ -58,16 +61,17 @@ typedef struct _server *Server;
 extern Server SocketServer(unsigned short port, 
 	void*(*create)(Client client),
 	void(*handle_delete)(Client client, void *data),
-	SocketInterpretation interpretation);
+	void(*handle_decongestion)(Client client, void *data),
+        SocketInterpretation interpretation);
 extern unsigned short SocketServerGetPort( Server server );
 extern void SocketServerClose( Server server );
 
 /* Client Part */
 
 extern void SocketClose( Client client );
-extern int SocketSend( Client client, char *fmt, ... );
-extern int SocketSendRaw( const Client client, const char *buffer, const int len );
-extern int SocketSendRawWithId( const Client client, const char *id, const char *buffer, const int len );
+extern SendState SocketSend( Client client, char *fmt, ... );
+extern SendState SocketSendRaw( const Client client, const char *buffer, const int len );
+extern SendState SocketSendRawWithId( const Client client, const char *id, const char *buffer, const int len );
 extern char *SocketGetPeerHost( Client client );
 extern void SocketSetData( Client client, void *data );
 extern void *SocketGetData( Client client );
@@ -75,13 +79,17 @@ extern void SocketBroadcast( char *fmt, ... );
 extern Client SocketConnect( char * host, unsigned short port,
 			void *data, 
 			SocketInterpretation interpretation,
-			void (*handle_delete)(Client client, void *data)
+ 	                void (*handle_delete)(Client client, void *data),
+			void(*handle_decongestion)(Client client, void *data)
  );
+
 extern Client SocketConnectAddr( struct in_addr * addr, unsigned short port, 
 			void *data, 
 			SocketInterpretation interpretation,
-			void (*handle_delete)(Client client, void *data)
+  		        void (*handle_delete)(Client client, void *data),
+			void(*handle_decongestion)(Client client, void *data)
 			);
+
 extern int SocketWaitForReply( Client client, char *buffer, int size, int delai);
 
 /* Socket UDP */
@@ -97,6 +105,9 @@ extern int SocketAddMember( Client client, unsigned long host );
 
 /* recuperation de l'emetteur du message */
 extern struct in_addr * SocketGetRemoteAddr( Client client );
+extern void SocketSetUuid (Client client, const char *uuid);
+extern  const char* SocketGetUuid (const Client client);
+extern int  SocketCmpUuid (const Client c1, const Client c2);
 extern void SocketGetRemoteHost (Client client, char **host, unsigned short *port );
 /* emmission d'un broadcast UDP */
 extern void SocketSendBroadcast( Client client, unsigned long host, unsigned short port, char *fmt, ... );

@@ -1,5 +1,5 @@
 #!/usr/bin/wish
-load ../src/libtclivy.so.3.6
+load ../src/libtclivy.so.3.11
 
 proc connect { client action } { }
 proc send { } {

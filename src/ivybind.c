@@ -67,6 +67,11 @@ static IvyBinding token_extract;
 
 IvyBinding IvyBindingCompile( const char * expression,  int *erroffset, const char **errmessage )
 {
+/*    static int called = 0;  */
+/*    called ++;  */
+/*    if ((called %1000) == 0) {  */
+/*      printf ("DBG> IvyBindingCompile called =%d\n", called);  */
+/*    }  */
 	IvyBinding bind=0;
 #ifdef USE_PCRE_REGEX
 	pcre *regexp;
@@ -117,15 +122,22 @@ IvyBinding IvyBindingCompile( const char * expression,  int *erroffset, const ch
 
 void IvyBindingFree( IvyBinding bind )
 {
+/*   static int called = 0; */
+/*   called ++; */
+/*   if ((called %1000) == 0) { */
+/*     printf ("DBG> IvyBindingFree called =%d\n", called); */
+/*   } */
 #ifdef USE_PCRE_REGEX
-	if (bind->inspect!=NULL)
-		pcre_free(bind->inspect);
-		pcre_free(bind->regexp);
+  if (bind->inspect!=NULL)
+    pcre_free(bind->inspect);
+  pcre_free(bind->regexp);
 #else  /* we don't USE_PCRE_REGEX */
-	free( bind->regexp );
+  free( bind->regexp );
 #endif /* USE_PCRE_REGEX */
-	free ( bind );
+  free ( bind );
 }
+
+
 int IvyBindingExec( IvyBinding bind, const char * message )
 {
 	int nb_match = 0;

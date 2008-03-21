@@ -45,10 +45,14 @@
 
 struct _channel {
 	XtInputId id_read;
+	XtInputId id_write;
 	XtInputId id_delete;
+
+	HANDLE fd;
 	void *data;
 	ChannelHandleDelete handle_delete;
 	ChannelHandleRead handle_read;
+	ChannelHandleWrite handle_write;
 	};
 
 
@@ -93,6 +97,13 @@ static void IvyXtHandleChannelRead( XtPointer closure, int* source, XtInputId* i
 	(*channel->handle_read)(channel,*source,channel->data);
 }
 
+static void IvyXtHandleChannelWrite( XtPointer closure, int* source, XtInputId* id )
+{
+	Channel channel = (Channel)closure;
+	TRACE("Handle Channel write %d\n",*source );
+	(*channel->handle_write)(channel,*source,channel->data);
+}
+
 static void IvyXtHandleChannelDelete( XtPointer closure, int* source, XtInputId* id )
 {
 	Channel channel = (Channel)closure;
@@ -108,7 +119,8 @@ void IvyXtChannelAppContext( XtAppContext cntx )
 
 Channel IvyChannelAdd(HANDLE fd, void *data,
 				ChannelHandleDelete handle_delete,
-				ChannelHandleRead handle_read
+				ChannelHandleRead handle_read,
+		                ChannelHandleWrite handle_write
 				)						
 {
 	Channel channel;
@@ -122,12 +134,25 @@ Channel IvyChannelAdd(HANDLE fd, void *data,
 
 	channel->handle_delete = handle_delete;
 	channel->handle_read = handle_read;
+	channel->handle_write = handle_write;
 	channel->data = data;
+	channel->fd = fd;
 
 	channel->id_read = XtAppAddInput( app, fd, (XtPointer)XtInputReadMask, IvyXtHandleChannelRead, channel);
 	channel->id_delete = XtAppAddInput( app, fd, (XtPointer)XtInputExceptMask, IvyXtHandleChannelDelete, channel);
 
 	return channel;
+}
+
+
+void IvyChannelAddWritableEvent(Channel channel)
+{
+  channel->id_write = XtAppAddInput( app,  channel->fd, (XtPointer)XtInputWriteMask, IvyXtHandleChannelWrite, channel);
+}
+
+void IvyChannelClearWritableEvent(Channel channel)
+{
+  XtRemoveInput( channel->id_write );
 }
 
 

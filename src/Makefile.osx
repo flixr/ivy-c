@@ -22,17 +22,21 @@ else
 endif
 REGEXP= -DUSE_PCRE_REGEX -DPCRE_OPT=$(PCRE_OPT)
 
-OBJ = ivyloop.o timer.o ivysocket.o ivy.o ivybuffer.o ivybind.o intervalRegexp.o
+OBJ = ivyloop.o timer.o ivysocket.o ivy.o ivybuffer.o ivyfifo.o ivybind.o intervalRegexp.o
 CC=gcc
 LIBTOOL=ar q # linux and solaris
 CFLAGS = -g -Wall $(FPIC)
 
-TARGETS = ivyprobe ivyperf
+TARGETS = ivyprobe ivyperf ivythroughput
 
 # ------------------------------------------------------------------------------------------
 
 .c.o:
 	$(CC) $(CFLAGS) -c $*.c
+
+.cpp.o:
+	$(CPP) $(CFLAGS)  -c $*.cpp
+
 
 all: static-libs commands shared-libs
 
@@ -54,6 +58,9 @@ libivy.dylib: $(OBJ)
 
 ivyprobe: ivyprobe.o libivy.a
 	$(CC)  $(CFLAGS) -o $@ ivyprobe.o -L. -livy $(PCRELIB) $(EXTRALIB)
+
+ivythroughput: ivythroughput.o libivy.a
+	$(CPP)  $(CFLAGS) $(PCREINC) -o $@ ivythroughput.o -L. -livy -lpcrecpp $(PCRELIB) $(EXTRALIB) 
 
 ivyperf: ivyperf.o libivy.a
 	$(CC)  $(CFLAGS) -o $@ ivyperf.o -L. -livy $(PCRELIB) $(EXTRALIB)

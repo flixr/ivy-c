@@ -27,9 +27,12 @@ typedef struct {
 	int size;
 	int offset;
 	} IvyBuffer;
+
+
 /* utility fonction do make vsprintf without buffer limit */
 extern int make_message(IvyBuffer * buffer, const char *fmt, va_list ap);
 extern int make_message_var(IvyBuffer* buffer, const char *fmt, ...);
+
 
 #ifdef __cplusplus
 }

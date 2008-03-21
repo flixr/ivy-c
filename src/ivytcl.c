@@ -45,6 +45,7 @@ struct _channel {
 	Tcl_Channel tcl_channel;
         ChannelHandleDelete handle_delete;
 	ChannelHandleRead handle_read;
+	ChannelHandleWrite handle_write;
 	};
 
 
@@ -84,8 +85,9 @@ IvyHandleFd(ClientData	cd,
   /*printf("handle event %d\n", mask);*/
   if (mask == TCL_READABLE) {
     (*channel->handle_read)(channel,channel->fd,channel->data);
-  }
-  else if (mask == TCL_EXCEPTION) {
+  } else if (mask == TCL_WRITABLE) {
+    (*channel->handle_write)(channel,channel->fd,channel->data);
+  } else if (mask == TCL_EXCEPTION) {
     (*channel->handle_delete)(channel->data);
   }
 }
@@ -102,7 +104,8 @@ void IvyChannelRemove( Channel channel )
 
 Channel IvyChannelAdd(HANDLE fd, void *data,
 				ChannelHandleDelete handle_delete,
-				ChannelHandleRead handle_read
+				ChannelHandleRead handle_read,
+		                ChannelHandleWrite handle_write
 				)						
 {
 	Channel channel;
@@ -116,14 +119,39 @@ Channel IvyChannelAdd(HANDLE fd, void *data,
 
 	channel->handle_delete = handle_delete;
 	channel->handle_read = handle_read;
+	channel->handle_write = handle_write;
 	channel->data = data;
 	channel->fd = fd;
 
 	/*printf("Create handle fd %d\n", fd);*/
-	channel->tcl_channel = Tcl_MakeTcpClientChannel((void*)fd);
-  	Tcl_CreateChannelHandler(channel->tcl_channel,  TCL_READABLE|TCL_EXCEPTION,	IvyHandleFd, (ClientData) channel);
+	channel->tcl_channel = Tcl_MakeTcpClientChannel((void*) fd);
+  	Tcl_CreateChannelHandler(channel->tcl_channel,  TCL_READABLE|TCL_EXCEPTION,	
+				 IvyHandleFd, (ClientData) channel);
 	return channel;
 }
+
+
+
+void IvyChannelAddWritableEvent(Channel channel)
+{
+  // On change juste le masque
+  Tcl_CreateChannelHandler(channel->tcl_channel,  TCL_READABLE|TCL_WRITABLE|TCL_EXCEPTION,	
+			   IvyHandleFd, (ClientData) channel);
+}
+
+void IvyChannelClearWritableEvent(Channel channel)
+{
+  // On change juste le masque
+  Tcl_CreateChannelHandler(channel->tcl_channel,  TCL_READABLE|TCL_EXCEPTION,	
+			   IvyHandleFd, (ClientData) channel);
+}
+
+
+
+
+
+
+
 
 #else
 /* On utilisa la procedure Idle et la boucle Standard Ivy */

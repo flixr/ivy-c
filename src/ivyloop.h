@@ -56,6 +56,8 @@ extern void IvyMainLoop(void);
 
 typedef void ( *IvyHookPtr) ( void *data );
 
+extern void IvyChannelAddWritableEvent(Channel channel);
+extern void IvyChannelClearWritableEvent(Channel channel);
 extern void IvySetBeforeSelectHook(IvyHookPtr before, void *data );
 extern void IvySetAfterSelectHook(IvyHookPtr after, void *data );
 

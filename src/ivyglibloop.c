@@ -32,10 +32,13 @@
 
 struct _channel {
 	guint id_read;
+	guint id_write;
 	guint id_delete;
 	gpointer data;
 	ChannelHandleDelete handle_delete;
 	ChannelHandleRead handle_read;
+	ChannelHandleWrite handle_write;
+  GIOChannel*        io_channel;
 	};
 
 static int channel_initialized = 0;
@@ -49,6 +52,9 @@ static gboolean IvyGlibHandleChannelDelete(GIOChannel *source,
 					 GIOCondition condition,
 					   gpointer data);
 
+static gboolean IvyGlibHandleChannelWrite(GIOChannel *source,
+					  GIOCondition condition,
+					  gpointer data);
 
 void IvyChannelInit(void) {
   if ( channel_initialized ) return;
@@ -62,19 +68,21 @@ void IvyChannelInit(void) {
 
 
 Channel IvyChannelAdd(HANDLE fd, void *data,
-			   ChannelHandleDelete handle_delete,
-			   ChannelHandleRead handle_read
-			   ) {
+		      ChannelHandleDelete handle_delete,
+		      ChannelHandleRead handle_read,
+		      ChannelHandleWrite handle_write
+		      ) {
   Channel channel;
   channel = (Channel)g_new(struct _channel, 1);
 
   channel->handle_delete = handle_delete;
   channel->handle_read = handle_read;
+  channel->handle_write = handle_write;
   channel->data = data;
 
   {
     GIOChannel* io_channel = g_io_channel_unix_new(fd);
-
+    channel->io_channel = io_channel;
     channel->id_read = g_io_add_watch( io_channel, G_IO_IN, 
 				       IvyGlibHandleChannelRead, channel);
     channel->id_delete = g_io_add_watch( io_channel, G_IO_ERR | G_IO_HUP, 
@@ -83,6 +91,16 @@ Channel IvyChannelAdd(HANDLE fd, void *data,
   return channel;
 }
 
+void IvyChannelAddWritableEvent(Channel channel)
+{
+  channel->id_write = g_io_add_watch( channel->io_channel, G_IO_OUT, 
+				      IvyGlibHandleChannelWrite, channel);
+}
+
+void IvyChannelClearWritableEvent(Channel channel)
+{
+  g_source_remove( channel->id_write );
+}
 
 
 
@@ -100,6 +118,15 @@ static gboolean IvyGlibHandleChannelRead(GIOChannel *source,
   Channel channel = (Channel)data;
   TRACE("Handle Channel read %d\n",source );
   (*channel->handle_read)(channel, g_io_channel_unix_get_fd(source), channel->data);
+  return TRUE;
+}
+
+static gboolean IvyGlibHandleChannelWrite(GIOChannel *source,
+					  GIOCondition condition,
+					  gpointer data) {
+  Channel channel = (Channel)data;
+  TRACE("Handle Channel read %d\n",source );
+  (*channel->handle_write)(channel, g_io_channel_unix_get_fd(source), channel->data);
   return TRUE;
 }
 

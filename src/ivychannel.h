@@ -35,6 +35,7 @@ typedef struct _channel *Channel;
 typedef void (*ChannelHandleDelete)( void *data );
 /* callback declenche par la gestion de boucle sur donnees pretes sur le canal */
 typedef void (*ChannelHandleRead)( Channel channel, HANDLE fd, void *data);
+typedef void (*ChannelHandleWrite)( Channel channel, HANDLE fd, void *data);
 
 /* fonction appele par le bus pour initialisation */
 extern void IvyChannelInit(void);
@@ -46,7 +47,8 @@ extern Channel IvyChannelAdd(
 	HANDLE fd,
 	void *data,
 	ChannelHandleDelete handle_delete,
-	ChannelHandleRead handle_read
+	ChannelHandleRead handle_read,
+	ChannelHandleRead handle_write
 );
 
 /* fonction appele par le bus pour suppression des callback sur le canal */

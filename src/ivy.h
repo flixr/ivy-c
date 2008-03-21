@@ -24,11 +24,11 @@ extern "C" {
 
 /* numero par default du bus */
 
-#define DEFAULT_BUS 2010
-
 typedef struct _clnt_lst_dict *IvyClientPtr;
 
-typedef enum { IvyApplicationConnected, IvyApplicationDisconnected } IvyApplicationEvent;
+typedef enum { IvyApplicationConnected, IvyApplicationDisconnected, 
+	       IvyApplicationCongestion , IvyApplicationDecongestion ,
+	       IvyApplicationFifoFull } IvyApplicationEvent;
 typedef enum { IvyAddBind, IvyRemoveBind, IvyFilterBind, IvyChangeBind } IvyBindEvent;
 
 extern void IvyDefaultApplicationCallback( IvyClientPtr app, void *user_data, IvyApplicationEvent event ) ;

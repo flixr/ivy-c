@@ -1,4 +1,4 @@
-
+#
 #	Ivy, C interface
 #
 #	Copyright (C) 1997-2002
@@ -17,7 +17,7 @@
 
 # change this in version.h too !!!!
 MAJOR=3
-MINOR=10
+MINOR=11
 
 PERHAPS64 := $(shell uname -m | perl -ne "print /64/ ? '64' : '';")
 LIB = /lib$(PERHAPS64)
@@ -28,7 +28,7 @@ else
 endif
 
 ifndef PREFIX
-	PREFIX=/usr/local
+	export PREFIX=/usr/local
 endif
 
 X11_PREFIX:= $(shell pkg-config --variable=prefix x11)
@@ -80,8 +80,10 @@ else
 	EXTRALIB=
 endif
 
-CC=gcc
-CPP='g++'
+
+TOOLS_DIR = ../tools
+export CC=gcc
+export CPP='g++'
 LIBTOOL=ar q # linux and solaris
 #LIBTOOL=libtool -static -o
 
@@ -91,23 +93,33 @@ REGEXP= -DUSE_PCRE_REGEX -DPCRE_OPT=$(PCRE_OPT)
 # see below
 CHANNEL = -DTCL_CHANNEL_INTEGRATION 
 
-CFLAGS += -g -Wall -Wshadow $(FPIC)
+# DEBUG
+CFLAGS_DEBUG = -g -Wall -Wshadow -DDEBUG $(FPIC)
+# RELEASE
+CFLAGS_RELEASE = -O2 -Wall -Wshadow $(FPIC)
+
+ifdef DEBUG
+	export CFLAGS += $(CFLAGS_DEBUG)
+else
+	export CFLAGS += $(CFLAGS_RELEASE)
+endif
+
+
+
 BUGGY_DEBIAN_OPTION = -DPCRECPP_EXP_DEFN="" -DPCRECPP_EXP_DECL=""
-OMPCFLAGS = $(CFLAGS) -fopenmp -DOPENMP=1 # -DDEBUG
+OMPCFLAGS = $(CFLAGS) -fopenmp -DOPENMP=1
 OMPLIB = -lgomp -lpthread
 
-OBJ = ivyloop.o timer.o ivysocket.o ivy.o ivybuffer.o ivybind.o intervalRegexp.o
-OMPOBJ = ivyloop.o timer.o ivysocket_omp.o ivy_omp.o ivybuffer.o ivybind.o intervalRegexp.o
-GOBJ = ivyloop.o timer.o ivysocket.o givy.o ivybuffer.o ivybind.o intervalRegexp.o
-XTOBJ = ivyxtloop.o ivysocket.o ivy.o ivybuffer.o ivybind.o intervalRegexp.o
-GLIBOBJ = ivyglibloop.o ivysocket.o ivy.o ivybuffer.o ivybind.o intervalRegexp.o
-GLUTOBJ = ivyglutloop.o ivysocket.o ivy.o ivybuffer.o ivybind.o intervalRegexp.o
-TCLOBJ = ivytcl.o  timer.o ivysocket.o givy.o ivybuffer.o ivybind.o intervalRegexp.o
+OBJ = ivyloop.o timer.o ivysocket.o ivy.o ivybuffer.o ivyfifo.o ivybind.o intervalRegexp.o
+OMPOBJ = ivyloop.o timer.o ivysocket_omp.o ivy_omp.o ivybuffer.o ivyfifo.o ivybind.o intervalRegexp.o
+GOBJ = ivyloop.o timer.o ivysocket.o givy.o ivybuffer.o ivyfifo.o ivybind.o intervalRegexp.o
+XTOBJ = ivyxtloop.o ivysocket.o ivy.o ivybuffer.o ivyfifo.o ivybind.o intervalRegexp.o
+GLIBOBJ = ivyglibloop.o ivysocket.o ivy.o ivybuffer.o ivyfifo.o ivybind.o intervalRegexp.o
+GLUTOBJ = ivyglutloop.o ivysocket.o ivy.o ivybuffer.o ivyfifo.o ivybind.o intervalRegexp.o
+TCLOBJ = ivytcl.o  timer.o ivysocket.o givy.o ivybuffer.o ivyfifo.o ivybind.o intervalRegexp.o
 
 # WINDOWS add ivyloop.o if TCL_CHANNEL_INTEGRATION is not set
-TARGETS = ivyprobe ivythroughput ivyperf ivyglibprobe ivyxtprobe #ivyprobe_efence 
 TARGETLIBS=libivy.so.$(MAJOR).$(MINOR) libgivy.so.$(MAJOR).$(MINOR) libxtivy.so.$(MAJOR).$(MINOR) libglibivy.so.$(MAJOR).$(MINOR) libtclivy.so.$(MAJOR).$(MINOR)
-OMP_TARGET= libivy_omp.so.$(MAJOR).$(MINOR) libivy_omp.a ivyprobe_omp ivythroughput_omp 
 # not yet need Modified Glut ivyglutprobe
 
 .c.o:
@@ -115,9 +127,8 @@ OMP_TARGET= libivy_omp.so.$(MAJOR).$(MINOR) libivy_omp.a ivyprobe_omp ivythrough
 .cpp.o:
 	$(CPP) $(CFLAGS) $(BUGGY_DEBIAN_OPTION) -c $*.cpp
 
-all: static-libs commands shared-libs pkgconf
-
-omp: $(OMP_TARGET)
+all: static-libs commands shared-libs pkgconf libomp tools
+libomp: libivy_omp.a libivy_omp.so.$(MAJOR).$(MINOR)
 
 static-libs: libivy.a libgivy.a libxtivy.a libglibivy.a libtclivy.a 
 # not yet need Modified Glut libglutivy.a
@@ -149,46 +160,6 @@ ivyglutloop.o: ivyglutloop.c ivyglutloop.h
 ivyglibloop.o: ivyglibloop.c ivyglibloop.h
 	$(CC) -c $(CFLAGS) $(GLIBINC) ivyglibloop.c
 
-ivyprobe: ivyprobe.o libivy.a
-	$(CC)  $(CFLAGS) -o $@ ivyprobe.o -L. -livy $(PCRELIB) $(EXTRALIB) 
-
-ivythroughput: ivythroughput.o libivy.a
-	$(CPP)  $(CFLAGS) -o $@ ivythroughput.o -L. -livy -lpcrecpp $(PCRELIB) $(EXTRALIB) 
-
-ivyprobe_efence: ivyprobe.o libivy.a
-	$(CPP)  $(CFLAGS) -o $@ ivyprobe.o -L. -livy -lpcrecpp $(PCRELIB) $(EXTRALIB) -lefence
-
-
-
-ivyprobe_omp: ivyprobe.o libivy_omp.a
-	$(CC)  $(CFLAGS) -o $@ ivyprobe.o -L. -livy_omp $(PCRELIB) $(EXTRALIB) $(OMPLIB)
-
-ivythroughput_omp: ivythroughput.o libivy_omp.a
-	$(CPP)  $(CFLAGS) -o $@ ivythroughput.o -L. -livy_omp -lpcrecpp $(PCRELIB) $(EXTRALIB) $(OMPLIB)
-
-ivyprobe.o : ivyprobe.c 
-	$(CC)  $(CFLAGS) $(REGEXP) -c ivyprobe.c -o $@
-
-ivyperf: ivyperf.o libivy.a
-	$(CC)  $(CFLAGS) -o $@ ivyperf.o -L. -livy $(PCRELIB) $(EXTRALIB)
-
-ivyxtprobe.o : ivyprobe.c
-	$(CC)  $(CFLAGS) $(REGEXP) -DXTMAINLOOP -c ivyprobe.c -o $@ $(XTINC)
-
-ivyxtprobe: ivyxtprobe.o libxtivy.a
-	$(CC) -o $@ ivyxtprobe.o -L. $(XTLIB) -lxtivy  $(PCRELIB) $(EXTRALIB)
-
-ivyglibprobe.o : ivyprobe.c
-	$(CC)  $(CFLAGS) $(REGEXP) -DGLIBMAINLOOP -c ivyprobe.c -o ivyglibprobe.o $(GLIBINC)
-
-ivyglibprobe: ivyglibprobe.o libglibivy.a
-	$(CC) -o ivyglibprobe ivyglibprobe.o -L. $(GLIBLIB) -lglibivy $(PCRELIB) $(EXTRALIB)
-
-ivyglutprobe.o : ivyprobe.c
-	$(CC)  $(CFLAGS) $(REGEXP) -DGLUTMAINLOOP -c ivyprobe.c -o ivyglutprobe.o $(GLUTINC)
-
-ivyglutprobe: ivyglutprobe.o libglutivy.a
-	$(CC) -o ivyglutprobe ivyglutprobe.o -L. $(GLUTLIB) -lglutivy $(PCRELIB) $(EXTRALIB)
 
 libivy.a: $(OBJ)
 	rm -f $@
@@ -256,8 +227,10 @@ libtclivy.so.$(MAJOR).$(MINOR): $(TCLOBJ)
 
 distclean: clean
 clean:
-	-rm -f $(TARGETS) $(TARGETLIBS) $(OMP_TARGET) *.o *.a *.so *.so.* *~
+	-rm -f $(TARGETS) $(TARGETLIBS)  *.o *.a *.so *.so.* *~
 	-rm -f ivy-glib.pc
+	@(cd $(TOOLS_DIR) && $(MAKE) clean)
+
 
 installlibs: static-libs shared-libs
 	test -d $(DESTDIR)$(PREFIX)$(LIB)  || mkdirhier $(DESTDIR)$(PREFIX)$(LIB)
@@ -310,13 +283,13 @@ installliblinks: installlibs
 	ln -fs $(PREFIX)$(LIB)/libtclivy.so.$(MAJOR).$(MINOR)		$(DESTDIR)$(PREFIX)$(LIB)/libtclivy.so.$(MAJOR)
 	ln -fs $(PREFIX)$(LIB)/libivy_omp.so.$(MAJOR).$(MINOR)		$(DESTDIR)$(PREFIX)$(LIB)/libivy_omp.so
 
-installbins: commands
-	test -d $(DESTDIR)$(PREFIX)/bin || mkdirhier $(DESTDIR)$(PREFIX)/bin
-	install -m755 ivyprobe $(DESTDIR)$(PREFIX)/bin
+installbins: 
+	@(cd $(TOOLS_DIR) && $(MAKE) install)
 
-installbins_omp: commands
-	test -d $(DESTDIR)$(PREFIX)/bin || mkdirhier $(DESTDIR)$(PREFIX)/bin
-	install -m755 ivyprobe_omp $(DESTDIR)$(PREFIX)/bin
+installbins_omp: 
+	@(cd $(TOOLS_DIR) && $(MAKE) install_omp)
+
+
 
 installdocs:
 	test -d $(DESTDIR)$(PREFIX)/share/doc/ivy-c || mkdirhier $(DESTDIR)$(PREFIX)/share/doc/ivy-c
@@ -337,7 +310,8 @@ installdocs:
 
 install: installlibs installbins installliblinks installdocs includes installpkgconf
 install_omp: installlibs_omp installbins_omp
-
+tools: static-libs libomp
+	@(cd $(TOOLS_DIR) && $(MAKE))
 rpm::
 	/usr/bin/rpmize
 
