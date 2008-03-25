@@ -26,9 +26,7 @@ OBJ = ivyloop.o timer.o ivysocket.o ivy.o ivybuffer.o ivyfifo.o ivybind.o interv
 CC=gcc
 LIBTOOL=ar q # linux and solaris
 CFLAGS = -g -Wall $(FPIC)
-
-TARGETS = ivyprobe ivyperf ivythroughput
-
+TOOLS_DIR = ../tools
 # ------------------------------------------------------------------------------------------
 
 .c.o:
@@ -38,13 +36,11 @@ TARGETS = ivyprobe ivyperf ivythroughput
 	$(CPP) $(CFLAGS)  -c $*.cpp
 
 
-all: static-libs commands shared-libs
+all: static-libs shared-libs tools
 
 static-libs: libivy.a
 
 shared-libs: libivy.dylib
-
-commands: $(TARGETS)
 
 ivybind.o: ivybind.c
 	$(CC) -c $(CFLAGS) $(REGEXP) $(PCREINC) ivybind.c
@@ -56,21 +52,13 @@ libivy.a: $(OBJ)
 libivy.dylib: $(OBJ)
 	$(CC) -dynamiclib -o $@ $(OBJ) $(PCRELIB)
 
-ivyprobe: ivyprobe.o libivy.a
-	$(CC)  $(CFLAGS) -o $@ ivyprobe.o -L. -livy $(PCRELIB) $(EXTRALIB)
-
-ivythroughput: ivythroughput.o libivy.a
-	$(CPP)  $(CFLAGS) $(PCREINC) -o $@ ivythroughput.o -L. -livy -lpcrecpp $(PCRELIB) $(EXTRALIB) 
-
-ivyperf: ivyperf.o libivy.a
-	$(CC)  $(CFLAGS) -o $@ ivyperf.o -L. -livy $(PCRELIB) $(EXTRALIB)
-
 # ------------------------------------------------------------------------------------------
 
 installlibs: static-libs shared-libs
 	test -d $(DESTDIR)$(PREFIX)$(LIB)  || mkdir -p $(DESTDIR)$(PREFIX)$(LIB)
 	install -m644 libivy.a		$(DESTDIR)$(PREFIX)$(LIB)
 	install -m644 libivy.dylib	$(DESTDIR)$(PREFIX)$(LIB)
+	@(cd $(TOOLS_DIR) && $(MAKE) -f Makefile.osx install)
 
 includes:
 	test -d $(DESTDIR)$(PREFIX)/include/Ivy || mkdir -p $(DESTDIR)$(PREFIX)/include/Ivy
@@ -90,9 +78,13 @@ installbins: commands
 	install -m755 ivyprobe $(DESTDIR)$(PREFIX)/bin
 	install -m755 ivyperf $(DESTDIR)$(PREFIX)/bin
 
+tools: static-libs 
+	@(cd $(TOOLS_DIR) && $(MAKE) -f Makefile.osx)
+
 install: installlibs installbins includes
 
 # ------------------------------------------------------------------------------------------
 
 clean:
-	-rm -f $(TARGETS) *.o *.a *.dylib *.dylib.* *~
+	-rm -f  *.o *.a *.dylib *.dylib.* *~
+	@(cd $(TOOLS_DIR) && $(MAKE) -f Makefile.osx clean)

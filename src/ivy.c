@@ -16,9 +16,7 @@
  */
 
 /*
-  TODO :  ° compil sur mac 
-	  ° faire un repertoire exemple avec tous les executables
-	  ° commit svn (penser aux fichiers nouveaux, et deplacés)
+  TODO :  ° sync svn
 	  ° compil sur windows
 	  ° faire un configure
 	  ° mettre à jour la doc / site web
@@ -875,7 +873,7 @@ void IvyStart (const char* bus)
 {
 
 	struct in_addr baddr;
-	unsigned long mask = 0xffffffff; 
+	unsigned int mask = 0xffffffff; 
 	unsigned char elem = 0;
 	int numdigit = 0;
 	int numelem = 0;
@@ -948,12 +946,15 @@ void IvyStart (const char* bus)
 			} else {
 
 				baddr.s_addr = htonl(mask);
-				printf ("Broadcasting on network %s, port %d\n", inet_ntoa(baddr), SupervisionPort);
+				printf ("Broadcasting on network %s, port %d\n", 
+					inet_ntoa(baddr), SupervisionPort);
 				/* test mask value agaisnt CLASS D */
 				if ( IN_MULTICAST( mask ) )
 					SocketAddMember (broadcast , mask );
 
-				SocketSendBroadcast (broadcast, mask, SupervisionPort, "%d %hu %s %s\n", IVYMAJOR_VERSION, ApplicationPort, ApplicationID, ApplicationName); 
+				SocketSendBroadcast (broadcast, mask, SupervisionPort, 
+						     "%d %hu %s %s\n", IVYMAJOR_VERSION, ApplicationPort, 
+						     ApplicationID, ApplicationName); 
 				numelem = 0;
 				mask = 0xffffffff;
 			}
