@@ -17,7 +17,7 @@
 
 
 MAJOR=3
-MINOR=9
+MINOR=11
 RM=del
 #RM=rm -f
 XTINC = 
@@ -29,31 +29,30 @@ GLUTLIB = -L.
 TCLINCL	= -I/usr/include/tcl8.4
 TCLLIB = -ltcl84
 
+TOOLS_DIR = ../tools
 CC=gcc
 CFLAGS = -g 
 # IVY full debug
 #CFLAGS = -g  -DDEBUG
-OBJ = ivyloop.o timer.o ivysocket.o ivy.o 
-GOBJ = ivyloop.o timer.o ivysocket.o givy.o
-XTOBJ = ivyxtloop.o ivysocket.o ivy.o
-GTKOBJ = ivygtkloop.o ivysocket.o ivy.o
-GLUTOBJ = ivyglutloop.o ivysocket.o ivy.o
-TCLOBJ = ivytcl.o ivyloop.o timer.o ivysocket.o givy.o
-TARGETS = ivyprobe 
+OBJ = ivyloop.o timer.o ivysocket.o ivy.o ivybuffer.o ivyfifo.o ivybind.o intervalRegexp.o
+GOBJ = ivyloop.o timer.o ivysocket.o givy.o ivybuffer.o ivyfifo.o ivybind.o intervalRegexp.o
+XTOBJ = ivyxtloop.o ivysocket.o ivy.o ivybuffer.o ivyfifo.o ivybind.o intervalRegexp.o
+GLIBOBJ = ivyglibloop.o ivysocket.o ivy.o ivybuffer.o ivyfifo.o ivybind.o intervalRegexp.o
+GLUTOBJ = ivyglutloop.o ivysocket.o ivy.o ivybuffer.o ivyfifo.o ivybind.o intervalRegexp.o
+TCLOBJ = ivytcl.o  timer.o ivysocket.o givy.o ivybuffer.o ivyfifo.o ivybind.o intervalRegexp.o
+
 # not yiet ivygtkprobe ivyxtprobe  need Modified Glut ivyglutprobe
 
 .c.o:
 	$(CC) $(CFLAGS) -c $*.c
 
-all: static-libs commands shared-libs
+all: static-libs  shared-libs
 
 static-libs: libivy.a libgivy.a libtclivy.a  
 # not yiet libxtivy.a libgtkivy.a  need Modified Glut libglutivy.a
 
 shared-libs: libivy.so.$(MAJOR).$(MINOR) libgivy.so.$(MAJOR).$(MINOR)  libtclivy.so.$(MAJOR).$(MINOR)
 # not yiet libxtivy.so.$(MAJOR).$(MINOR) libgtkivy.so.$(MAJOR).$(MINOR) need Modified Glut libglutivy.so.$(MAJOR).$(MINOR)
-
-commands: $(TARGETS)
 
 ivytcl.o: ivytcl.c
 	$(CC) -DGNU_REGEXP -c $(CFLAGS) $(TCLINCL) -o ivytcl.o ivytcl.c
@@ -135,7 +134,8 @@ libtclivy.so.$(MAJOR).$(MINOR): $(TCLOBJ)
 	$(TCLOBJ) $(TCLLIB) -lwsock32 -lregex 
 
 clean:
-	-$(RM) $(TARGETS) *.o *.a *.so *.so.* *~
+	-$(RM)  *.o *.a *.so *.so.* *~
+	@(cd $(TOOLS_DIR) && $(MAKE) -f Makefile.mingw clean)
 
 installlibs: static-libs shared-libs
 	test -d $(PREFIX)/usr/lib || mkdirhier $(PREFIX)/usr/lib
@@ -168,13 +168,9 @@ installliblinks: installlibs
 	ln -s /usr/X11R6/lib/libtclivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/X11R6/lib/libtclivy.so
 	ln -s /usr/X11R6/lib/libtclivy.so.$(MAJOR).$(MINOR) $(PREFIX)/usr/X11R6/lib/libtclivy.so.$(MAJOR)
 
-installbins: commands
-	test -d $(PREFIX)/usr/bin || mkdirhier $(PREFIX)/usr/bin
-	test -d $(PREFIX)/usr/X11R6/bin || mkdirhier $(PREFIX)/usr/X11R6/bin
-	install -m755 ivyprobe $(PREFIX)/usr/bin
-	install -m755 ivyxtprobe $(PREFIX)/usr/X11R6/bin
-	install -m755 ivygtkprobe $(PREFIX)/usr/X11R6/bin
-#	install -m755 ivyglutprobe $(PREFIX)/usr/X11R6/bin
+
+installbins: 
+	@(cd $(TOOLS_DIR) && $(MAKE) -f Makefile.mingw install)
 
 installdocs:
 	test -d $(PREFIX)/usr/doc/ivy-c || mkdirhier $(PREFIX)/usr/doc/ivy-c
@@ -187,6 +183,8 @@ installdocs:
         done
 
 install: installlibs installbins installliblinks installdocs
+tools: static-libs libomp
+	@(cd $(TOOLS_DIR) && $(MAKE) -f Makefile.mingw)
 
 rpm::
 	/usr/bin/rpmize

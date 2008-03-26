@@ -1,0 +1,54 @@
+PCREINC = -I "C:\Documents and Settings\fcolin\My Documents\Visual Studio 2005\Projects\pcre-6.4\\" 
+PCRELIB = Debug\pcre.lib
+EXTRALIB= -L../src
+EXTRAINC=-I../src
+
+#PCREINC = -I "C:\Program Files\GnuWin32\include" #`pcre-config --cflags`
+#PCRELIB = "C:\Program Files\GnuWin32\lib\libpcre.lib" #`pcre-config --libs`
+
+PCRE_OPT = PCRE_CASELESS
+REGCOMP_OPT = REG_ICASE
+
+#	PCRE_OPT = 0
+#	REGCOMP_OPT = REG_EXTENDED	
+
+
+#PCREOBJ = `pcre-config --prefix`/lib/libpcre.a
+PCREOBJ = 
+
+#CC=gcc
+#CFLAGS = -g -Wall
+CFLAGS = /W3 /DWIN32 /D_CRT_SECURE_NO_DEPRECATE /nologo
+#LIBTOOL=ar q # linux and solaris
+#LIBTOOL=libtool -static -o
+LIBTOOL=lib /nologo /out:
+
+#REGEXP = -DGNU_REGEXP  -DREGCOMP_OPT=$(REGCOMP_OPT) # deprecated !
+REGEXP= /DUSE_PCRE_REGEX /DPCRE_OPT=$(PCRE_OPT)
+# on activeTCL , set #define CHANNEL to null, and add ivyloop.obj in the ivytcl target,
+# see below
+CHANNEL = -DTCL_CHANNEL_INTEGRATION 
+
+# WINDOWS add ivyloop.obj if TCL_CHANNEL_INTEGRATION is not set
+TARGETS = ivyprobe.exe ivyperf.exe 
+
+.c.obj:
+	$(CC) $(CFLAGS) /c $*.c
+
+all: commands
+
+commands: $(TARGETS)
+
+ivyprobe.exe: ivyprobe.obj libivy.lib
+	$(CC)  $(CFLAGS) $(EXTRAINC) /Fe$@ ivyprobe.obj libivy.lib wsock32.lib $(PCRELIB) $(EXTRALIB)
+
+ivyprobe.obj : ivyprobe.c 
+	$(CC) $(CFLAGS) $(REGEXP) $(PCREINC) $(EXTRAINC) /c ivyprobe.c
+
+ivyperf.exe: ivyperf.obj libivy.lib
+	$(CC) $(CFLAGS) /Fe$@ ivyperf.obj libivy.lib wsock32.lib $(PCRELIB) $(EXTRALIB)
+
+
+clean:
+	-del /f $(TARGETS)  *.obj *.lib *.dll *~
+

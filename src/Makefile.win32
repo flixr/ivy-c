@@ -17,7 +17,7 @@
 
 # change this in version.h too !!!!
 MAJOR=3
-MINOR=9
+MINOR=11
 
 PCREINC = -I "C:\Documents and Settings\fcolin\My Documents\Visual Studio 2005\Projects\pcre-6.4\\" 
 PCRELIB = Debug\pcre.lib
@@ -41,6 +41,7 @@ CFLAGS = /W3 /DWIN32 /D_CRT_SECURE_NO_DEPRECATE /nologo
 #LIBTOOL=ar q # linux and solaris
 #LIBTOOL=libtool -static -o
 LIBTOOL=lib /nologo /out:
+TOOLS_DIR = ../tools
 
 #REGEXP = -DGNU_REGEXP  -DREGCOMP_OPT=$(REGCOMP_OPT) # deprecated !
 REGEXP= /DUSE_PCRE_REGEX /DPCRE_OPT=$(PCRE_OPT)
@@ -48,22 +49,20 @@ REGEXP= /DUSE_PCRE_REGEX /DPCRE_OPT=$(PCRE_OPT)
 # see below
 CHANNEL = -DTCL_CHANNEL_INTEGRATION 
 
-OBJ = intervalRegexp.obj ivyloop.obj timer.obj ivysocket.obj ivy.obj ivybuffer.obj ivybind.obj getopt.obj
+OBJ = intervalRegexp.obj ivyloop.obj timer.obj ivysocket.obj ivy.obj \
+      ivybuffer.obj ivyfifo.obj ivybind.obj getopt.obj 
 
 # WINDOWS add ivyloop.obj if TCL_CHANNEL_INTEGRATION is not set
-TARGETS = ivyprobe.exe ivyperf.exe 
 TARGETLIBS=libivy.dll
 
 .c.obj:
 	$(CC) $(CFLAGS) /c $*.c
 
-all: static-libs commands shared-libs
+all: static-libs  shared-libs tools
 
 static-libs: libivy.lib
 
 shared-libs: $(TARGETLIBS)
-
-commands: $(TARGETS)
 
 ivybind.obj: ivybind.c
 	$(CC) $(CFLAGS) $(REGEXP) $(PCREINC) /c ivybind.c
@@ -74,7 +73,7 @@ ivyprobe.exe: ivyprobe.obj libivy.lib
 
 ivyprobe.obj : ivyprobe.c 
 	$(CC) $(CFLAGS) $(REGEXP) $(PCREINC) /c ivyprobe.c
-	
+
 ivyperf.exe: ivyperf.obj libivy.lib
 	$(CC) $(CFLAGS) /Fe$@ ivyperf.obj libivy.lib wsock32.lib $(PCRELIB)
 
@@ -86,8 +85,10 @@ libivy.lib: $(OBJ)
 libivy.dll: $(OBJ)
 	$(CC) /dll /out: $@ $(OBJ) $(PCRELIB)
 
+tools: static-libs 
+	@(cd $(TOOLS_DIR) && $(MAKE) -f Makefile.win32)
+
+
 clean:
-	-del /f $(TARGETS) $(TARGETLIBS) *.obj *.lib *.dll *~
-
-
-
+	-del /f $(TARGETLIBS) *.obj *.lib *.dll *~
+	@(cd $(TOOLS_DIR) && $(MAKE) -f Makefile.win32 clean)
