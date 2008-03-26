@@ -16,11 +16,9 @@
  */
 
 /*
-  TODO :  ° sync svn
-	  ° compil sur windows
+  TODO :  ° mettre à jour la doc / site web
 	  ° faire un configure
-	  ° mettre à jour la doc / site web
- */
+*/
 
 #ifdef OPENMP
 #include <omp.h>
