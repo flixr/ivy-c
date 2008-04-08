@@ -82,8 +82,8 @@ void recepteur_ml (const char* bus, KindOfTest kod, unsigned int inst,
 void emetteur (const char* bus, KindOfTest kod, int testDuration, 
 	       const ListOfString& messages, int regexpSize);
 
-bool getMessages (const char*fileName, ListOfString &messages);
-bool getRegexps (const char*fileName, ListOfString &regexps);
+bool getMessages (const char*fileName, ListOfString &messages, unsigned int numMess);
+bool getRegexps (const char*fileName, ListOfString &regexps, unsigned int numReg);
 
 double currentTime();
 void binCB( IvyClientPtr app, void *user_data, int id, char* regexp,  IvyBindEvent event ) ;
@@ -99,7 +99,7 @@ void desabonneEtReabonneCB (TimerId id, void *user_data, unsigned long delta);
 void changeRegexpCB (TimerId id, void *user_data, unsigned long delta);
 void exitCB (TimerId id, void *user_data, unsigned long delta);
 
-unsigned int nbMess=0, nbReg=0, numClients =1, globalInst;
+unsigned int nbMess=0, nbReg=0, numClients =1, globalInst, numRegexps=1e6, numMessages=1e6;
 MapUintToBool   recReady;
 KindOfTest   kindOfTest = throughput;
 bool	     regexpAreUniq = false;
@@ -110,7 +110,7 @@ int main(int argc, char *argv[])
   int testDuration = 10;
   char *bus ;
   char  regexpFile[1024] = "testivy/regexp.txt";
-  char  messageFile[1024] = "testivy/plantageradargl.ivy";
+  char  messageFile[1024] = "testivy/messages.ivy";
   ListOfString messages, regexps;
   pid_t        pid;
   ListOfPid    recPid;
@@ -120,10 +120,12 @@ int main(int argc, char *argv[])
     "\t -b bus\tdefines the Ivy bus to which to connect to, defaults to 127:2010\n"
     "\t -v \t prints the ivy relase number\n\n"
     "\t -t \t type of test :  ml or ml2 (memory leak) or tp (throughput)\n"
-    "\t -r \t regexfile\tread list of regexp's from file\n"
+    "\t -r \t regexfile\tread list of regexp's from file (default to testivy/regexp.txt)\n"
+    "\t -R \t restrict to R firsts regexps instead of all the regexp in the regexp file \n"
     "\t -p \t each client will prepend regexp with uniq string to "
              "simulate N clients with differents regexps\n"
-    "\t -m \t messageFile\tread list of messages from file\n"
+    "\t -m \t messageFile\tread list of messages from file (default to testivy/messages.ivy)\n"
+    "\t -M \t restrict to M firsts messages instead of all the message in the message file \n"
     "\t -n \t number of clients\n" 
     "\t -d \t duration of the test in seconds\n" ;
 
@@ -134,7 +136,7 @@ int main(int argc, char *argv[])
     bus = strdup ("127.0.0.1:2000") ;
   }
 
-  while ((c = getopt(argc, argv, "vpb:r:m:n:t:d:")) != EOF)
+  while ((c = getopt(argc, argv, "vpb:r:m:R:M:n:t:d:")) != EOF)
     switch (c) {
     case 'b':
       strcpy (bus, optarg);
@@ -165,6 +167,12 @@ int main(int argc, char *argv[])
     case 'm':
       strcpy (messageFile, optarg);
       break;
+    case 'R':
+       numRegexps = atoi (optarg);
+      break;
+    case 'M':
+       numMessages = atoi (optarg);
+      break;
     case 'n':
       numClients = atoi (optarg);
       break;
@@ -176,11 +184,11 @@ int main(int argc, char *argv[])
       exit(1);
     }
 
-  if (!getRegexps (regexpFile, regexps)) 
+  if (!getRegexps (regexpFile, regexps, numRegexps)) 
     {return (1);};
 
   if (kindOfTest != memoryLeak1) {
-    if (!getMessages (messageFile, messages)) 
+    if (!getMessages (messageFile, messages, numMessages)) 
       {return (1);};
   }
 
@@ -345,7 +353,7 @@ void recepteur_ml (const char* bus, KindOfTest kod, unsigned int inst,
 #                 |___/   \___|  \__|  |_|  |_|  \___| |___/  |___/   \__,_|  |___/   \___|
 */
 
-bool getMessages (const char*fileName, ListOfString &messages)
+bool getMessages (const char*fileName, ListOfString &messages, unsigned int numMess)
 {
   FILE *infile;
   char buffer [1024*64];
@@ -358,7 +366,7 @@ bool getMessages (const char*fileName, ListOfString &messages)
     return false;
   }
   
-  while (fgets (buffer, sizeof (buffer), infile) != NULL) {
+  while ((fgets (buffer, sizeof (buffer), infile) != NULL) && (nbMess < numMess)) {
     if (pcreg.PartialMatch (buffer, &aMsg)) {
       messages.push_back (aMsg);
       nbMess++;
@@ -377,11 +385,12 @@ bool getMessages (const char*fileName, ListOfString &messages)
 #                  __/ | |  __/ \ |_   | | \ \  |  __/   __/ | |  __/  >  <   | |     \__ \
 #                 |___/   \___|  \__|  |_|  \_\  \___|  |___/   \___| /_/\_\  |_|     |___/
 */
-bool getRegexps (const char*fileName, ListOfString &regexps)
+bool getRegexps (const char*fileName, ListOfString &regexps, unsigned int numReg)
 {
   FILE *infile;
   char buffer [1024*64];
-  pcrecpp::RE pcreg ("add regexp \\d+ : (.*)$");
+  pcrecpp::RE pcreg1 ("add regexp \\d+ : (.*)$");
+  pcrecpp::RE pcreg2 ("\\^(.*)$");
   string  aMsg;
 
   infile = fopen(fileName, "r");
@@ -390,11 +399,14 @@ bool getRegexps (const char*fileName, ListOfString &regexps)
     return false;
   }
   
-  while (fgets (buffer, sizeof (buffer), infile) != NULL) {
-    if (pcreg.PartialMatch (buffer, &aMsg)) {
+  while ((fgets (buffer, sizeof (buffer), infile) != NULL) && (nbReg < numReg)) {
+    if (pcreg1.PartialMatch (buffer, &aMsg)) {
       regexps.push_back (aMsg);
       nbReg++;
-    } 
+    } else if (pcreg2.PartialMatch (buffer, &aMsg)) {
+      regexps.push_back (aMsg);
+      nbReg++;
+    }
   }
   fclose (infile);
 
@@ -472,6 +484,7 @@ void congestCB ( IvyClientPtr app, void *user_data, IvyApplicationEvent event )
   string appName = IvyGetApplicationName( app );
 
   switch ( event ) {
+#if IVYMINOR_VERSION >= 11
   case IvyApplicationCongestion:
     printf("Application:%s : Congestion\n", appName.c_str());
     break;
@@ -481,6 +494,7 @@ void congestCB ( IvyClientPtr app, void *user_data, IvyApplicationEvent event )
   case IvyApplicationFifoFull:
     printf("Application:%s : FIFO PLEINE, MESSAGES PERDUS !!!\n", appName.c_str());
     break;
+#endif
   case IvyApplicationConnected:
     //    printf("Application:%s : Connected\n", appName.c_str());
   case IvyApplicationDisconnected:
@@ -511,7 +525,7 @@ void sendAllMessageCB (TimerId id, void *user_data, unsigned long delta)
   }
   IvySendMsg ("endOfSequence");
 
-  printf ("[ivy %d.%d] envoyer [%d/%d] messages filtrés par %d regexps a %d clients "
+  printf ("[ivy %d.%d] envoyer [%d/%d] messages filtres par %d regexps a %d clients "
 	  "prends %.1f secondes\n",
 	  IVYMAJOR_VERSION, IVYMINOR_VERSION,
 	  envoyes, nbMess, nbReg, numClients, 

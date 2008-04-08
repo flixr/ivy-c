@@ -425,8 +425,6 @@ SendState SocketSendRaw (const Client client, const char *buffer, const int len 
 }
 
 
-
-
 static SendState BufferizedSocketSendRaw (const Client client, const char *buffer, const int len )
 {
   ssize_t reallySent;
@@ -444,7 +442,19 @@ static SendState BufferizedSocketSendRaw (const Client client, const char *buffe
     if (reallySent == len) {
       state = SendOk; // PAS CONGESTIONNEE
     } else if (reallySent == -1) {
-      state = SendError; // ERREUR
+      if (errno == EWOULDBLOCK) {
+	// Aucun octet n'a été envoyé, mais le send ne rend pas 0
+	// car 0 peut être une longueur passée au send, donc dans ce cas
+	// send renvoie -1 et met errno a EWOULDBLOCK
+	client->ifb = IvyFifoNew ();
+	IvyFifoWrite (client->ifb, buffer, len);
+	// on ajoute un fdset pour que le select appelle une callback pour vider
+	// le buffer quand la socket sera ?? nouveau libre
+	IvyChannelAddWritableEvent (client->channel);
+	state = SendStateChangeToCongestion;
+      } else {
+	state = SendError; // ERREUR
+      }
     } else {
       // socket congestionnée
       // on initialise une fifo pour accumuler les données
@@ -456,6 +466,40 @@ static SendState BufferizedSocketSendRaw (const Client client, const char *buffe
       state = SendStateChangeToCongestion;
     }
   }
+
+#ifdef DEBUG
+  // DBG BEGIN DEBUG
+  /* SendOk, SendStillCongestion, SendStateChangeToCongestion,
+          SendStateChangeToDecongestion, SendStateFifoFull, SendError,
+	  SendParamError
+  */
+  {
+    static SendState DBG_state = SendOk;
+    char *litState="";
+    if (state != DBG_state) {
+      switch (state) {
+      case SendOk : litState = "SendOk";
+	break;
+      case  SendStillCongestion: litState = "SendStillCongestion";
+	break;
+      case SendStateChangeToCongestion : litState = "SendStateChangeToCongestion";
+	break;
+      case  SendStateChangeToDecongestion: litState = "SendStateChangeToDecongestion";
+	break;
+      case  SendStateFifoFull: litState = "SendStateFifoFull";
+	break;
+      case  SendError: litState = "SendError";
+	break;
+      case  SendParamError: litState = "SendParamError";
+	break;
+      }
+      printf ("DBG>> BufferizedSocketSendRaw, state changed tp '%s'\n", litState);
+      DBG_state = state;
+    }
+  }
+  // DBG END DEBUG
+#endif
+
   return (state);
 }
 

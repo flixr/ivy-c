@@ -127,8 +127,10 @@ TARGETLIBS=libivy.so.$(MAJOR).$(MINOR) libgivy.so.$(MAJOR).$(MINOR) libxtivy.so.
 .cpp.o:
 	$(CPP) $(CFLAGS) $(BUGGY_DEBIAN_OPTION) -c $*.cpp
 
-all: static-libs commands shared-libs pkgconf libomp tools
+all: static-libs commands shared-libs pkgconf  tools
 libomp: libivy_omp.a libivy_omp.so.$(MAJOR).$(MINOR)
+omp: libomp
+	@(cd $(TOOLS_DIR) && $(MAKE) omp) 
 
 static-libs: libivy.a libgivy.a libxtivy.a libglibivy.a libtclivy.a 
 # not yet need Modified Glut libglutivy.a

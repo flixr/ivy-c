@@ -1,8 +1,15 @@
+ivy-c (3.11.1) unstable; urgency=low
+
+  * fix a bug with the behavior of send system call in non blocking mode
+	in some rare case
+  * simplify ivythroutput and his fileset
+	
+ -- Alexandre Bustico <bustico@cena.fr>  Wed, 8 Apr 2008 15:32:54 +0100
+
 ivy-c (3.11.0) unstable; urgency=low
 
   * change socket behavior to non blocking, with local management of a
-	fifo, this fix some deadlock problems when lot of agents with
-	numerous regexp binding are on the same bus.
+	fifo, this fix some deadlock problems when lot of agents with numerous regexp binding are on the same bus.
   * little (ascendant compatible) api change
   * fix for numerous bugs
 	

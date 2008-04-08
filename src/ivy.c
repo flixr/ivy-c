@@ -234,6 +234,9 @@ static SendState MsgSendTo(IvyClientPtr ivyClient,
   SendState state = 
     SocketSend( ivyClient->client, "%d %d" ARG_START "%s\n", msgtype, id, message);
 
+  //  if (msgtype == AddRegexp) {
+  //printf ("DBG> MsgSendTo:: sending addRegexp ID=%d [%s]\n", id, message);
+  //}
   if ((application_callback != NULL) && (ivyClient != NULL)) {
     switch (state) {
     case SendStateChangeToCongestion :
@@ -542,7 +545,6 @@ static void Receive( Client client, void *data, char *line )
 
 
 			TRACE("Regexp  id=%d exp='%s'\n",  id, arg);
-
 			if ( !IvyBindingFilter( arg ) )
 				{
 
@@ -590,7 +592,6 @@ static void Receive( Client client, void *data, char *line )
 		case EndRegexp:
 			
 			TRACE("Regexp End id=%d\n",  id);
-
 			if ( application_callback )
 				{
 				(*application_callback)( clnt, application_user_data, IvyApplicationConnected );
@@ -1085,8 +1086,8 @@ int IvySendMsg(const char *fmt, ...) /* version dictionnaire */
   /*   pour toutes les regexp */
 
 #ifdef OPENMP 
+#define TABLEAU_PREALABLE 1 // mode normal, les autres sont pour le debug
   //#define TABLEAU_PREALABLE_SEQUENTIEL 1
-#define TABLEAU_PREALABLE 1
   //#define SINGLE_NOWAIT  1
   //#define SCHEDULE_GUIDED 1
   //#define SEQUENTIEL_DEBUG 1
@@ -1526,9 +1527,30 @@ static void addRegexpToDictionary (const char* regexp, IvyClientPtr client)
 
     msgSendDict->clientList = NULL;
 
-    /* HASH_ADD_STR ne fonctionne que si la clef est un tavbleau de char, si c'est un pointeur 
+    /* HASH_ADD_STR ne fonctionne que si la clef est un tableau de char, si c'est un pointeur 
        if faut utiliser HASH_ADD_KEYPTR */
+#ifdef DEBUG
+    {// DEBUG
+      int debugSize=0, nDebugSize=0;
+      MsgSndDictPtr msd;
+      for (msd=messSndByRegexp; msd ; msd=msd->hh.next) {
+	debugSize++;
+      }
+      HASH_ADD_KEYPTR(hh, messSndByRegexp, msgSendDict->regexp_src, strlen (msgSendDict->regexp_src), msgSendDict); 
+      for (msd=messSndByRegexp; msd ; msd=msd->hh.next) {
+	nDebugSize++;
+      }
+      if ((nDebugSize-debugSize) != 1) {
+	printf ("DBG> Hash ERROR, adding %s let hashsize to pass from %d to %d\n", regexp, debugSize, nDebugSize);
+      } else {
+	printf ("DBG> adding %s[%d]\n", regexp, nDebugSize);
+      }
+      
+    }// END DEBUG
+#else
     HASH_ADD_KEYPTR(hh, messSndByRegexp, msgSendDict->regexp_src, strlen (msgSendDict->regexp_src), msgSendDict); 
+#endif
+
 #ifdef OPENMP
     // On ne regenere le cache qu'après recpetion du endregexp, ça permet d'eviter
     // de regenerer inutilement le cache à chaqye nouvelle regexp initiale
@@ -1557,7 +1579,7 @@ static void addRegexpToDictionary (const char* regexp, IvyClientPtr client)
 
 static void changeRegexpInDictionary (const char* regexp, IvyClientPtr client) 
 {
-  //  printf ("ENTER changeRegexpInDictionary\n");
+  //  printf ("DBG> ENTER changeRegexpInDictionary\n");
   delRegexpForOneClientFromDictionary (regexp, client);
   addRegexpToDictionary (regexp, client);
 }
