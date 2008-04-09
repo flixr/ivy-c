@@ -25,9 +25,6 @@ REGEXP= -DUSE_PCRE_REGEX -DPCRE_OPT=$(PCRE_OPT)
 OBJ = ivyloop.o timer.o ivysocket.o ivy.o ivybuffer.o ivyfifo.o ivybind.o intervalRegexp.o
 OMPOBJ = ivyloop.o timer.o ivysocket_omp.o ivy_omp.o ivybuffer.o ivyfifo.o ivybind.o intervalRegexp.o
 
-CC=gcc
-LIBTOOL=ar q # linux and solaris
-CFLAGS = -g -Wall $(FPIC)
 TOOLS_DIR = ../tools
 
 # you should first install gcc version >= 4.3 
@@ -35,8 +32,20 @@ TOOLS_DIR = ../tools
 # using macport greatly simplify gcc install : port install gcc43
 OMPCC = gcc-mp-4.3  
 OMPCPP =  g++-mp-4.3
-OMPCFLAGS = $(CFLAGS) -fopenmp -DOPENMP=1
+OMPLIBTOOL =gar q
+OMPCFLAGS = -g -Wall $(FPIC) -fopenmp -DOPENMP=1
 OMPLIB = -lgomp -lpthread
+
+
+LIBTOOL=ar q # linux and solaris
+CFLAGS = -g -Wall $(FPIC)
+
+CC=gcc
+CPP=g++
+#CC = $(OMPCC)
+#CPP = $(OMPCPP)
+#LIBTOOL = $(OMPLIBTOOL)
+#CFLAGS = $(OMPCFLAGS)
 
 # ------------------------------------------------------------------------------------------
 
@@ -47,8 +56,9 @@ OMPLIB = -lgomp -lpthread
 	$(CPP) $(CFLAGS)  -c $*.cpp
 
 
-all: static-libs shared-libs tools
+all: static-libs tools # shared-libs 
 libomp: libivy_omp.a 
+
 omp: libomp
 	@(cd $(TOOLS_DIR) && $(MAKE) -f Makefile.osx omp) 
 

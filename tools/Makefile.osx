@@ -1,5 +1,3 @@
-CC = gcc -g -Wall
-CPP='g++'
 GLUTINC = -I/usr/include -I.
 GLUTLIB = -L. -lglut -lGLU -lGL -lX11 -lXmu 
 
@@ -11,6 +9,10 @@ OMP_TARGET= ivyprobe_omp ivythroughput_omp
 OMPLIB = -lgomp -lpthread
 OMPCC = gcc-mp-4.3  
 OMPCPP =  g++-mp-4.3
+CC = gcc -g -Wall
+CPP='g++'
+#CC = $(OMPCC)
+#CPP= $(OMPCPP)
 
 PCRELIB = `pcre-config --libs`
 PCREINCL = `pcre-config --cflags`
