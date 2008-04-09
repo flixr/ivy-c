@@ -23,10 +23,21 @@ endif
 REGEXP= -DUSE_PCRE_REGEX -DPCRE_OPT=$(PCRE_OPT)
 
 OBJ = ivyloop.o timer.o ivysocket.o ivy.o ivybuffer.o ivyfifo.o ivybind.o intervalRegexp.o
+OMPOBJ = ivyloop.o timer.o ivysocket_omp.o ivy_omp.o ivybuffer.o ivyfifo.o ivybind.o intervalRegexp.o
+
 CC=gcc
 LIBTOOL=ar q # linux and solaris
 CFLAGS = -g -Wall $(FPIC)
 TOOLS_DIR = ../tools
+
+# you should first install gcc version >= 4.3 
+# gcc (g++) 4.3 is the first gcc version which support openmp under macosx 
+# using macport greatly simplify gcc install : port install gcc43
+OMPCC = gcc-mp-4.3  
+OMPCPP =  g++-mp-4.3
+OMPCFLAGS = $(CFLAGS) -fopenmp -DOPENMP=1
+OMPLIB = -lgomp -lpthread
+
 # ------------------------------------------------------------------------------------------
 
 .c.o:
@@ -37,6 +48,9 @@ TOOLS_DIR = ../tools
 
 
 all: static-libs shared-libs tools
+libomp: libivy_omp.a 
+omp: libomp
+	@(cd $(TOOLS_DIR) && $(MAKE) -f Makefile.osx omp) 
 
 static-libs: libivy.a
 
@@ -45,12 +59,26 @@ shared-libs: libivy.dylib
 ivybind.o: ivybind.c
 	$(CC) -c $(CFLAGS) $(REGEXP) $(PCREINC) ivybind.c
 
+ivy_omp.o: ivy.c
+	$(OMPCC) -c $(OMPCFLAGS)  -o ivy_omp.o ivy.c
+
+ivysocket_omp.o: ivysocket.c
+	$(OMPCC) -c $(OMPCFLAGS)  -o ivysocket_omp.o ivysocket.c
+
+
 libivy.a: $(OBJ)
 	rm -f $@
 	$(LIBTOOL) $@ $(OBJ)
 
+libivy_omp.a: $(OMPOBJ)
+	rm -f $@
+	$(LIBTOOL) $@ $(OMPOBJ)
+
 libivy.dylib: $(OBJ)
 	$(CC) -dynamiclib -o $@ $(OBJ) $(PCRELIB)
+
+libivy_omp.dylib: $(OMPOBJ)
+	$(OMPCC) -dynamiclib -o $@ $(OMPOBJ) $(PCRELIB) $(OMPLIB) 
 
 # ------------------------------------------------------------------------------------------
 
