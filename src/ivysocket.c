@@ -250,8 +250,8 @@ static void HandleServer(Channel channel, HANDLE fd, void *data)
 	client->ifb = NULL;
 	strcpy (client->app_uuid, "init by HandleServer");
 
- 	socketFlag = fcntl (client->fd, F_GETFD);
-	if (fcntl (client->fd, F_SETFD, socketFlag|O_NONBLOCK)) {
+ 	socketFlag = fcntl (client->fd, F_GETFL);
+	if (fcntl (client->fd, F_SETFL, socketFlag|O_NONBLOCK)) {
 	  fprintf(stderr,"Warning : Setting socket in nonblock mode FAILED\n");
 	}
 
@@ -438,7 +438,7 @@ static SendState BufferizedSocketSendRaw (const Client client, const char *buffe
     state = IvyFifoIsFull (client->ifb) ? SendStateFifoFull : SendStillCongestion;
   } else {
     // on tente d'ecrire direct dans la socket
-    reallySent =  send (client->fd, buffer, len, MSG_DONTWAIT);
+    reallySent =  send (client->fd, buffer, len, 0);
     if (reallySent == len) {
       state = SendOk; // PAS CONGESTIONNEE
     } else if (reallySent == -1) {
@@ -493,7 +493,7 @@ static SendState BufferizedSocketSendRaw (const Client client, const char *buffe
       case  SendParamError: litState = "SendParamError";
 	break;
       }
-      printf ("DBG>> BufferizedSocketSendRaw, state changed tp '%s'\n", litState);
+      printf ("DBG>> BufferizedSocketSendRaw, state changed to '%s'\n", litState);
       DBG_state = state;
     }
   }
@@ -625,8 +625,8 @@ Client SocketConnectAddr (struct in_addr * addr, unsigned short port,
 		perror ("*** client connect ***");
 		return NULL;
 	};
-	socketFlag = fcntl (handle, F_GETFD);
-	if (fcntl (handle, F_SETFD, socketFlag|O_NONBLOCK)) {
+	socketFlag = fcntl (handle, F_GETFL);
+	if (fcntl (handle, F_SETFL, socketFlag|O_NONBLOCK)) {
 	  fprintf(stderr,"Warning : Setting socket in nonblock mode FAILED\n");
 	}
 
