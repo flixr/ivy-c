@@ -1,7 +1,8 @@
-PCREINC = -I "C:\Documents and Settings\fcolin\My Documents\Visual Studio 2005\Projects\pcre-6.4\\" 
-PCRELIB = Debug\pcre.lib
-EXTRALIB= -L../src
-EXTRAINC=-I../src
+PCREINC = -I "C:\Users\fcolin\Documents\Projects Visual Studio\pcre-6.4\\" 
+PCRELIB = ..\Release\pcre.lib
+IVYLIB = ..\Release\ivy.lib
+EXTRALIB= -L..\Release
+EXTRAINC=-I..
 
 #PCREINC = -I "C:\Program Files\GnuWin32\include" #`pcre-config --cflags`
 #PCRELIB = "C:\Program Files\GnuWin32\lib\libpcre.lib" #`pcre-config --libs`
@@ -39,14 +40,14 @@ all: commands
 
 commands: $(TARGETS)
 
-ivyprobe.exe: ivyprobe.obj libivy.lib
-	$(CC)  $(CFLAGS) $(EXTRAINC) /Fe$@ ivyprobe.obj libivy.lib wsock32.lib $(PCRELIB) $(EXTRALIB)
+ivyprobe.exe: ivyprobe.obj $(IVYLIB)
+	$(CC)  $(CFLAGS) $(EXTRAINC) /Fe$@ ivyprobe.obj $(IVYLIB) wsock32.lib $(PCRELIB) $(EXTRALIB)
 
 ivyprobe.obj : ivyprobe.c 
 	$(CC) $(CFLAGS) $(REGEXP) $(PCREINC) $(EXTRAINC) /c ivyprobe.c
 
-ivyperf.exe: ivyperf.obj libivy.lib
-	$(CC) $(CFLAGS) /Fe$@ ivyperf.obj libivy.lib wsock32.lib $(PCRELIB) $(EXTRALIB)
+ivyperf.exe: ivyperf.obj $(IVYLIB)
+	$(CC) $(CFLAGS) /Fe$@ ivyperf.obj $(IVYLIB) wsock32.lib $(PCRELIB) $(EXTRALIB)
 
 
 clean:
