@@ -23,6 +23,10 @@
 #include <stdarg.h>
 #include <string.h>
 
+#ifdef WIN32
+#define snprintf _snprintf
+#endif
+
 #include "param.h"
 #include "ivybuffer.h"
 
@@ -45,10 +49,12 @@ int make_message(IvyBuffer* buffer, const char *fmt, va_list ap)
 		}
     while (1) {
     /* Try to print in the allocated space. */
-	va_copy( ap_copy, ap );
+	
 #ifdef WIN32
+	ap_copy = ap;
 	n = _vsnprintf (buffer->data + buffer->offset, buffer->size - buffer->offset, fmt, ap_copy);
 #else
+	va_copy( ap_copy, ap );
     n = vsnprintf (buffer->data + buffer->offset, buffer->size - buffer->offset, fmt, ap_copy);
 #endif
 	va_end(ap_copy);

@@ -27,6 +27,7 @@
 #include <stdlib.h>
 #ifdef WIN32
 #include <windows.h>
+#define snprintf _snprintf
 #else
 #include <sys/time.h>
 #include <arpa/inet.h>
@@ -1066,6 +1067,8 @@ IvyChangeMsg (MsgRcvPtr msg, const char *fmt_regex, ... )
 int IvySendMsg(const char *fmt, ...) /* version dictionnaire */
 {
   int match_count = 0;
+  MsgSndDictPtr msgSendDict;
+
   static IvyBuffer buffer = { NULL, 0, 0}; /* Use static mem to eliminate multiple call to malloc /free */
   va_list ap;
   
@@ -1143,7 +1146,6 @@ int IvySendMsg(const char *fmt, ...) /* version dictionnaire */
 
 
 #else // PAS OPENMP
-  MsgSndDictPtr msgSendDict;
 
   for (msgSendDict=messSndByRegexp; msgSendDict ; msgSendDict=msgSendDict->hh.next) {
     match_count += RegexpCall (msgSendDict, buffer.data);

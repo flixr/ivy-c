@@ -1,7 +1,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
+#ifdef WIN32
+#include <windows.h>
+#else
 #include <sys/socket.h>
+#endif
 #include <stdio.h> // DEBUG, pour printf
 #include "ivyfifo.h"
 #include "param.h"
@@ -146,7 +150,11 @@ unsigned int IvyFifoSendSocket (IvyFifoBuffer *f, const int fd)
   
   do {
     maxLen = MIN ((f->end - f->rptr), IvyFifoLength(f));
-    realLen = send (fd, f->rptr, maxLen, MSG_DONTWAIT);
+#ifdef WIN32
+    realLen = send (fd, f->rptr, maxLen, 0);
+#else
+	realLen = send (fd, f->rptr, maxLen, MSG_DONTWAIT);
+#endif
     IvyFifoDrain(f, realLen);
     //    printf ("DBG> maxLen=%d realLen=%d IvyFifoLength=%d\n",
     //    maxLen, realLen, IvyFifoLength(f));

@@ -29,6 +29,7 @@
 #include <fcntl.h>
 
 #ifdef WIN32
+typedef int ssize_t;
 #define close closesocket
 /*#define perror (a ) printf(a" error=%d\n",WSAGetLastError());*/
 #else
@@ -222,8 +223,11 @@ static void HandleServer(Channel channel, HANDLE fd, void *data)
 	HANDLE ns;
 	socklen_t addrlen;
 	struct sockaddr_in remote2;
+#ifdef WIN32
+	u_long iMode = 1; /* non blocking Mode */
+#else
 	long   socketFlag;
-
+#endif
 	TRACE( "Accepting Connection...\n");
 
 	addrlen = sizeof (remote2 );
@@ -250,10 +254,16 @@ static void HandleServer(Channel channel, HANDLE fd, void *data)
 	client->ifb = NULL;
 	strcpy (client->app_uuid, "init by HandleServer");
 
- 	socketFlag = fcntl (client->fd, F_GETFL);
+#ifdef WIN32
+	if ( ioctlsocket(client->fd,FIONBIO, &iMode ) )
+		fprintf(stderr,"Warning : Setting socket in nonblock mode FAILED\n");
+#else
+	socketFlag = fcntl (client->fd, F_GETFL);
 	if (fcntl (client->fd, F_SETFL, socketFlag|O_NONBLOCK)) {
 	  fprintf(stderr,"Warning : Setting socket in nonblock mode FAILED\n");
 	}
+#endif
+
 
 
 	client->channel = IvyChannelAdd (ns, client,  DeleteSocket, HandleSocket,
@@ -439,10 +449,16 @@ static SendState BufferizedSocketSendRaw (const Client client, const char *buffe
   } else {
     // on tente d'ecrire direct dans la socket
     reallySent =  send (client->fd, buffer, len, 0);
-    if (reallySent == len) {
+    if (reallySent == len) 
+	{
       state = SendOk; // PAS CONGESTIONNEE
-    } else if (reallySent == -1) {
+    } else if (reallySent == -1) 
+	{
+#ifdef WIN32
+	if ( WSAGetLastError() == WSAEWOULDBLOCK) {
+#else
       if (errno == EWOULDBLOCK) {
+#endif
 	// Aucun octet n'a été envoyé, mais le send ne rend pas 0
 	// car 0 peut être une longueur passée au send, donc dans ce cas
 	// send renvoie -1 et met errno a EWOULDBLOCK
@@ -610,7 +626,11 @@ Client SocketConnectAddr (struct in_addr * addr, unsigned short port,
 	HANDLE handle;
 	Client client;
 	struct sockaddr_in remote;
+#ifdef WIN32
+	u_long iMode = 1; /* non blocking Mode */
+#else
 	long   socketFlag;
+#endif
 
 	remote.sin_family = AF_INET;
 	remote.sin_addr = *addr;
@@ -625,11 +645,15 @@ Client SocketConnectAddr (struct in_addr * addr, unsigned short port,
 		perror ("*** client connect ***");
 		return NULL;
 	};
+#ifdef WIN32
+	if ( ioctlsocket(handle,FIONBIO, &iMode ) )
+		fprintf(stderr,"Warning : Setting socket in nonblock mode FAILED\n");
+#else
 	socketFlag = fcntl (handle, F_GETFL);
 	if (fcntl (handle, F_SETFL, socketFlag|O_NONBLOCK)) {
 	  fprintf(stderr,"Warning : Setting socket in nonblock mode FAILED\n");
 	}
-
+#endif
 	IVY_LIST_ADD_START(clients_list, client );
 	
 	client->buffer_size = IVY_BUFFER_SIZE;
