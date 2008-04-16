@@ -1,7 +1,6 @@
 ivy-c (3.11.1) unstable; urgency=low
 
-  * fix a bug with the behavior of send system call in non blocking mode
-	in some rare case
+  * fix a bug with the behavior of send system call in non blocking mode in some rare case
   * simplify ivythroutput and his fileset
 	
  -- Alexandre Bustico <bustico@cena.fr>  Wed, 8 Apr 2008 15:32:54 +0100
