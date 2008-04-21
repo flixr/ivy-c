@@ -16,6 +16,7 @@ IvyGetApplicationHost
 IvyGetApplication
 IvyGetApplicationList
 IvyGetApplicationMessages
+IvySetBindCallback
 IvyBindMsg
 IvyUnbindMsg
 IvySendError
@@ -38,3 +39,5 @@ IvyBindingFree
 
 IvyBindingExec
 IvyBindingMatch
+
+TimerRepeatAfter

@@ -19,8 +19,8 @@
 MAJOR=3
 MINOR=11
 
-PCREINC = -I "C:\Documents and Settings\fcolin\My Documents\Visual Studio 2005\Projects\pcre-6.4\\" 
-PCRELIB = Debug\pcre.lib
+PCREINC = -I "..\..\pcre-7.5\\" 
+PCRELIB = ..\..\pcre\x64\Release\pcre.lib
 
 #PCREINC = -I "C:\Program Files\GnuWin32\include" #`pcre-config --cflags`
 #PCRELIB = "C:\Program Files\GnuWin32\lib\libpcre.lib" #`pcre-config --libs`
@@ -40,8 +40,8 @@ PCREOBJ =
 CFLAGS = /W3 /DWIN32 /D_CRT_SECURE_NO_DEPRECATE /nologo
 #LIBTOOL=ar q # linux and solaris
 #LIBTOOL=libtool -static -o
-LIBTOOL=lib /nologo /out:
-TOOLS_DIR = ../tools
+LIBTOOL=lib /nologo
+TOOLS_DIR = tools
 
 #REGEXP = -DGNU_REGEXP  -DREGCOMP_OPT=$(REGCOMP_OPT) # deprecated !
 REGEXP= /DUSE_PCRE_REGEX /DPCRE_OPT=$(PCRE_OPT)
@@ -50,10 +50,10 @@ REGEXP= /DUSE_PCRE_REGEX /DPCRE_OPT=$(PCRE_OPT)
 CHANNEL = -DTCL_CHANNEL_INTEGRATION 
 
 OBJ = intervalRegexp.obj ivyloop.obj timer.obj ivysocket.obj ivy.obj \
-      ivybuffer.obj ivyfifo.obj ivybind.obj getopt.obj 
+      ivybuffer.obj ivyfifo.obj ivybind.obj
 
 # WINDOWS add ivyloop.obj if TCL_CHANNEL_INTEGRATION is not set
-TARGETLIBS=libivy.dll
+TARGETLIBS=ivy.dll
 
 .c.obj:
 	$(CC) $(CFLAGS) /c $*.c
@@ -68,22 +68,13 @@ ivybind.obj: ivybind.c
 	$(CC) $(CFLAGS) $(REGEXP) $(PCREINC) /c ivybind.c
 
 
-ivyprobe.exe: ivyprobe.obj libivy.lib
-	$(CC)  $(CFLAGS) /Fe$@ ivyprobe.obj libivy.lib wsock32.lib $(PCRELIB)
-
-ivyprobe.obj : ivyprobe.c 
-	$(CC) $(CFLAGS) $(REGEXP) $(PCREINC) /c ivyprobe.c
-
-ivyperf.exe: ivyperf.obj libivy.lib
-	$(CC) $(CFLAGS) /Fe$@ ivyperf.obj libivy.lib wsock32.lib $(PCRELIB)
-
 
 libivy.lib: $(OBJ)
 	del /f $@
-	$(LIBTOOL)$@ $(OBJ)
+	$(LIBTOOL) /out:$@ $(OBJ) 
 
-libivy.dll: $(OBJ)
-	$(CC) /dll /out: $@ $(OBJ) $(PCRELIB)
+ivy.dll: $(OBJ)
+	LINK /dll /out:$@ /DEF:libivy.def $(OBJ) $(PCRELIB) wsock32.lib
 
 tools: static-libs 
 	@(cd $(TOOLS_DIR) && $(MAKE) -f Makefile.win32)
