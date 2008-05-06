@@ -16,8 +16,7 @@
  */
 
 /*
-  TODO :  ° mettre à jour la doc / site web
-	  ° faire un configure
+  TODO :  ° faire un configure
 */
 
 #ifdef OPENMP

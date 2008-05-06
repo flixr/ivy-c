@@ -127,7 +127,7 @@ TARGETLIBS=libivy.so.$(MAJOR).$(MINOR) libgivy.so.$(MAJOR).$(MINOR) libxtivy.so.
 .cpp.o:
 	$(CPP) $(CFLAGS) $(BUGGY_DEBIAN_OPTION) -c $*.cpp
 
-all: static-libs commands shared-libs pkgconf  tools
+all: static-libs shared-libs pkgconf  tools
 libomp: libivy_omp.a libivy_omp.so.$(MAJOR).$(MINOR)
 omp: libomp
 	@(cd $(TOOLS_DIR) && $(MAKE) omp) 
@@ -138,7 +138,6 @@ static-libs: libivy.a libgivy.a libxtivy.a libglibivy.a libtclivy.a
 shared-libs: $(TARGETLIBS)
 # not yet need Modified Glut libglutivy.so.$(MAJOR).$(MINOR)
 
-commands: $(TARGETS)
 
 ivybind.o: ivybind.c
 	$(CC) -c $(CFLAGS) $(REGEXP) $(PCREINC) ivybind.c
@@ -312,8 +311,10 @@ installdocs:
 
 install: installlibs installbins installliblinks installdocs includes installpkgconf
 install_omp: installlibs_omp installbins_omp
-tools: static-libs libomp
+tools: static-libs
 	@(cd $(TOOLS_DIR) && $(MAKE))
+tools_omp: libomp
+	@(cd $(TOOLS_DIR) && $(MAKE) omp)
 rpm::
 	/usr/bin/rpmize
 
