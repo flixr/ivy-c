@@ -22,6 +22,11 @@
 extern "C" {
 #endif
 
+
+#ifndef __GNUC__
+#  define  __attribute__(x)  /*NOTHING*/
+#endif
+
 /* numero par default du bus */
 
 typedef struct _clnt_lst_dict *IvyClientPtr;
@@ -79,20 +84,25 @@ IvyClientPtr IvyGetApplication( char *name );
 char *IvyGetApplicationList(const char *sep);
 char **IvyGetApplicationMessages( IvyClientPtr app); /* demande de reception d'un message */
 
-MsgRcvPtr IvyBindMsg( MsgCallback callback, void *user_data, const char *fmt_regexp, ... ); /* avec sprintf prealable */
-MsgRcvPtr IvyChangeMsg (MsgRcvPtr msg, const char *fmt_regex, ... ); /* avec sprintf prealable */
+MsgRcvPtr IvyBindMsg( MsgCallback callback, void *user_data, const char *fmt_regexp, ... )
+__attribute__((format(printf,3,4))) ; /* avec sprintf prealable */
+
+MsgRcvPtr IvyChangeMsg (MsgRcvPtr msg, const char *fmt_regex, ... )
+__attribute__((format(printf,2,3))); /* avec sprintf prealable */
 
 void IvyUnbindMsg( MsgRcvPtr id );
 
 /* emission d'un message d'erreur */
-void IvySendError( IvyClientPtr app, int id, const char *fmt, ... );
+void IvySendError( IvyClientPtr app, int id, const char *fmt, ... )
+__attribute__((format(printf,3,4))) ; /* avec sprintf prealable */
 
 /* emmission d'un message die pour terminer l'application */
 void IvySendDieMsg( IvyClientPtr app );
 
 /* emission d'un message retourne le nb effectivement emis */
 
-int IvySendMsg( const char *fmt_message, ... );		/* avec sprintf prealable */
+int IvySendMsg( const char *fmt_message, ... )
+__attribute__((format(printf,1,2))); /* avec sprintf prealable */
 
 /* Message Direct Inter-application */
 

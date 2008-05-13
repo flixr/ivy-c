@@ -62,14 +62,14 @@ static long currentTime()
 }
 static void SetNewTimeout( unsigned long current, unsigned long when )
 {
-	unsigned long time;
-	time = (when <= current) ? 0 : when - current;
+	unsigned long ltime;
+	ltime = (when <= current) ? 0 : when - current;
 	nextTimeout = when;
-	selectTimeout.tv_sec = time / MILLISEC;
-	selectTimeout.tv_usec = (time - selectTimeout.tv_sec* MILLISEC) * MILLISEC;
+	selectTimeout.tv_sec = ltime / MILLISEC;
+	selectTimeout.tv_usec = (ltime - selectTimeout.tv_sec* MILLISEC) * MILLISEC;
 	if ( timeoutptr == NULL )
 				timeoutptr = &selectTimeout;
-	/*printf("New timeout %lu\n", time );*/
+	/*printf("New timeout %lu\n", ltime );*/
 }
 static void AdjTimeout(unsigned long current)
 {
@@ -95,7 +95,7 @@ static void AdjTimeout(unsigned long current)
 
 /* API */
 
-TimerId TimerRepeatAfter( int count, long time, TimerCb cb, void *user_data )
+TimerId TimerRepeatAfter( int count, long ltime, TimerCb cb, void *user_data )
 {
 	unsigned long stamp;
 	TimerId timer;
@@ -108,8 +108,8 @@ TimerId TimerRepeatAfter( int count, long time, TimerCb cb, void *user_data )
 		timer->callback = cb;
 		timer->user_data = user_data;
 		stamp = currentTime();
-		timer->period = time;
-		timer->when =  stamp + time;
+		timer->period = ltime;
+		timer->when =  stamp + ltime;
 		if ( (timer->when < nextTimeout) || (timeoutptr == NULL))
 			SetNewTimeout( stamp, timer->when );
 	IVY_LIST_ADD_END( timers, timer )
@@ -123,14 +123,14 @@ void TimerRemove( TimerId timer )
 	stamp = currentTime();
 	AdjTimeout(stamp);
 }
-void TimerModify( TimerId timer, long time )
+void TimerModify( TimerId timer, long ltime )
 {
 	unsigned long stamp;
 	if ( !timer ) return;
 
 	stamp = currentTime();
-	timer->period = time;
-	timer->when = stamp + time;
+	timer->period = ltime;
+	timer->when = stamp + ltime;
 	AdjTimeout(stamp);
 }
 /* Interface avec select */
