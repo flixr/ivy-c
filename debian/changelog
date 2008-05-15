@@ -1,3 +1,9 @@
+ivy-c (3.11.3) unstable; urgency=low
+
+  * fix timer.c (thanks to brno ivy dev team), and ivydebug.h 
+	
+ -- Alexandre Bustico <bustico@cena.fr>  Tue, 14 May 2008 11:00:00 +0200
+	
 ivy-c (3.11.2) unstable; urgency=low
 
   * fix makefile for openmp lib and tools

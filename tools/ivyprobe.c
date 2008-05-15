@@ -282,7 +282,7 @@ void IvyPrintBindCallback( IvyClientPtr app, void *user_data, int id, char* rege
 void TimerCall(TimerId id, void *user_data, unsigned long delta)
 {
 	printf("Timer callback: %ld delta %lu ms\n", (long)user_data, delta);
-	IvySendMsg ("TEST TIMER %d", (long)user_data);
+	IvySendMsg ("TEST TIMER %ld", (long) user_data);
 	/*if  ((int)user_data == 5) TimerModify (id, 2000);*/
 }
 #endif
