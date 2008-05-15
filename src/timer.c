@@ -153,24 +153,32 @@ void TimerScan()
 	int timer_echu = 0;
 	
 	stamp = currentTime();
+
 	/* recherche des timers echu dans la liste */
 	IVY_LIST_EACH_SAFE( timers , timer, next )
 	{
-	if ( timer->when <= stamp )
+	  if ( timer->when <= stamp )
+	    {
+	      timer_echu++;
+	      delta = stamp - timer->when;
+	      /* call callback */
+	      (*timer->callback)( timer, timer->user_data, delta );
+	    }
+	}
+
+	IVY_LIST_EACH_SAFE( timers , timer, next )
+	{
+	  if ( timer->when <= stamp )
+	    {
+	      if ( timer->repeat == TIMER_LOOP || --(timer->repeat) )
 		{
-		timer_echu++;
-		delta = stamp - timer->when;
-		/* call callback */
-		(*timer->callback)( timer, timer->user_data, delta );
-		if ( timer->repeat == TIMER_LOOP || --(timer->repeat) )
-			{
-			timer->when = stamp + timer->period;
-			}
-			else
-			{
-			IVY_LIST_REMOVE( timers, timer );
-			}
+		  timer->when = stamp + timer->period;
 		}
+	      else
+		{
+		  IVY_LIST_REMOVE( timers, timer );
+		}
+	    }
 	}
 	
 }

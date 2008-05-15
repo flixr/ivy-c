@@ -15,6 +15,7 @@
 #endif
 #else
 #ifdef DEBUG
+#include <stdio.h>
 #define TRACE(format, args...)  \
  fprintf (stderr, format , ## args)
 
