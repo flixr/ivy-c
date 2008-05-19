@@ -1088,6 +1088,7 @@ int IvySendMsg(const char *fmt, ...) /* version dictionnaire */
   /*   pour toutes les regexp */
 
 #ifdef OPENMP 
+  {
 #define TABLEAU_PREALABLE 1 // mode normal, les autres sont pour le debug
   //#define TABLEAU_PREALABLE_SEQUENTIEL 1
   //#define SINGLE_NOWAIT  1
@@ -1101,9 +1102,9 @@ int IvySendMsg(const char *fmt, ...) /* version dictionnaire */
   {
 #pragma omp for schedule(guided) // après debug mettre  schedule(guided, 10)
   for(count=0; count<ompDictCache.numPtr; count++) {
-    match_count += RegexpCall (ompDictCache.msgPtrArray[count], buffer.data);
-  }
-}  
+		match_count += RegexpCall (ompDictCache.msgPtrArray[count], buffer.data);
+		}
+  }  
 #endif // SCHEDULE_GUIDED
 
 
@@ -1142,7 +1143,7 @@ int IvySendMsg(const char *fmt, ...) /* version dictionnaire */
   }
 #endif // SEQUENTIEL_DEBUG
 
-
+  }
 
 #else // PAS OPENMP
 
