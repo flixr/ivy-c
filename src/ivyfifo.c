@@ -146,7 +146,7 @@ unsigned int IvyFifoGenericRead (IvyFifoBuffer *f, const unsigned int buf_size, 
 
 unsigned int IvyFifoSendSocket (IvyFifoBuffer *f, const int fd)
 {
-  unsigned int maxLen, realLen;
+  unsigned int  maxLen, realLen;
   
   do {
     maxLen = MIN ((unsigned int)(f->end - f->rptr), IvyFifoLength(f));
