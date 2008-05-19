@@ -193,7 +193,7 @@ static NextMax nextMax (const char *min, const char *max)
   char revMin[32], revMax[32];
   size_t nbDigitsMin, nbDigitsMax;
   size_t rankRev=0, rankForw, rank=0;
-  int i;
+  size_t i;
   int currMax; 
 
   nbDigitsMin = strlen (min);

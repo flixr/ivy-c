@@ -22,13 +22,13 @@ unsigned int IvyFifoSize(const IvyFifoBuffer  *f);
 
 unsigned int IvyFifoAvail(const IvyFifoBuffer  *f);
 
-unsigned int IvyFifoRead(IvyFifoBuffer *f, char *buf, int buf_size);
+unsigned int IvyFifoRead(IvyFifoBuffer *f, char *buf, unsigned int buf_size);
 
 unsigned int IvyFifoSendSocket (IvyFifoBuffer *f, const int fd);
 
 int IvyFifoIsFull (const IvyFifoBuffer  *f) ;
 
-void IvyFifoWrite(IvyFifoBuffer *f, const char *buf, int size);
+void IvyFifoWrite(IvyFifoBuffer *f, const char *buf, unsigned int size);
 
 
 

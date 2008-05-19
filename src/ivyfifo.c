@@ -17,7 +17,7 @@
 
 static void IvyFifoRealloc(IvyFifoBuffer *f, unsigned int neededSize);
 
-static unsigned int IvyFifoGenericRead(IvyFifoBuffer *f, const int buf_size, 
+static unsigned int IvyFifoGenericRead(IvyFifoBuffer *f, const unsigned int buf_size, 
 				       void (*func)(void*, void*, int), void* dest);
 
 static void IvyFifoDrain(IvyFifoBuffer *f, int size);
@@ -77,7 +77,7 @@ unsigned int IvyFifoAvail(const IvyFifoBuffer  *f)
   return (IvyFifoSize (f)- IvyFifoLength (f));
 }
 
-unsigned int IvyFifoRead (IvyFifoBuffer *f, char *buf, int buf_size)
+unsigned int IvyFifoRead (IvyFifoBuffer *f, char *buf, unsigned int buf_size)
 {
   return IvyFifoGenericRead(f, buf_size, NULL, buf);
 }
@@ -104,7 +104,7 @@ void IvyFifoRealloc (IvyFifoBuffer *f, unsigned int new_size)
   }
 }
 
-void IvyFifoWrite (IvyFifoBuffer *f, const char *buf, int size)
+void IvyFifoWrite (IvyFifoBuffer *f, const char *buf, unsigned int size)
 {
   if (size >= IvyFifoAvail (f)) {
     IvyFifoRealloc(f, size + IvyFifoLength (f));
@@ -113,7 +113,7 @@ void IvyFifoWrite (IvyFifoBuffer *f, const char *buf, int size)
     return ;
   }
   do {
-    int len = MIN(f->end - f->wptr, size);
+    unsigned int len = MIN((unsigned int)(f->end - f->wptr), size);
     memcpy(f->wptr, buf, len);
     f->wptr += len;
     if (f->wptr >= f->end)
@@ -124,13 +124,13 @@ void IvyFifoWrite (IvyFifoBuffer *f, const char *buf, int size)
 }
 
 
-unsigned int IvyFifoGenericRead (IvyFifoBuffer *f, const int buf_size, void (*func)(void*, void*, int), void* dest)
+unsigned int IvyFifoGenericRead (IvyFifoBuffer *f, const unsigned int buf_size, void (*func)(void*, void*, int), void* dest)
 {
   unsigned int bytesToRead, retV;
   retV = bytesToRead = MIN(buf_size, IvyFifoLength(f));
   
   do {
-    int len = MIN(f->end - f->rptr, bytesToRead);
+    unsigned int len = MIN((unsigned int)(f->end - f->rptr), bytesToRead);
     if (func) {
       func (dest, f->rptr, len);
     } else {
@@ -149,7 +149,7 @@ unsigned int IvyFifoSendSocket (IvyFifoBuffer *f, const int fd)
   unsigned int maxLen, realLen;
   
   do {
-    maxLen = MIN ((f->end - f->rptr), IvyFifoLength(f));
+    maxLen = MIN ((unsigned int)(f->end - f->rptr), IvyFifoLength(f));
 #ifdef WIN32
     realLen = send (fd, f->rptr, maxLen, 0);
 #else
