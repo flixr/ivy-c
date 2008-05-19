@@ -1,16 +1,3 @@
-CC = gcc -g -Wall
-CPP='g++'
-BUGGY_DEBIAN_OPTION = -DPCRECPP_EXP_DEFN="" -DPCRECPP_EXP_DECL=""
-OMPCFLAGS = $(CFLAGS) -fopenmp -DOPENMP=1
-OMPLIB = -lgomp -lpthread
-GLIBINC = `pkg-config --cflags glib-2.0`
-GLIBLIB = `pkg-config --libs glib-2.0`
-GLUTINC = -I/usr/include -I.
-GLUTLIB = -L. -lglut -lGLU -lGL -lX11 -lXmu 
-
-
-
-
 TARGETS = ivyprobe ivythroughput ivyperf ivyglibprobe ivyxtprobe #ivyprobe_efence 
 OMP_TARGET= ivyprobe_omp ivythroughput_omp 
 

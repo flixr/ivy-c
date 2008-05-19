@@ -1066,9 +1066,11 @@ IvyChangeMsg (MsgRcvPtr msg, const char *fmt_regex, ... )
 int IvySendMsg(const char *fmt, ...) /* version dictionnaire */
 {
   int match_count = 0;
-  MsgSndDictPtr msgSendDict;
 
-  static IvyBuffer buffer = { NULL, 0, 0}; /* Use static mem to eliminate multiple call to malloc /free */
+#ifndef OPENMP 
+  MsgSndDictPtr msgSendDict;
+#endif 
+ static IvyBuffer buffer = { NULL, 0, 0}; /* Use static mem to eliminate multiple call to malloc /free */
   va_list ap;
   
   /* construction du buffer message à partir du format et des arguments */
