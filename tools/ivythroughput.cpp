@@ -86,8 +86,7 @@ bool getMessages (const char*fileName, ListOfString &messages, unsigned int numM
 bool getRegexps (const char*fileName, ListOfString &regexps, unsigned int numReg);
 
 double currentTime();
-void binCB( IvyClientPtr app, void *user_data, int id, char* regexp,  IvyBindEvent event ) ;
-void binCBR( IvyClientPtr app, void *user_data, int id, char* regexp,  IvyBindEvent event ) ;
+void binCB( IvyClientPtr app, void *user_data, int id, const char* regexp,  IvyBindEvent event ) ;
 void congestCB ( IvyClientPtr app, void *user_data, IvyApplicationEvent event ) ;
 void stopCB (TimerId id, void *user_data, unsigned long delta);
 void sendAllMessageCB (TimerId id, void *user_data, unsigned long delta);
@@ -442,7 +441,7 @@ double currentTime()
 #                | |_) | | |  | | | | | |____  | |_) |
 #                |_.__/  |_|  |_| |_|  \_____| |____/
 */
-void binCB( IvyClientPtr app, void *user_data, int id, char* regexp,  IvyBindEvent event ) 
+void binCB( IvyClientPtr app, void *user_data, int id, const char* regexp,  IvyBindEvent event ) 
 {
   string appName = IvyGetApplicationName( app );
   static MapBindByClnt bindByClnt;

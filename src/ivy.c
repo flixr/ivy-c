@@ -104,14 +104,14 @@ struct _global_reg_lst {		/* liste des regexp source */
 struct _msg_snd_dict {			/* requete de reception d'un client */
         UT_hash_handle hh;		/* makes this structure hashable */
         char *regexp_src;		/* clef du dictionnaire (hash uthash) */
-        IvyClientPtr clientList;        /* liste des clients */
+        RWIvyClientPtr clientList;        /* liste des clients */
 	IvyBinding binding;		/* la regexp sous forme machine */
 };
 
 /* liste de clients, champ de la struct _msg_snd_dict qui est valeur du dictionnaire */
 /* typedef IvyClientPtr */
 struct _clnt_lst_dict {
-	IvyClientPtr next;
+	RWIvyClientPtr next;
 	Client client;			/* la socket  client */
 
 	char *app_name;			/* nom de l'application */
@@ -167,7 +167,7 @@ static void *application_die_user_data = NULL;
 static MsgRcvPtr msg_recv = NULL;
 
 /* liste des clients connectes */
-static IvyClientPtr allClients = NULL;
+static RWIvyClientPtr allClients = NULL;
 
 /* dictionnaire clef : regexp, valeur : liste de clients IvyClientPtr */
 static MsgSndDictPtr messSndByRegexp = NULL;
@@ -179,19 +179,19 @@ static int RegexpCall (const MsgSndDictPtr msg, const char * const message);
 static int RegexpCallUnique (const MsgSndDictPtr msg, const char * const message, 
 			     const Client clientUnique);
 
-static void freeClient ( IvyClientPtr client);
+static void freeClient ( RWIvyClientPtr client);
 static void delOneClient (const Client client);
 
-static void delRegexpForOneClientFromDictionary (const char *regexp, const IvyClientPtr client);
+static void delRegexpForOneClientFromDictionary (const char *regexp, IvyClientPtr client);
 static void delOneIvyClientFromDictionaryEntry (MsgSndDictPtr msgSendDict, 
-						const IvyClientPtr client);
+						IvyClientPtr client);
 static void delOneClientFromDictionaryEntry (MsgSndDictPtr msgSendDict, 
 					     const Client client);
 static void delAllRegexpsFromDictionary ();
 static void addRegexpToDictionary (const char* regexp, IvyClientPtr client);
 static void changeRegexpInDictionary (const char* regexp, IvyClientPtr client);
 
-static char delRegexpForOneClient (const IvyClientPtr client, int id);
+static char delRegexpForOneClient (IvyClientPtr client, int id);
 static void addRegexp (const char* regexp, IvyClientPtr client);
 static void changeRegexp (const char* regexp, IvyClientPtr client);
 static void addOrChangeRegexp (const char* regexp, IvyClientPtr client);
@@ -276,7 +276,7 @@ static SendState MsgSendTo(IvyClientPtr ivyClient,
 
 static void IvyCleanup()
 {
-	IvyClientPtr clnt,next;
+	RWIvyClientPtr clnt,next;
 	GlobRegPtr   regLst;
 	
 
@@ -505,9 +505,9 @@ static int CheckConnected( Client sclnt )
 
 
 
-static void Receive( Client client, void *data, char *line )
+static void Receive( Client client, const void *data, char *line )
 {
-	IvyClientPtr clnt;
+	RWIvyClientPtr clnt;
 	int err,id;
 	MsgRcvPtr rcv;
 	int argc = 0;
@@ -515,7 +515,7 @@ static void Receive( Client client, void *data, char *line )
 	char *arg;
 	int kind_of_msg = Bye;
 
-	clnt = (IvyClientPtr)data;
+	clnt = (RWIvyClientPtr) data;
 	err = sscanf( line ,"%d %d", &kind_of_msg, &id );
 	arg = strstr( line , ARG_START );
 	if ( (err != 2) || (arg == 0)  )
@@ -666,9 +666,9 @@ static void Receive( Client client, void *data, char *line )
 		
 }
 
-static IvyClientPtr SendService( Client client, const char *appname )
+static RWIvyClientPtr SendService( Client client, const char *appname )
 {
-	IvyClientPtr clnt;
+	RWIvyClientPtr clnt;
 	MsgRcvPtr msg;
 	IVY_LIST_ADD_START( allClients, clnt )
 		clnt->client = client;
@@ -687,7 +687,7 @@ static IvyClientPtr SendService( Client client, const char *appname )
 	return clnt;
 }
 
-static void ClientDelete( Client client, void *data )
+static void ClientDelete( Client client, const void *data )
 {
 	IvyClientPtr clnt;
 
@@ -708,7 +708,7 @@ static void ClientDelete( Client client, void *data )
 	delOneClient (client);
 }
 
-static void ClientDecongestion ( Client client, void *data )
+static void ClientDecongestion ( Client client, const void *data )
 {
   IvyClientPtr clnt;
   
@@ -757,7 +757,7 @@ static void *ClientCreate( Client client )
 
 
 
-static void BroadcastReceive( Client client, void *data, char *line )
+static void BroadcastReceive( Client client, const void *data, char *line )
 {	
 	Client app;
 	int err;
@@ -1178,7 +1178,7 @@ static int IvyCheckBuffer( const char* buffer )
 }
 
 
-void IvySendError( IvyClientPtr app, int id, const char *fmt, ... )
+void IvySendError(IvyClientPtr app, int id, const char *fmt, ... )
 {
 	static IvyBuffer buffer = { NULL, 0, 0}; /* Use static mem to eliminate multiple call to malloc /free */
 	va_list ap;
@@ -1196,31 +1196,31 @@ void IvyBindDirectMsg( MsgDirectCallback callback, void *user_data)
 	direct_user_data = user_data;
 }
 
-void IvySendDirectMsg( IvyClientPtr app, int id, char *msg )
+void IvySendDirectMsg(IvyClientPtr app, int id, char *msg )
 {
   MsgSendTo( app, DirectMsg, id, msg);
 }
 
-void IvySendDieMsg( IvyClientPtr app )
+void IvySendDieMsg(IvyClientPtr app )
 {
   MsgSendTo(app, Die, 0, "" );
 }
 
-char *IvyGetApplicationName( IvyClientPtr app )
+char *IvyGetApplicationName(IvyClientPtr app )
 {
 	if ( app && app->app_name ) 
 		return app->app_name;
 	else return "Unknown";
 }
 
-char *IvyGetApplicationHost( IvyClientPtr app )
+char *IvyGetApplicationHost(IvyClientPtr app )
 {
 	if ( app && app->client ) 
 		return SocketGetPeerHost (app->client );
 	else return 0;
 }
 
-void IvyDefaultApplicationCallback( IvyClientPtr app, void *user_data, IvyApplicationEvent event)
+void IvyDefaultApplicationCallback(IvyClientPtr app, void *user_data, IvyApplicationEvent event)
 {
 	switch ( event )  {
 	case IvyApplicationConnected:
@@ -1245,7 +1245,7 @@ void IvyDefaultApplicationCallback( IvyClientPtr app, void *user_data, IvyApplic
 	}
 }
 
-void IvyDefaultBindCallback( IvyClientPtr app, void *user_data, int id, char* regexp,  IvyBindEvent event)
+void IvyDefaultBindCallback(IvyClientPtr app, void *user_data, int id, const char* regexp,  IvyBindEvent event)
 {
 	switch ( event )  {
 	case IvyAddBind:
@@ -1350,7 +1350,7 @@ static void substituteInterval (IvyBuffer *src)
 }
 
 
-static void freeClient ( IvyClientPtr client)
+static void freeClient ( RWIvyClientPtr client)
 {
   GlobRegPtr srcReg;
 
@@ -1375,7 +1375,7 @@ static void freeClient ( IvyClientPtr client)
 
 
 
-static void delRegexpForOneClientFromDictionary (const char *regexp, const IvyClientPtr client)
+static void delRegexpForOneClientFromDictionary (const char *regexp, IvyClientPtr client)
 {
   MsgSndDictPtr msgSendDict = NULL;
   //  printf ("DBG> ENTER delRegexpForOneClientFromDictionary clnt=%d, reg='%s'\n", client, regexp);
@@ -1398,9 +1398,9 @@ static void delRegexpForOneClientFromDictionary (const char *regexp, const IvyCl
 
 
 static void delOneIvyClientFromDictionaryEntry (MsgSndDictPtr msgSendDict, 
-						const IvyClientPtr client)
+						IvyClientPtr client)
 {
-  IvyClientPtr  client_itr, next;
+  RWIvyClientPtr  client_itr, next;
 
 
 
@@ -1438,7 +1438,7 @@ static void delOneIvyClientFromDictionaryEntry (MsgSndDictPtr msgSendDict,
 static void delOneClientFromDictionaryEntry (MsgSndDictPtr msgSendDict, 
 					     const Client client)
 {
-  IvyClientPtr  client_itr, next;
+  RWIvyClientPtr  client_itr, next;
 
     /* la clef est trouvée, on itere sur la liste de client associée */
   IVY_LIST_EACH_SAFE ( msgSendDict->clientList, client_itr, next) { 
@@ -1472,7 +1472,7 @@ static void delOneClientFromDictionaryEntry (MsgSndDictPtr msgSendDict,
 static void delAllRegexpsFromDictionary ()
 {
   MsgSndDictPtr msgSendDict;
-  IvyClientPtr  client;
+  RWIvyClientPtr  client;
 
   /* pour toutes les entrees du dictionnaire des regexps */
   for (msgSendDict=messSndByRegexp; msgSendDict ; msgSendDict=msgSendDict->hh.next) {
@@ -1509,7 +1509,7 @@ static void delAllRegexpsFromDictionary ()
 static void addRegexpToDictionary (const char* regexp, IvyClientPtr client)
 {
   MsgSndDictPtr msgSendDict = NULL;
-  IvyClientPtr  newClient = NULL;
+  RWIvyClientPtr  newClient = NULL;
   /* on cherche si une entrée existe deja pour cette regexp source */
   HASH_FIND_STR(messSndByRegexp, regexp, msgSendDict);
     /* l'entree n'existe pas dans le dictionnaire : on la cree */
@@ -1591,17 +1591,17 @@ static void changeRegexpInDictionary (const char* regexp, IvyClientPtr client)
 /* met a jour le dictionnaire et la liste globale */
 static void delOneClient (const Client client)
 {
-  IvyClientPtr client_itr, next;
+  RWIvyClientPtr client_itr, next;
   MsgSndDictPtr msgSendDict, mnext=NULL;
 
   /* on cherche le client dans la liste globale des clients */
   IVY_LIST_EACH_SAFE(allClients, client_itr, next) {
-    GlobRegPtr   regxpSrc =NULL, next;
+    GlobRegPtr   regxpSrc =NULL, next2;
     /* si on le trouve */
     if (client_itr->client == client) {
 
       /* pour chaque regexp source de ce client */
-      IVY_LIST_EACH_SAFE (client_itr->srcRegList, regxpSrc, next) {
+      IVY_LIST_EACH_SAFE (client_itr->srcRegList, regxpSrc, next2) {
 	/* on met a jour la liste des clients associee a la regexp source */
 	delRegexpForOneClient (client_itr, regxpSrc->id);
 	/* on libere la memoire associee a la regexp source */
@@ -1641,9 +1641,9 @@ static void delOneClient (const Client client)
 }
 
 
-static char delRegexpForOneClient (const IvyClientPtr client, int id) 
+static char delRegexpForOneClient (IvyClientPtr client, int id) 
 {  
-  IvyClientPtr client_itr = NULL;
+  RWIvyClientPtr client_itr = NULL;
   GlobRegPtr   regxpSrc = NULL, next = NULL;
   char removed = 0;
 
@@ -1703,7 +1703,7 @@ static void  addOrChangeRegexp (const char* regexp, IvyClientPtr client)
 
 static void addRegexp (const char* regexp, IvyClientPtr client) 
 {
-  IvyClientPtr client_itr = NULL;
+  RWIvyClientPtr client_itr = NULL;
   GlobRegPtr   regxpSrc = NULL;
 
 

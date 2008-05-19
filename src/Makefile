@@ -36,6 +36,9 @@ ifndef X11_PREFIX
 	X11_PREFIX = /usr/X11R6
 endif
 
+# Export all variables (Petr Mejzlik)
+export
+
 XTINC = -I$(X11_PREFIX)/include
 XTLIB = -L$(X11_PREFIX)$(LIB) -lXt -lX11 -lSM -lICE
 GLIBINC = `pkg-config --cflags glib-2.0`

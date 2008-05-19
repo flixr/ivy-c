@@ -147,14 +147,14 @@ void HandleStdin (Channel channel, HANDLE fd, void *data)
 		  arg = strtok (NULL, "'");
 		  Chop(arg);
 		  if  (arg) {
-		    IvyBinding bind;
+		    IvyBinding binding;
 		    const char *errbuf;
 		    int erroffset;
-		    bind = IvyBindingCompile(arg, & erroffset, & errbuf);
-		    if (bind==NULL) {
+		    binding = IvyBindingCompile(arg, & erroffset, & errbuf);
+		    if (binding==NULL) {
 			  printf("Error compiling '%s', %s, not bound\n", arg, errbuf);
 		    } else {
-			  IvyBindingFree( bind );
+			  IvyBindingFree( binding );
 		      IvyBindMsg (Callback, NULL, arg);
 		    }
 		  }
@@ -249,7 +249,7 @@ void ApplicationCallback (IvyClientPtr app, void *user_data, IvyApplicationEvent
 		break;
 	}
 }
-void IvyPrintBindCallback( IvyClientPtr app, void *user_data, int id, char* regexp,  IvyBindEvent event)
+void IvyPrintBindCallback( IvyClientPtr app, void *user_data, int id, const char* regexp,  IvyBindEvent event)
 {
         switch ( event )  {
         case IvyAddBind:

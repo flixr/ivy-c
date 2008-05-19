@@ -116,7 +116,7 @@ static gboolean IvyGlibHandleChannelRead(GIOChannel *source,
 					 GIOCondition condition,
 					 gpointer data) {
   Channel channel = (Channel)data;
-  TRACE("Handle Channel read %d\n",source );
+  TRACE("Handle Channel read %p\n",source );
   (*channel->handle_read)(channel, g_io_channel_unix_get_fd(source), channel->data);
   return TRUE;
 }
@@ -125,7 +125,7 @@ static gboolean IvyGlibHandleChannelWrite(GIOChannel *source,
 					  GIOCondition condition,
 					  gpointer data) {
   Channel channel = (Channel)data;
-  TRACE("Handle Channel read %d\n",source );
+  TRACE("Handle Channel read %p\n",source );
   (*channel->handle_write)(channel, g_io_channel_unix_get_fd(source), channel->data);
   return TRUE;
 }
@@ -134,7 +134,7 @@ static gboolean IvyGlibHandleChannelDelete(GIOChannel *source,
 					 GIOCondition condition,
 					 gpointer data) {
   Channel channel = (Channel)data;
-  TRACE("Handle Channel delete %d\n",source );
+  TRACE("Handle Channel delete %p\n",source );
   (*channel->handle_delete)(channel->data);
   return TRUE;
 }

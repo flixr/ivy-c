@@ -29,22 +29,23 @@ extern "C" {
 
 /* numero par default du bus */
 
-typedef struct _clnt_lst_dict *IvyClientPtr;
+typedef  struct _clnt_lst_dict *RWIvyClientPtr;
+typedef  const struct _clnt_lst_dict *IvyClientPtr;
 
 typedef enum { IvyApplicationConnected, IvyApplicationDisconnected, 
-	       IvyApplicationCongestion , IvyApplicationDecongestion ,
+	       IvyApplicationCongestion , IvyApplicationDecongestion,
 	       IvyApplicationFifoFull } IvyApplicationEvent;
 typedef enum { IvyAddBind, IvyRemoveBind, IvyFilterBind, IvyChangeBind } IvyBindEvent;
 
 extern void IvyDefaultApplicationCallback( IvyClientPtr app, void *user_data, IvyApplicationEvent event ) ;
-extern void IvyDefaultBindCallback( IvyClientPtr app, void *user_data, int id, char* regexp,  IvyBindEvent event ) ;
+extern void IvyDefaultBindCallback( IvyClientPtr app, void *user_data, int id, const char* regexp,  IvyBindEvent event ) ;
 
 
 /* callback callback appele sur connexion deconnexion d'une appli */
 typedef void (*IvyApplicationCallback)( IvyClientPtr app, void *user_data, IvyApplicationEvent event ) ;
 
 /* callback callback appele sur ajout ou suppression d'un bind */
-typedef void (*IvyBindCallback)( IvyClientPtr app, void *user_data, int id, char* regexp,  IvyBindEvent event ) ;
+typedef void (*IvyBindCallback)( IvyClientPtr app, void *user_data, int id, const char* regexp,  IvyBindEvent event ) ;
 
 /* callback appele sur reception de die */
 typedef void (*IvyDieCallback)( IvyClientPtr app, void *user_data, int id ) ;
@@ -93,11 +94,11 @@ __attribute__((format(printf,2,3))); /* avec sprintf prealable */
 void IvyUnbindMsg( MsgRcvPtr id );
 
 /* emission d'un message d'erreur */
-void IvySendError( IvyClientPtr app, int id, const char *fmt, ... )
+void IvySendError(IvyClientPtr app, int id, const char *fmt, ... )
 __attribute__((format(printf,3,4))) ; /* avec sprintf prealable */
 
 /* emmission d'un message die pour terminer l'application */
-void IvySendDieMsg( IvyClientPtr app );
+void IvySendDieMsg(IvyClientPtr app );
 
 /* emission d'un message retourne le nb effectivement emis */
 

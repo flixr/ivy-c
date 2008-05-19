@@ -76,7 +76,7 @@ void TimerCall(TimerId id, void *user_data, unsigned long delta)
 	if ( count == 0 ) fprintf(stderr, "." );
 }
 
-void binCB( IvyClientPtr app, void *user_data, int id, char* regexp,  IvyBindEvent event ) 
+void binCB( IvyClientPtr app, void *user_data, int id, const char* regexp,  IvyBindEvent event ) 
 {
 	char *app_name = IvyGetApplicationName( app );
 	switch ( event )
@@ -86,6 +86,9 @@ void binCB( IvyClientPtr app, void *user_data, int id, char* regexp,  IvyBindEve
 		break;
 	case IvyRemoveBind:
 		printf("Application:%s bind '%s' REMOVED\n", app_name, regexp );
+		break;
+	case IvyChangeBind:
+		printf("Application:%s bind '%s' CHANGED\n", app_name, regexp );
 		break;
 	case IvyFilterBind:
 		printf("Application:%s bind '%s' FILTRED\n", app_name, regexp );

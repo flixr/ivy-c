@@ -58,8 +58,8 @@ struct _server {
 	Channel channel;
 	unsigned short port;
 	void *(*create)(Client client);
-	void (*handle_delete)(Client client, void *data);
-	void (*handle_decongestion)(Client client, void *data);
+	void (*handle_delete)(Client client, const void *data);
+	void (*handle_decongestion)(Client client, const void *data);
 	SocketInterpretation interpretation;
 };
 
@@ -71,8 +71,8 @@ struct _client {
         char app_uuid[128];
 	struct sockaddr_in from;
 	SocketInterpretation interpretation;
-	void (*handle_delete)(Client client, void *data);
-	void (*handle_decongestion)(Client client, void *data);
+	void (*handle_delete)(Client client, const void *data);
+	void (*handle_decongestion)(Client client, const void *data);
 	char terminator;	/* character delimiter of the message */ 
 	/* Buffer de reception */
 	long buffer_size;
@@ -81,7 +81,7 @@ struct _client {
 	/* Buffer d'emission */
         IvyFifoBuffer *ifb;             /* le buffer circulaire en cas de congestion */
   	/* user data */
-	void *data;
+	const void *data;
 #ifdef OPENMP
 	omp_lock_t fdLock;
 #endif
@@ -284,9 +284,9 @@ static void HandleServer(Channel channel, HANDLE fd, void *data)
 
 Server SocketServer(unsigned short port, 
 	void*(*create)(Client client),
-	void(*handle_delete)(Client client, void *data),
-        void(*handle_decongestion)(Client client, void *data),
-	void(*interpretation) (Client client, void *data, char *ligne))
+	void(*handle_delete)(Client client, const void *data),
+        void(*handle_decongestion)(Client client, const void *data),
+	void(*interpretation) (Client client, const void *data, char *ligne))
 {
 	Server server;
 	HANDLE fd;
@@ -546,7 +546,7 @@ SendState SocketSendRawWithId( const Client client, const char *id, const char *
 }
 
 
-void SocketSetData (Client client, void *data )
+void SocketSetData (Client client, const void *data )
 {
   if (client) {
     client->data = data;
@@ -571,7 +571,7 @@ SendState SocketSend (Client client, char *fmt, ... )
   return state;
 }
 
-void *SocketGetData (Client client )
+const void *SocketGetData (Client client )
 {
 	return client ? client->data : 0;
 }
@@ -602,8 +602,8 @@ Ouverture d'un canal TCP/IP en mode client
 Client SocketConnect (char * host, unsigned short port, 
 			void *data, 
 			SocketInterpretation interpretation,
-		        void (*handle_delete)(Client client, void *data),
-		        void(*handle_decongestion)(Client client, void *data)
+		        void (*handle_delete)(Client client, const void *data),
+		        void(*handle_decongestion)(Client client, const void *data)
 			)
 {
 	struct hostent *rhost;
@@ -619,8 +619,8 @@ Client SocketConnect (char * host, unsigned short port,
 Client SocketConnectAddr (struct in_addr * addr, unsigned short port, 
 			  void *data, 
 			  SocketInterpretation interpretation,
-			  void (*handle_delete)(Client client, void *data),
-		          void(*handle_decongestion)(Client client, void *data)
+			  void (*handle_delete)(Client client, const void *data),
+		          void(*handle_decongestion)(Client client, const void *data)
 			  )
 {
 	HANDLE handle;

@@ -75,8 +75,8 @@ pour eviter de chainer un objet non initialise
 #define IVY_LIST_EACH( list, p ) \
 	for ( p = list ; p ; p = p -> next )
 
-#define IVY_LIST_EACH_SAFE( list, p, next )\
-for ( p = list ; (next = p ? p->next: p ),p ; p = next )
+#define IVY_LIST_EACH_SAFE( list, p, nxt )\
+for ( p = list ; (nxt = p ? p->next: p ),p ; p = nxt )
 
 #define IVY_LIST_IS_EMPTY( list ) \
   list == NULL

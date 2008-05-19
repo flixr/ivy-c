@@ -1,6 +1,16 @@
+ivy-c (3.12) unstable; urgency=low
+
+  * fix again timer.c (thanks again to brno ivy dev team) so that timer	could be removed within the callback 
+  * make the lib and api more robust by adding const where they should be
+  * compile with -Wall and eliminate remaining warnings
+	
+ -- Alexandre Bustico <bustico@cena.fr>  Mon, 19 May 2008 17:30:00 +0200
+
 ivy-c (3.11.3) unstable; urgency=low
 
   * fix timer.c (thanks to brno ivy dev team), and ivydebug.h 
+  * add __attribute__ gcc hooks which permit to emit warning when format
+    and arguments of bindmessage and sendmessage aren't concordant.
 	
  -- Alexandre Bustico <bustico@cena.fr>  Tue, 14 May 2008 11:00:00 +0200
 	

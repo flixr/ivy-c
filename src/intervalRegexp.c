@@ -189,7 +189,7 @@ static bool strictPosRegexpGen (char *regexp, size_t buflen, long min, long max,
 */
 static NextMax nextMax (const char *min, const char *max)
 {
-  NextMax nextMax ={0,0};
+  NextMax nextMaxi ={0,0};
   char revMin[32], revMax[32];
   size_t nbDigitsMin, nbDigitsMax;
   size_t rankRev=0, rankForw, rank=0;
@@ -201,11 +201,11 @@ static NextMax nextMax (const char *min, const char *max)
 
   for (i=nbDigitsMin-1; i >= 0; i--) {
     revMin[nbDigitsMin-i-1]= min[i];
-    /*    printf ("DBG> nextMax  revMin[%d]= %c\n", nbDigitsMin-i-1, min[i]); */
+    /*    printf ("DBG> nextMaxi  revMin[%d]= %c\n", nbDigitsMin-i-1, min[i]); */
   }
   for (i=nbDigitsMax-nbDigitsMin; i >= 0; i--) {
     revMin[nbDigitsMax-i]= '0';
-    /* printf ("DBG> nextMax  revMin[%d]= %c\n", nbDigitsMax-i, '0'); */
+    /* printf ("DBG> nextMaxi  revMin[%d]= %c\n", nbDigitsMax-i, '0'); */
   }
 
   for (i=nbDigitsMax-1; i >= 0; i--) {
@@ -214,7 +214,7 @@ static NextMax nextMax (const char *min, const char *max)
   revMin[nbDigitsMax] = revMax[nbDigitsMax] = 0;
   rankForw = nbDigitsMax -1;
 
-  /*  printf ("DBG> nextMax rev(%s)=%s rev(%s)=%s rankForw=%d\n", min, revMin, max, revMax, rankForw); */
+  /*  printf ("DBG> nextMaxi rev(%s)=%s rev(%s)=%s rankForw=%d\n", min, revMin, max, revMax, rankForw); */
 
   /*  en partant des unitées (digit de poids faible), premier digit de min != 0 */
   while ((revMin[rankRev] == '0') && (rankRev < nbDigitsMax)) rankRev++; 
@@ -230,14 +230,14 @@ static NextMax nextMax (const char *min, const char *max)
     for (i=0; i<=rankRev; i++) revMin[i] = '9';
   }
 
-  nextMax.max = atoi (reverse (revMin));
-  nextMax.rank = rank+1;
+  nextMaxi.max = atoi (reverse (revMin));
+  nextMaxi.rank = rank+1;
   
   currMax = atoi (max);
-  if (nextMax.max > currMax) nextMax.max = currMax;
+  if (nextMaxi.max > currMax) nextMaxi.max = currMax;
 
-  /*  printf ("DBG> nextMax ('%s', '%s') = %d@%d\n", min, max, nextMax.max, nextMax.rank); */
-  return (nextMax);
+  /*  printf ("DBG> nextMaxi ('%s', '%s') = %d@%d\n", min, max, nextMaxi.max, nextMaxi.rank); */
+  return (nextMaxi);
 }
 
 

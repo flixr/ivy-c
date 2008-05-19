@@ -43,6 +43,7 @@ struct _timer {
 	unsigned long when;
 	TimerCb callback;
 	void *user_data;
+        unsigned char mark2Remove;
 	};
 
 /* liste des timers */
@@ -81,9 +82,8 @@ static void AdjTimeout(unsigned long current)
 	newTimeout =  timers->when ; /* remise a la premiere valeur */
 	IVY_LIST_EACH( timers , timer )
 		{
-		if ( timer->when < newTimeout  )
-				newTimeout = timer->when;
-		
+		  if ((!timer->mark2Remove) && (timer->when < newTimeout  ))
+		    newTimeout = timer->when;
 		}
 	SetNewTimeout( current, newTimeout );
 	}
@@ -110,6 +110,7 @@ TimerId TimerRepeatAfter( int count, long ltime, TimerCb cb, void *user_data )
 		stamp = currentTime();
 		timer->period = ltime;
 		timer->when =  stamp + ltime;
+		timer->mark2Remove = 0;
 		if ( (timer->when < nextTimeout) || (timeoutptr == NULL))
 			SetNewTimeout( stamp, timer->when );
 	IVY_LIST_ADD_END( timers, timer )
@@ -118,15 +119,16 @@ TimerId TimerRepeatAfter( int count, long ltime, TimerCb cb, void *user_data )
 void TimerRemove( TimerId timer )
 {
 	unsigned long stamp;
-	if ( !timer ) return;
-	IVY_LIST_REMOVE( timers, timer );
+	if (( !timer ) || (timer->mark2Remove)) return;
+	//	IVY_LIST_REMOVE( timers, timer );
+	timer->mark2Remove = 1;
 	stamp = currentTime();
 	AdjTimeout(stamp);
 }
 void TimerModify( TimerId timer, long ltime )
 {
 	unsigned long stamp;
-	if ( !timer ) return;
+	if (( !timer ) || (timer->mark2Remove)) return;
 
 	stamp = currentTime();
 	timer->period = ltime;
@@ -168,7 +170,10 @@ void TimerScan()
 
 	IVY_LIST_EACH_SAFE( timers , timer, next )
 	{
-	  if ( timer->when <= stamp )
+	  if (timer->mark2Remove) {
+	    IVY_LIST_REMOVE( timers, timer );
+	  }
+	  else if ( timer->when <= stamp )
 	    {
 	      if ( timer->repeat == TIMER_LOOP || --(timer->repeat) )
 		{

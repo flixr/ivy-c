@@ -54,14 +54,14 @@ extern void SocketInit();
 
 /* Forward def */
 typedef struct _client *Client;
-typedef void (*SocketInterpretation) (Client client, void *data, char *ligne);
+typedef void (*SocketInterpretation) (Client client, const void *data, char *ligne);
 
 /* Server Part */
 typedef struct _server *Server;
 extern Server SocketServer(unsigned short port, 
 	void*(*create)(Client client),
-	void(*handle_delete)(Client client, void *data),
-	void(*handle_decongestion)(Client client, void *data),
+	void(*handle_delete)(Client client, const void *data),
+	void(*handle_decongestion)(Client client, const void *data),
         SocketInterpretation interpretation);
 extern unsigned short SocketServerGetPort( Server server );
 extern void SocketServerClose( Server server );
@@ -73,21 +73,21 @@ extern SendState SocketSend( Client client, char *fmt, ... );
 extern SendState SocketSendRaw( const Client client, const char *buffer, const int len );
 extern SendState SocketSendRawWithId( const Client client, const char *id, const char *buffer, const int len );
 extern char *SocketGetPeerHost( Client client );
-extern void SocketSetData( Client client, void *data );
-extern void *SocketGetData( Client client );
+extern void SocketSetData( Client client, const void *data );
+extern const void *SocketGetData( Client client );
 extern void SocketBroadcast( char *fmt, ... );
 extern Client SocketConnect( char * host, unsigned short port,
 			void *data, 
 			SocketInterpretation interpretation,
- 	                void (*handle_delete)(Client client, void *data),
-			void(*handle_decongestion)(Client client, void *data)
+ 	                void (*handle_delete)(Client client, const void *data),
+			void(*handle_decongestion)(Client client, const void *data)
  );
 
 extern Client SocketConnectAddr( struct in_addr * addr, unsigned short port, 
 			void *data, 
 			SocketInterpretation interpretation,
-  		        void (*handle_delete)(Client client, void *data),
-			void(*handle_decongestion)(Client client, void *data)
+  		        void (*handle_delete)(Client client, const void *data),
+			void(*handle_decongestion)(Client client, const void *data)
 			);
 
 extern int SocketWaitForReply( Client client, char *buffer, int size, int delai);

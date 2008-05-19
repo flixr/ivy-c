@@ -124,7 +124,7 @@ Channel IvyChannelAdd(HANDLE fd, void *data,
 	channel->fd = fd;
 
 	/*printf("Create handle fd %d\n", fd);*/
-	channel->tcl_channel = Tcl_MakeTcpClientChannel((void*) fd);
+	channel->tcl_channel = Tcl_MakeTcpClientChannel((void*) (long) fd);
   	Tcl_CreateChannelHandler(channel->tcl_channel,  TCL_READABLE|TCL_EXCEPTION,	
 				 IvyHandleFd, (ClientData) channel);
 	return channel;
@@ -431,7 +431,7 @@ IvyBindCmd(ClientData	clientData,
   strcpy(filter->script, argv[2]);
   filter->id = IvyBindMsg(IvyMsgCB, (void *) filter, filter->filter, NULL); /* MsgPtr id */
   filter->interp = interp;
-  entry = Tcl_CreateHashEntry(&filter_table, (char *) filter_id, &dummy);
+  entry = Tcl_CreateHashEntry(&filter_table, (char *) (long) filter_id, &dummy);
   Tcl_SetHashValue(entry, (ClientData) filter);
   sprintf(msg, "%d", filter_id); 
   filter_id++;
@@ -446,7 +446,7 @@ IvyUnbindCmd(ClientData	clientData,
 	     int	argc,
 	     const char	**argv)
 {
-  unsigned long	filter_id;
+  unsigned long	filterId;
   char		*end;
   filter_struct	*filter;
   Tcl_HashEntry	*entry;
@@ -455,13 +455,13 @@ IvyUnbindCmd(ClientData	clientData,
 		     argv[0], " filterId\"", (char *) NULL);
     return TCL_ERROR;
   }
-  filter_id = strtol(argv[1], &end, 10);
+  filterId = strtol(argv[1], &end, 10);
   if (*end) {
     Tcl_AppendResult(interp, argv[0], " wrong filter id: \"", argv[1],
 		     (char *) NULL);
     return TCL_ERROR;
   }
-  entry = Tcl_FindHashEntry(&filter_table, (char *) filter_id);
+  entry = Tcl_FindHashEntry(&filter_table, (char *) filterId);
   if (!entry) {
     Tcl_AppendResult(interp, argv[0], " unknown filter: \"", argv[1],
 		     (char *) NULL);
