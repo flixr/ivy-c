@@ -1,4 +1,4 @@
-ivy-c (3.12) unstable; urgency=low
+ivy-c (3.11.4) unstable; urgency=low
 
   * fix again timer.c (thanks again to brno ivy dev team) so that timer	could be removed within the callback 
   * make the lib and api more robust by adding const where they should be
