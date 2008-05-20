@@ -1,7 +1,7 @@
 /*
  *	Ivy, C interface
  *
- *	Copyright (C) 1997-2000
+ *	Copyright (C) 1997-2008
  *	Centre d'Études de la Navigation Aérienne
  *
  * 	Simple lists in C
