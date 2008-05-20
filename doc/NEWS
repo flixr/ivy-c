@@ -58,7 +58,7 @@ void congestCB ( IvyClientPtr app, void *user_data, IvyApplicationEvent event )
 }
 
 5.a new tool for measuring performance : ivythroughput
- ./ivythroughput_omp -v -t tp -R 500 -M 5000 -n4-d 60  
+ ./ivythroughput_omp -v -t tp -R 500 -M 5000 -n4 -d 60  
 
 this will initiate a bench : 10 clients are created, they will bind 500 regexps of the file testivy/regexp.txt, then the emitter process will periodically send 5000 messages of the file 
  testivy/messages.ivy, and  this will be displayed :

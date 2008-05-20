@@ -196,6 +196,9 @@ int main(int argc, char *argv[])
   for (unsigned int i=0; i< numClients; i++) {
     if ((pid = fork ()) == 0) {
       // fils
+#ifdef __APPLE__
+      usleep (200 * 1000);
+#endif
       switch  (kindOfTest) {
       case throughput :
 	recepteur_tp (bus, kindOfTest, i, regexps, 0);
@@ -495,9 +498,13 @@ void congestCB ( IvyClientPtr app, void *user_data, IvyApplicationEvent event )
     break;
 #endif
   case IvyApplicationConnected:
-    //    printf("Application:%s : Connected\n", appName.c_str());
+#ifdef __APPLE__
+    printf("Application:%s : Connected\n", appName.c_str());
+#endif
   case IvyApplicationDisconnected:
-    // printf("Application:%s : Disconnected\n", appName.c_str());
+#ifdef __APPLE__
+    printf("Application:%s : Disconnected\n", appName.c_str());
+#endif
     break;
   }
 }
@@ -551,7 +558,7 @@ void recepteurReadyCB (IvyClientPtr app, void *user_data, int argc, char *argv[]
 
   for (unsigned int i=0; i< numClients; i++) {
     if (recReady[i]==false) {
-      //      printf ("Emetteur : manque recepteur [%d/%d]\n", i, numClients-1);
+      printf ("Emetteur :Recepteur[%d] OK,  manque recepteur [%d/%d]\n", instance, i, numClients-1);
       readyToStart = false;
     }
   }
