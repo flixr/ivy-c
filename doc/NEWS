@@ -77,3 +77,8 @@ usage: ivythroughput_omp [options]
          -n      number of clients
          -d      duration of the test in seconds
 
+6. credits
+ivy-c now use an opensource bsd license hash library : utash, thanks to
+Troy D. Hanson for this concise en efficient library.
+http://uthash.sourceforge.net/
+
