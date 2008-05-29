@@ -634,7 +634,7 @@ pack .send
 the following lines into your code:
 <programlisting>
 #include &lt;ivy.h&gt;
-#include &lt;ivygtkloop.h&gt;
+#include &lt;gtk/gtk.h&gt;
 ...
 IvyInit ("IvyGtkButton", "IvyGtkButton READY",NULL,NULL,NULL,NULL);
 IvyBindMsg(textCallback,&amp;tosend,"^Ivy Button text=(.*)");
@@ -648,7 +648,7 @@ pkg-config with gtk-config for older gnome1 libs)
 <programlisting>
 #include &lt;gtk/gtk.h&gt;
 #include &lt;ivy.h&gt;
-#include &lt;ivygtkloop.h&gt;
+#include &lt;gtk/gtk.h&gt;
 #include &lt;stdio.h&gt;
 #include &lt;stdlib.h&gt;
 
@@ -657,7 +657,8 @@ void hello( GtkWidget *widget, gpointer   data ) {
   IvySendMsg(*((char**)data));
 }
 
-void textCallback(IvyClientPtr app, void *user_data, int argc, char *argv[]){
+void textCallback(IvyClientPtr app, void *user_data, int argc, char 
+*argv[]){
   *((char **)user_data)=argv[0];
 }
 
@@ -666,20 +667,30 @@ int main( int   argc, char *argv[] ) {
     GtkWidget *button;
     char *bus=getenv("IVYBUS");
     char *tosend="foo";
-    gtk_init (&amp;argc, &amp;argv);
+    gtk_init (&argc, &argv);
     window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
     gtk_container_set_border_width (GTK_CONTAINER (window), 10);
     button = gtk_button_new_with_label ("send message");
-    g_signal_connect (G_OBJECT(button),"clicked",G_CALLBACK(hello),&amp;tosend); 
+    gtk_signal_connect (GTK_OBJECT(button),"clicked",hello,&tosend);
     gtk_container_add (GTK_CONTAINER(window),button);
     gtk_widget_show (button);
     gtk_widget_show (window);
     IvyInit ("IvyGtkButton", "IvyGtkButton READY",NULL,NULL,NULL,NULL);
-    IvyBindMsg(textCallback,&amp;tosend,"^Ivy Button text=(.*)");
+    IvyBindMsg(textCallback,&tosend,"^Ivy Button text=(.*)");
     IvyStart (bus);
     gtk_main ();
     return 0;
 }
+
+
+assuming that you are in directory tools of ivy source,
+you can compile this example with this command :
+
+gcc -g -Wall -I../src `gtk-config --cflags` `pkg-config --cflags glib` 
+-o test test.c -L. `pkg-config --libs glib` -lglibivy `gtk-config 
+--libs` `pcre-config --libs` -L../src
+
+
 </programlisting>
 </sect2>
 
