@@ -4,5 +4,11 @@ usr/lib/*.la
 usr/X11R6/lib/*.so
 usr/X11R6/lib/*.a
 usr/X11R6/lib/*.la
+usr/lib64/*.so
+usr/lib64/*.a
+usr/lib64/*.la
+usr/X11R6/lib/64*.so
+usr/X11R6/lib/64*.a
+usr/X11R6/lib/64*.la
 usr/include/Ivy/*.h
 usr/lib/pkgconfig/*
