@@ -33,7 +33,7 @@ install: build
 	dh_testroot
 	dh_clean -k 
 	dh_installdirs
-	cd src && $(MAKE) install DESTDIR=$(CURDIR)/debian/tmp PREFIX=/usr
+	cd src && $(MAKE) install DESTDIR=$(CURDIR)/debian/tmp PREFIX=/usr LIB=/lib
 
 binary-indep: build install
 binary-arch: build install
