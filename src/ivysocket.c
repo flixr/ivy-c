@@ -30,7 +30,7 @@
 
 #ifdef WIN32
 #ifndef __MINGW32__
-typedef int ssize_t;
+typedef long ssize_t;
 #endif
 #define close closesocket
 /*#define perror (a ) printf(a" error=%d\n",WSAGetLastError());*/
