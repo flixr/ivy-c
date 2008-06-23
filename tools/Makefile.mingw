@@ -26,7 +26,7 @@ GLUTINC = -I/usr/include -I.
 GLUTLIB = -L.
 TCLINCL	= -I/usr/include/tcl8.4
 TCLLIB = -ltcl84
-EXTRALIB= -L../src
+EXTRALIB= -L../src -lwsock32 -lregex
 EXTRAINC=-I../src
 
 
@@ -43,7 +43,7 @@ TARGETS = ivyprobe
 all: $(TARGETS)
 
 ivyprobe: ivyprobe.o ../src/libivy.a
-	(CC)  $(CFLAGS) $(EXTRAINC) -o $@ ivyprobe.o -L. -livy $(PCRELIB) $(EXTRALIB) 
+	$(CC)  $(CFLAGS) $(EXTRAINC) -o $@ ivyprobe.o -L. -livy $(PCRELIB) $(EXTRALIB) 
 
 clean:
 	-$(RM) $(TARGETS) *.o *.a *.so *.so.* *~

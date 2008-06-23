@@ -29,9 +29,11 @@ GLUTLIB = -L.
 TCLINCL	= -I/usr/include/tcl8.4
 TCLLIB = -ltcl84
 
+REGCOMP_OPT=REG_ICASE
+
 TOOLS_DIR = ../tools
 CC=gcc
-CFLAGS = -g 
+CFLAGS = -g -DREGCOMP_OPT=$(REGCOMP_OPT)
 # IVY full debug
 #CFLAGS = -g  -DDEBUG
 OBJ = ivyloop.o timer.o ivysocket.o ivy.o ivybuffer.o ivyfifo.o ivybind.o intervalRegexp.o
@@ -48,10 +50,12 @@ TCLOBJ = ivytcl.o  timer.o ivysocket.o givy.o ivybuffer.o ivyfifo.o ivybind.o in
 
 all: static-libs  shared-libs
 
-static-libs: libivy.a libgivy.a libtclivy.a  
+static-libs: libivy.a libgivy.a
+#static-libs: libivy.a libgivy.a libtclivy.a  
 # not yiet libxtivy.a libgtkivy.a  need Modified Glut libglutivy.a
 
-shared-libs: libivy.so.$(MAJOR).$(MINOR) libgivy.so.$(MAJOR).$(MINOR)  libtclivy.so.$(MAJOR).$(MINOR)
+shared-libs: libivy.so.$(MAJOR).$(MINOR) libgivy.so.$(MAJOR).$(MINOR)
+#shared-libs: libivy.so.$(MAJOR).$(MINOR) libgivy.so.$(MAJOR).$(MINOR)  libtclivy.so.$(MAJOR).$(MINOR)
 # not yiet libxtivy.so.$(MAJOR).$(MINOR) libgtkivy.so.$(MAJOR).$(MINOR) need Modified Glut libglutivy.so.$(MAJOR).$(MINOR)
 
 ivytcl.o: ivytcl.c

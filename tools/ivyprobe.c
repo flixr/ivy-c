@@ -34,10 +34,11 @@
 #include <string.h>
 #ifdef WIN32
 #include <windows.h>
-#include "getopt.h"
 #ifdef __MINGW32__
 #include <regex.h> 
 #include <getopt.h>
+#else
+#include "getopt.h"
 #endif
 #else
 #include <sys/time.h>

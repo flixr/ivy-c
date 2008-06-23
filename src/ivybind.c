@@ -24,7 +24,9 @@
 #include <stdarg.h>
 
 #ifdef WIN32
+#ifndef __MINGW32__
 #include <crtdbg.h>
+#endif
 #endif
 
 
@@ -105,9 +107,13 @@ IvyBinding IvyBindingCompile( const char * expression,  int *erroffset, const ch
 	if ( reg == 0 )
 		{
 			bind = (IvyBinding)malloc( sizeof( struct _binding ));
+			if ( ! bind ) 
+			{
+				perror( "IvyBindingCompile malloc error: ");
+				exit(-1);
+			}
 			memset( bind, 0, sizeof(*bind ) );
 			bind->regexp = regexp;
-			bind->next = NULL;
 		}
 		else
 		{
@@ -132,7 +138,7 @@ void IvyBindingFree( IvyBinding bind )
     pcre_free(bind->inspect);
   pcre_free(bind->regexp);
 #else  /* we don't USE_PCRE_REGEX */
-  free( bind->regexp );
+  regfree( &bind->regexp );
 #endif /* USE_PCRE_REGEX */
   free ( bind );
 }
@@ -155,14 +161,17 @@ int IvyBindingExec( IvyBinding bind, const char * message )
 	if (nb_match<1) return 0; /* no match */
 	bind->nb_match = nb_match;
 #else  /* we don't USE_PCRE_REGEX */
+	{
+		int index;
 	memset( bind->match, -1, sizeof(bind->match )); /* work around bug !!!*/
-	nb_match = regexec (&bind->regexp, message, MAX_MSG_FIELDS, bind->match, 0) 
+	nb_match = regexec (&bind->regexp, message, MAX_MSG_FIELDS, bind->match, 0);
 	if (nb_match == REG_NOMATCH)
 		return 0;
-	for ( index = 1; index < MAX_MSG_FIELDS; index++ )
+	for (index = 1; index < MAX_MSG_FIELDS; index++ )
 	{
-		if ( bind->match[i].rm_so != -1 )
+		if ( bind->match[index].rm_so != -1 )
 			nb_match++;
+	}
 	}
 #endif /* USE_PCRE_REGEX */
 	return nb_match;
