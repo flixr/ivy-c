@@ -392,7 +392,7 @@ bool getRegexps (const char*fileName, ListOfString &regexps, unsigned int numReg
   FILE *infile;
   char buffer [1024*64];
   pcrecpp::RE pcreg1 ("add regexp \\d+ : (.*)$");
-  pcrecpp::RE pcreg2 ("\\^(.*)$");
+  pcrecpp::RE pcreg2 ("(\\^.*)$");
   string  aMsg;
 
   infile = fopen(fileName, "r");
