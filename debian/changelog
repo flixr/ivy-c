@@ -1,3 +1,9 @@
+ivy-c (3.11.5) unstable; urgency=low
+
+  * fix double free error in delAllRegexpsFromDictionary
+	
+ -- Alexandre Bustico <bustico@cena.fr>  Mon, 16 Oct 2008 12:30:00 +0200
+
 ivy-c (3.11.4) unstable; urgency=low
 
   * fix again timer.c (thanks again to brno ivy dev team) so that timer	could be removed within the callback 

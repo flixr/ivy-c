@@ -103,6 +103,7 @@ CFLAGS_RELEASE = -O2 -Wall -Wshadow $(FPIC)
 
 ifdef DEBUG
 	export CFLAGS += $(CFLAGS_DEBUG)
+	LIB:= $(LIB)/debug
 else
 	export CFLAGS += $(CFLAGS_RELEASE)
 endif

@@ -1481,8 +1481,6 @@ static void delAllRegexpsFromDictionary ()
   for (msgSendDict=messSndByRegexp; msgSendDict ; msgSendDict=msgSendDict->hh.next) {
     /* on efface le binding */
     IvyBindingFree (msgSendDict->binding);
-    /* on efface la clef (regexp source) */
-    free (msgSendDict->regexp_src);
     /* pour chaque client abonne a cette regexp */
     IVY_LIST_EACH ( msgSendDict->clientList, client) { 
       freeClient (client);
@@ -1491,6 +1489,10 @@ static void delAllRegexpsFromDictionary ()
     IVY_LIST_EMPTY(msgSendDict->clientList);
     /* on enleve le couple regexp -> valeur */
     HASH_DEL(messSndByRegexp, msgSendDict);
+    /* on efface la clef (regexp source) */
+    free (msgSendDict->regexp_src);
+    /* on libère la structure */
+    //    free (msgSendDict);
   }
 
 #ifdef OPENMP
