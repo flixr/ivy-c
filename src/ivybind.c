@@ -31,7 +31,6 @@
 
 
 #ifdef USE_PCRE_REGEX
-#define OVECSIZE 120 /* must be multiple of 3, for regexp return */
 #include <pcre.h>
 #else  /* we don't USE_PCRE_REGEX */
 #define MAX_MSG_FIELDS 200
@@ -54,7 +53,8 @@ struct _binding {
 	pcre *regexp;
 	pcre_extra *inspect;
 	int nb_match;
-	int ovector[OVECSIZE];
+	int *ovector;
+	int ovectorsize;
 #else  /* we don't USE_PCRE_REGEX */
 	regex_t regexp;						/* la regexp sous forme machine */
 	regmatch_t match[MAX_MSG_FIELDS+1];	/* resultat du match */
@@ -74,6 +74,7 @@ IvyBinding IvyBindingCompile( const char * expression,  int *erroffset, const ch
 /*    if ((called %1000) == 0) {  */
 /*      printf ("DBG> IvyBindingCompile called =%d\n", called);  */
 /*    }  */
+	int capture_count=0;
 	IvyBinding bind=0;
 #ifdef USE_PCRE_REGEX
 	pcre *regexp;
@@ -93,6 +94,12 @@ IvyBinding IvyBindingCompile( const char * expression,  int *erroffset, const ch
 				{
 					printf("Error studying %s, message: %s\n",expression,err_buf);
 				}
+			pcre_fullinfo( bind->regexp, bind->inspect, PCRE_INFO_CAPTURECOUNT, &capture_count );
+			if ( bind->ovector != NULL )
+				free( bind->ovector );
+			// + 1 pour la capture totale
+			bind->ovectorsize = (capture_count+1) * 3;
+			bind->ovector = malloc( sizeof( int )* bind->ovectorsize);
 		}
 		else
 		{
@@ -134,6 +141,9 @@ void IvyBindingFree( IvyBinding bind )
 /*     printf ("DBG> IvyBindingFree called =%d\n", called); */
 /*   } */
 #ifdef USE_PCRE_REGEX
+	if ( bind->ovector != NULL )
+				free( bind->ovector );
+			
   if (bind->inspect!=NULL)
     pcre_free(bind->inspect);
   pcre_free(bind->regexp);
@@ -157,7 +167,7 @@ int IvyBindingExec( IvyBinding bind, const char * message )
 					0, /* debut */
 					0, /* no other regexp option */
 					bind->ovector,
-					OVECSIZE);
+					bind->ovectorsize);
 	if (nb_match<1) return 0; /* no match */
 	bind->nb_match = nb_match;
 #else  /* we don't USE_PCRE_REGEX */
