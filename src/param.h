@@ -65,7 +65,7 @@
    Since Ivy is most of the time used to send events, we will priviligiate
    lag over throughtput, so  _TCP_NO_DELAY_ACTIVATED is set to 1
 */
-extern const int  _TCP_NO_DELAY_ACTIVATED;
+extern const int  TCP_NO_DELAY_ACTIVATED;
 
 
 

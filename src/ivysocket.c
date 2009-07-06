@@ -271,8 +271,8 @@ static void HandleServer(Channel channel, HANDLE fd, void *data)
 	if (setsockopt(client->fd,            /* socket affected */
 		       IPPROTO_TCP,     /* set option at TCP level */
 		       TCP_NODELAY,     /* name of option */
-		       (char *) &_TCP_NO_DELAY_ACTIVATED,  /* the cast is historical */
- 		       sizeof(_TCP_NO_DELAY_ACTIVATED)) < 0)    /* length of option value */
+		       (char *) &TCP_NO_DELAY_ACTIVATED,  /* the cast is historical */
+ 		       sizeof(TCP_NO_DELAY_ACTIVATED)) < 0)    /* length of option value */
 	  {
 #ifdef WIN32
 	    fprintf(stderr," setsockopt %d\n",WSAGetLastError());
@@ -675,8 +675,8 @@ Client SocketConnectAddr (struct in_addr * addr, unsigned short port,
 	if (setsockopt(handle,            /* socket affected */
 		       IPPROTO_TCP,     /* set option at TCP level */
 		       TCP_NODELAY,     /* name of option */
-		       (char *) &_TCP_NO_DELAY_ACTIVATED,  /* the cast is historical */
- 		       sizeof(_TCP_NO_DELAY_ACTIVATED)) < 0)    /* length of option value */
+		       (char *) &TCP_NO_DELAY_ACTIVATED,  /* the cast is historical */
+ 		       sizeof(TCP_NO_DELAY_ACTIVATED)) < 0)    /* length of option value */
 	  {
 #ifdef WIN32
 	    fprintf(stderr," setsockopt %d\n",WSAGetLastError());

@@ -1,3 +1,3 @@
 #include "param.h"
 
-const int  _TCP_NO_DELAY_ACTIVATED = 1;
+const int  TCP_NO_DELAY_ACTIVATED = 1;
