@@ -114,13 +114,13 @@ BUGGY_DEBIAN_OPTION = -DPCRECPP_EXP_DEFN="" -DPCRECPP_EXP_DECL=""
 OMPCFLAGS = $(CFLAGS) -fopenmp -DOPENMP=1
 OMPLIB = -lgomp -lpthread
 
-OBJ = ivyloop.o timer.o ivysocket.o ivy.o ivybuffer.o ivyfifo.o ivybind.o intervalRegexp.o
-OMPOBJ = ivyloop.o timer.o ivysocket_omp.o ivy_omp.o ivybuffer.o ivyfifo.o ivybind.o intervalRegexp.o
-GOBJ = ivyloop.o timer.o ivysocket.o givy.o ivybuffer.o ivyfifo.o ivybind.o intervalRegexp.o
-XTOBJ = ivyxtloop.o ivysocket.o ivy.o ivybuffer.o ivyfifo.o ivybind.o intervalRegexp.o
-GLIBOBJ = ivyglibloop.o ivysocket.o ivy.o ivybuffer.o ivyfifo.o ivybind.o intervalRegexp.o
-GLUTOBJ = ivyglutloop.o ivysocket.o ivy.o ivybuffer.o ivyfifo.o ivybind.o intervalRegexp.o
-TCLOBJ = ivytcl.o  timer.o ivysocket.o givy.o ivybuffer.o ivyfifo.o ivybind.o intervalRegexp.o
+OBJ = ivyloop.o timer.o ivysocket.o ivy.o ivybuffer.o ivyfifo.o ivybind.o intervalRegexp.o param.o
+OMPOBJ = ivyloop.o timer.o ivysocket_omp.o ivy_omp.o ivybuffer.o ivyfifo.o ivybind.o intervalRegexp.o param.o
+GOBJ = ivyloop.o timer.o ivysocket.o givy.o ivybuffer.o ivyfifo.o ivybind.o intervalRegexp.o param.o
+XTOBJ = ivyxtloop.o ivysocket.o ivy.o ivybuffer.o ivyfifo.o ivybind.o intervalRegexp.o param.o
+GLIBOBJ = ivyglibloop.o ivysocket.o ivy.o ivybuffer.o ivyfifo.o ivybind.o intervalRegexp.o param.o
+GLUTOBJ = ivyglutloop.o ivysocket.o ivy.o ivybuffer.o ivyfifo.o ivybind.o intervalRegexp.o param.o
+TCLOBJ = ivytcl.o  timer.o ivysocket.o givy.o ivybuffer.o ivyfifo.o ivybind.o intervalRegexp.o param.o
 
 # WINDOWS add ivyloop.o if TCL_CHANNEL_INTEGRATION is not set
 TARGETLIBS=libivy.so.$(MAJOR).$(MINOR) libgivy.so.$(MAJOR).$(MINOR) libxtivy.so.$(MAJOR).$(MINOR) libglibivy.so.$(MAJOR).$(MINOR) libtclivy.so.$(MAJOR).$(MINOR)

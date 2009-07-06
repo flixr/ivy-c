@@ -14,6 +14,8 @@
  *	copyright notice regarding this software
  */
 
+
+
 #ifdef OPENMP
 #include <omp.h>
 #endif
@@ -27,6 +29,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <fcntl.h>
+#include <netinet/tcp.h>
 
 #ifdef WIN32
 #ifndef __MINGW32__
@@ -265,6 +268,19 @@ static void HandleServer(Channel channel, HANDLE fd, void *data)
 	  fprintf(stderr,"Warning : Setting socket in nonblock mode FAILED\n");
 	}
 #endif
+	if (setsockopt(client->fd,            /* socket affected */
+		       IPPROTO_TCP,     /* set option at TCP level */
+		       TCP_NODELAY,     /* name of option */
+		       (char *) &_TCP_NO_DELAY_ACTIVATED,  /* the cast is historical */
+ 		       sizeof(_TCP_NO_DELAY_ACTIVATED)) < 0)    /* length of option value */
+	  {
+#ifdef WIN32
+	    fprintf(stderr," setsockopt %d\n",WSAGetLastError());
+#endif
+	    perror ("*** set socket option  TCP_NODELAY***");
+	    exit(0);
+	  } 
+
 
 
 
@@ -656,6 +672,20 @@ Client SocketConnectAddr (struct in_addr * addr, unsigned short port,
 	  fprintf(stderr,"Warning : Setting socket in nonblock mode FAILED\n");
 	}
 #endif
+	if (setsockopt(handle,            /* socket affected */
+		       IPPROTO_TCP,     /* set option at TCP level */
+		       TCP_NODELAY,     /* name of option */
+		       (char *) &_TCP_NO_DELAY_ACTIVATED,  /* the cast is historical */
+ 		       sizeof(_TCP_NO_DELAY_ACTIVATED)) < 0)    /* length of option value */
+	  {
+#ifdef WIN32
+	    fprintf(stderr," setsockopt %d\n",WSAGetLastError());
+#endif
+	    perror ("*** set socket option  TCP_NODELAY***");
+	    exit(0);
+	  } 
+
+
 	IVY_LIST_ADD_START(clients_list, client );
 	
 	client->buffer_size = IVY_BUFFER_SIZE;

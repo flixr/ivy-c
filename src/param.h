@@ -53,6 +53,20 @@
 /*
   maximum number of arguments which can be catched by a regexp
  */
-#define MAX_MATCHING_ARGS 40
+#define MAX_MATCHING_ARGS 120
+
+
+/* TCP_NODELAY is for a specific purpose; to disable the Nagle buffering
+   algorithm. It should only be set for applications that send frequent
+   small bursts of information without getting an immediate response,
+   where timely delivery of data is required (the canonical example is
+   mouse movements).
+
+   Since Ivy is most of the time used to send events, we will priviligiate
+   lag over throughtput, so  _TCP_NO_DELAY_ACTIVATED is set to 1
+*/
+extern const int  _TCP_NO_DELAY_ACTIVATED;
+
+
 
 #endif // PARAM_H
