@@ -29,7 +29,6 @@
 #include <stdarg.h>
 #include <string.h>
 #include <fcntl.h>
-#include <netinet/tcp.h>
 
 #ifdef WIN32
 #ifndef __MINGW32__
@@ -43,6 +42,7 @@ typedef long ssize_t;
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <signal.h>
