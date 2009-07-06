@@ -1,3 +1,11 @@
+ivy-c (3.11.6) unstable; urgency=low
+
+  * desactivation of the nagle buffering for TCP sockets, 
+  since ivy is most of the time used to send events, we will priviligiate 
+  lag over throughtput
+	
+ -- Alexandre Bustico <bustico@cena.fr>  Mon, 6 Jul 2009 16:43:00 +0200
+ 
 ivy-c (3.11.5) unstable; urgency=low
 
   * fix double free error in delAllRegexpsFromDictionary
