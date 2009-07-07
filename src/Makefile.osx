@@ -22,17 +22,17 @@ else
 endif
 REGEXP= -DUSE_PCRE_REGEX -DPCRE_OPT=$(PCRE_OPT)
 
-OBJ = ivyloop.o timer.o ivysocket.o ivy.o ivybuffer.o ivyfifo.o ivybind.o intervalRegexp.o
-OMPOBJ = ivyloop.o timer.o ivysocket_omp.o ivy_omp.o ivybuffer.o ivyfifo.o ivybind.o intervalRegexp.o
+OBJ = ivyloop.o timer.o ivysocket.o ivy.o ivybuffer.o ivyfifo.o ivybind.o intervalRegexp.o param.o
+OMPOBJ = ivyloop.o timer.o ivysocket_omp.o ivy_omp.o ivybuffer.o ivyfifo.o ivybind.o intervalRegexp.o param.o
 
 TOOLS_DIR = ../tools
 
-# you should first install gcc version >= 4.3 
+# you should first install gcc version >= 4.3
 # gcc (g++) 4.3 is the first gcc version which support openmp under macosx 
-# using macport greatly simplify gcc install : port install gcc43
-OMPCC = gcc-mp-4.3  
-OMPCPP =  g++-mp-4.3
-OMPLIBTOOL =gar q
+# using macport greatly simplify gcc install : port install gcc44
+OMPCC = gcc-mp-4.4  
+OMPCPP =  g++-mp-4.4
+OMPLIBTOOL =ar q
 OMPCFLAGS = -g -Wall $(FPIC) -fopenmp -DOPENMP=1
 OMPLIB = -lgomp -lpthread
 
@@ -40,12 +40,12 @@ OMPLIB = -lgomp -lpthread
 LIBTOOL=ar q # linux and solaris
 CFLAGS = -g -Wall $(FPIC)
 
-CC=gcc
-CPP=g++
-#CC = $(OMPCC)
-#CPP = $(OMPCPP)
-#LIBTOOL = $(OMPLIBTOOL)
-#CFLAGS = $(OMPCFLAGS)
+#CC=gcc
+#CPP=g++
+CC = $(OMPCC)
+CPP = $(OMPCPP)
+LIBTOOL = $(OMPLIBTOOL)
+CFLAGS = $(OMPCFLAGS)
 
 # ------------------------------------------------------------------------------------------
 
