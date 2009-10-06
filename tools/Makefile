@@ -1,4 +1,4 @@
-TARGETS = ivyprobe ivythroughput ivyperf ivyglibprobe ivyxtprobe #ivyprobe_efence 
+TARGETS = ivyprobe ivythroughput ivytestready ivyperf ivyglibprobe ivyxtprobe #ivyprobe_efence 
 OMP_TARGET= ivyprobe_omp ivythroughput_omp 
 
 PCRELIB = `pcre-config --libs`
@@ -20,7 +20,10 @@ ivyprobe: ivyprobe.o ../src/libivy.a
 	$(CC)  $(CFLAGS) $(EXTRAINC) -o $@ ivyprobe.o -L. -livy $(PCRELIB) $(EXTRALIB) 
 
 ivythroughput: ivythroughput.o ../src/libivy.a
-	$(CPP)  $(CFLAGS) $(EXTRAINC) -o $@ ivythroughput.o -L. -livy -lpcrecpp $(PCRELIB) $(EXTRALIB) 
+	$(CPP)  $(CFLAGS) $(EXTRAINC) -o $@ ivythroughput.o -L. $(EXTRALIB) -livy -lpcrecpp $(PCRELIB)  
+
+ivytestready: ivytestready.o ../src/libivy.a
+	$(CC)  $(CFLAGS) $(EXTRAINC) -o $@ ivytestready.o -L. $(EXTRALIB) -livy -lpcrecpp  
 
 ivyprobe_efence: ivyprobe.o ../src/libivy.a
 	$(CPP)  $(CFLAGS) $(EXTRAINC) -o $@ ivyprobe.o -L. -livy -lpcrecpp $(PCRELIB) $(EXTRALIB) -lefence
