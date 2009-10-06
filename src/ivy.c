@@ -604,12 +604,12 @@ static void Receive( Client client, const void *data, char *line )
         if (MAXPORT(other_localPort, other_remotePort) > MAXPORT( clnt_localPort, clnt_remotePort ))
                 {
                     target = other;
-                    printf("choose %s other ports %d,%d\n", target->app_name, other_localPort, other_remotePort);
+                    //printf("choose %s other ports %d,%d\n", target->app_name, other_localPort, other_remotePort);
                 }
                 else
                 {
                     target = clnt;
-                    printf("choose %s this ports %d,%d\n", target->app_name, clnt_remotePort, clnt_localPort);
+                    //printf("choose %s this ports %d,%d\n", target->app_name, clnt_remotePort, clnt_localPort);
                 }
                 
                 
