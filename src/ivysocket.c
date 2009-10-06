@@ -406,6 +406,27 @@ char *SocketGetPeerHost (Client client )
 	return host->h_name;
 }
 
+unsigned short int SocketGetLocalPort ( Client client )
+{
+	int err;
+	struct sockaddr_in name;
+	socklen_t len = sizeof(name);
+
+	if (!client)
+		return 0;
+
+	err = getsockname (client->fd, (struct sockaddr *)&name, &len );
+	if (err < 0 ) return 0;
+	return name.sin_port;;
+}
+unsigned short int SocketGetRemotePort ( Client client )
+{
+	if (!client)
+		return 0;
+
+	return client->from.sin_port;
+}
+
 struct in_addr * SocketGetRemoteAddr (Client client )
 {
 	return client ? &client->from.sin_addr : 0;

@@ -109,6 +109,9 @@ extern void SocketSetUuid (Client client, const char *uuid);
 extern  const char* SocketGetUuid (const Client client);
 extern int  SocketCmpUuid (const Client c1, const Client c2);
 extern void SocketGetRemoteHost (Client client, char **host, unsigned short *port );
+
+extern unsigned short int SocketGetLocalPort ( Client client );
+extern unsigned short int SocketGetRemotePort ( Client client );
 /* emmission d'un broadcast UDP */
 extern void SocketSendBroadcast( Client client, unsigned long host, unsigned short port, char *fmt, ... );
 

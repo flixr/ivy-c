@@ -123,6 +123,9 @@ struct _clnt_lst_dict {
 #ifdef OPENMP
        int endRegexpReceived;
 #endif // OPENMP
+	int readyToSend;			/* comptage des endRegexps recu et emis */
+	int ignore_subsequent_msg;	/* pour ignore les messages venant
+																	d'une socket ferme, mais donc les donnees sont deja en buffer */
 };
 
 /* flag pour le debug en cas de Filter de regexp */
@@ -207,6 +210,7 @@ static struct  {
 } ompDictCache  = {NULL, 0, 0}; 
 #endif 
 
+#define MAXPORT(a,b)      ((a>b) ? a : b)
 
 /*
  * function like strok but do not eat consecutive separator
@@ -469,9 +473,9 @@ RegexpCallUnique (const MsgSndDictPtr msg, const char * const message, const
 
 
 
-static int CheckConnected( Client sclnt )
+static RWIvyClientPtr CheckConnected( Client sclnt )
 {
-  IvyClientPtr iclient;
+  RWIvyClientPtr iclient;
   struct in_addr *addr1;
   struct in_addr *addr2;
   char *remotehost;
@@ -485,18 +489,20 @@ static int CheckConnected( Client sclnt )
   IVY_LIST_EACH( allClients, iclient )
     {
       /* client different mais port identique */
-      if ((iclient->client != sclnt) && (remoteport == iclient->app_port)) {
-	/* et meme machine */
-	addr1 = SocketGetRemoteAddr( iclient->client );
-	addr2 = SocketGetRemoteAddr( sclnt );
-	if ( addr1->s_addr == addr2->s_addr ) {
-	  TRACE ("DBG> CheckConnected "
-		  "clnt->app_uuid[%s] et iclient->app_uuid[%s] %s\n",
-		  SocketGetUuid (sclnt),
-		  iclient->app_name,
-		  SocketGetUuid (iclient->client));
-	  return 1;
-	}
+      if ((iclient->client != sclnt) && (remoteport == iclient->app_port)) 
+      {
+				/* et meme machine */
+				addr1 = SocketGetRemoteAddr( iclient->client );
+				addr2 = SocketGetRemoteAddr( sclnt );
+				if ( addr1->s_addr == addr2->s_addr ) 
+				{
+					TRACE ("DBG> CheckConnected "
+						"clnt->app_uuid[%s] et iclient->app_uuid[%s] %s\n",
+						SocketGetUuid (sclnt),
+						iclient->app_name,
+						SocketGetUuid (iclient->client));
+					return iclient;
+				}
       }
     }
   
@@ -508,6 +514,7 @@ static int CheckConnected( Client sclnt )
 static void Receive( Client client, const void *data, char *line )
 {
 	RWIvyClientPtr clnt;
+	RWIvyClientPtr other;
 	int err,id;
 	MsgRcvPtr rcv;
 	int argc = 0;
@@ -516,6 +523,7 @@ static void Receive( Client client, const void *data, char *line )
 	int kind_of_msg = Bye;
 
 	clnt = (RWIvyClientPtr) data;
+	if ( clnt->ignore_subsequent_msg ) return;
 	err = sscanf( line ,"%d %d", &kind_of_msg, &id );
 	arg = strstr( line , ARG_START );
 	if ( (err != 2) || (arg == 0)  )
@@ -579,14 +587,38 @@ static void Receive( Client client, const void *data, char *line )
 			
 			clnt->app_name = strdup( arg );
 			clnt->app_port = id;
-			if ( CheckConnected( clnt->client ) )
-			{			
+			other =  CheckConnected(  clnt->client );
+			if ( other )
+			{		
+				RWIvyClientPtr target;	
+				// Dilemma choose the rigth client to close
+        // the symetric processing will try to close each other 
+        // only one side may be closed 
+        unsigned short int other_localPort, other_remotePort, clnt_localPort, clnt_remotePort;
+        
+         other_localPort 	= SocketGetLocalPort( other->client);
+         other_remotePort = SocketGetRemotePort( other->client);
+         clnt_localPort 	= SocketGetLocalPort( clnt->client);
+         clnt_remotePort	= SocketGetRemotePort( clnt->client);
+        
+        if (MAXPORT(other_localPort, other_remotePort) > MAXPORT( clnt_localPort, clnt_remotePort ))
+                {
+                    target = other;
+                    printf("choose %s other ports %d,%d\n", target->app_name, other_localPort, other_remotePort);
+                }
+                else
+                {
+                    target = clnt;
+                    printf("choose %s this ports %d,%d\n", target->app_name, clnt_remotePort, clnt_localPort);
+                }
+                
+                
+				TRACE("Quitting already connected %s\n",  line);
+				printf("Receive StartRegexp: Quitting already connected %s\n",  line);
 
-			TRACE("Quitting already connected %s\n",  line);
-			printf("Receive StartRegexp: Quitting already connected %s\n",  line);
-
-			IvySendError( clnt, 0, "Application already connected" );
-			SocketClose( client );
+				IvySendError( target, 0, "Application already connected" );
+				SocketClose( target->client );
+				target->ignore_subsequent_msg = 1;
 			}
 			break;
 		case EndRegexp:
@@ -596,17 +628,19 @@ static void Receive( Client client, const void *data, char *line )
 				{
 				(*application_callback)( clnt, application_user_data, IvyApplicationConnected );
 				}
-			if ( ready_message )
+
+#ifdef OPENMP
+			clnt->endRegexpReceived=1;
+			regenerateRegPtrArrayCache();
+#endif // OPENMP
+			clnt->readyToSend++;
+			if ( ready_message && clnt->readyToSend == 2 )
 				{
 				int count;
 				count = ClientCall( clnt, ready_message );
 				// count = IvySendMsg ("%s", ready_message );
 				//				printf ("%s sending READY MESSAGE %d\n", clnt->app_name, count);
 				}
-#ifdef OPENMP
-			clnt->endRegexpReceived=1;
-			regenerateRegPtrArrayCache();
-#endif // OPENMP
 			break;
 		case Msg:
 			
@@ -674,6 +708,8 @@ static RWIvyClientPtr SendService( Client client, const char *appname )
 		clnt->client = client;
 		clnt->app_name = strdup(appname);
 		clnt->app_port = 0;
+		clnt->readyToSend = 0;
+		clnt->ignore_subsequent_msg =0;
 		MsgSendTo(clnt, StartRegexp, ApplicationPort, ApplicationName);
 		IVY_LIST_EACH(msg_recv, msg )
 			{
@@ -682,6 +718,15 @@ static RWIvyClientPtr SendService( Client client, const char *appname )
 		MsgSendTo(clnt, EndRegexp, 0, "");
 		
 	IVY_LIST_ADD_END( allClients, clnt )
+	
+	clnt->readyToSend++;
+	if ( ready_message && clnt->readyToSend == 2 )
+				{
+				int count;
+				count = ClientCall( clnt, ready_message );
+				// count = IvySendMsg ("%s", ready_message );
+				//				printf ("%s sending READY MESSAGE %d\n", clnt->app_name, count);
+				}
 	  //printf ("DBG> SendService addAllClient: name=%s; client->client=%p\n", appname, clnt->client);
 
 	return clnt;
