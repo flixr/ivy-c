@@ -45,7 +45,7 @@ CFLAGS = -g -Wall $(FPIC)
 CC = $(OMPCC)
 CPP = $(OMPCPP)
 LIBTOOL = $(OMPLIBTOOL)
-CFLAGS = $(OMPCFLAGS)
+CFLAGS = -g -Wall -Wshadow $(FPIC)
 
 # ------------------------------------------------------------------------------------------
 
