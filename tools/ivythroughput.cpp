@@ -121,7 +121,7 @@ int main(int argc, char *argv[])
     "\t -t \t type of test :  ml or ml2 (memory leak) or tp (throughput)\n"
     "\t -r \t regexfile\tread list of regexp's from file (default to testivy/regexp.txt)\n"
     "\t -R \t restrict to R firsts regexps instead of all the regexp in the regexp file \n"
-    "\t -p \t each client will prepend regexp with uniq string to "
+    "\t -p \t each client will postpend regexp with uniq string to "
              "simulate N clients with differents regexps\n"
     "\t -m \t messageFile\tread list of messages from file (default to testivy/messages.ivy)\n"
     "\t -M \t restrict to M firsts messages instead of all the message in the message file \n"
@@ -289,7 +289,7 @@ void recepteur_tp (const char* bus, KindOfTest kod, unsigned int inst,
   for (iter=regexps.begin(); iter != regexps.end(); iter++) {
     debugInt++;
     string reg = *iter;
-    if (regexpAreUniq) { (reg += " ") += stream.str();}
+    if (regexpAreUniq) { ((reg += "(") += stream.str()) += ")?";}
     IvyBindMsg (recepteurCB, (void *) inst, reg.c_str());
   }
   IvyBindMsg (startOfSeqCB, NULL, "^start(OfSequence)");
