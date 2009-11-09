@@ -1560,6 +1560,7 @@ static void addRegexpToDictionary (const char* regexp, IvyClientPtr client)
 {
   MsgSndDictPtr msgSendDict = NULL;
   RWIvyClientPtr  newClient = NULL;
+  static char errorbuffer[1024];
   /* on cherche si une entrée existe deja pour cette regexp source */
   HASH_FIND_STR(messSndByRegexp, regexp, msgSendDict);
     /* l'entree n'existe pas dans le dictionnaire : on la cree */
@@ -1572,8 +1573,9 @@ static void addRegexpToDictionary (const char* regexp, IvyClientPtr client)
     
     msgSendDict->binding = IvyBindingCompile(regexp, & erroffset, & errbuf );
     if (msgSendDict->binding  == NULL ) {
-      printf("Error compiling '%s', %s\n", regexp, errbuf);
-      MsgSendTo(client, Error, erroffset, errbuf );
+			sprintf( errorbuffer, "Error compiling '%s', %s", regexp, errbuf); 
+      printf("%s\n", errorbuffer);
+      MsgSendTo(client, Error, erroffset, errorbuffer );
     }
 
     msgSendDict->clientList = NULL;

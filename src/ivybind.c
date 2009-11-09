@@ -140,6 +140,7 @@ void IvyBindingFree( IvyBinding bind )
 /*   if ((called %1000) == 0) { */
 /*     printf ("DBG> IvyBindingFree called =%d\n", called); */
 /*   } */
+	if( bind == NULL ) return;
 #ifdef USE_PCRE_REGEX
 	if ( bind->ovector != NULL )
 				free( bind->ovector );
@@ -157,6 +158,7 @@ void IvyBindingFree( IvyBinding bind )
 int IvyBindingExec( IvyBinding bind, const char * message )
 {
 	int nb_match = 0;
+	if( bind == NULL ) return nb_match;
 #ifdef USE_PCRE_REGEX
 	
 	nb_match = pcre_exec(
@@ -189,6 +191,7 @@ int IvyBindingExec( IvyBinding bind, const char * message )
 
 void IvyBindingMatch( IvyBinding bind, const char *message, int argnum, int *arglen, const char **arg)
 {
+	if( bind == NULL ) return;
 #ifdef USE_PCRE_REGEX
 	
 		*arglen = bind->ovector[2*argnum+1]- bind->ovector[2*argnum];
