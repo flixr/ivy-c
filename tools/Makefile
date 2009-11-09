@@ -10,23 +10,23 @@ EXTRAINC=-I../src
 .c.o:
 	$(CC) $(CFLAGS) $(EXTRAINC) -c $*.c
 .cpp.o:
-	$(CPP) $(CFLAGS) $(EXTRAINC) $(BUGGY_DEBIAN_OPTION) -c $*.cpp
+	$(CXX) $(CFLAGS) $(EXTRAINC) $(BUGGY_DEBIAN_OPTION) -c $*.cpp
 
 
 all: $(TARGETS)
 omp: $(OMP_TARGET)
 
 ivyprobe: ivyprobe.o ../src/libivy.a
-	$(CC)  $(CFLAGS) $(EXTRAINC) -o $@ ivyprobe.o -L. -livy $(PCRELIB) $(EXTRALIB) 
+	$(CC)  $(CFLAGS) $(EXTRAINC) -o $@ ivyprobe.o  $(EXTRALIB) -livy $(PCRELIB)  
 
 ivythroughput: ivythroughput.o ../src/libivy.a
-	$(CPP)  $(CFLAGS) $(EXTRAINC) -o $@ ivythroughput.o -L. $(EXTRALIB) -livy -lpcrecpp $(PCRELIB)  
+	$(CXX)  $(CFLAGS) $(EXTRAINC) -o $@ ivythroughput.o $(EXTRALIB) -livy $(PCRELIB) -lpcrecpp  
 
 ivytestready: ivytestready.o ../src/libivy.a
-	$(CC)  $(CFLAGS) $(EXTRAINC) -o $@ ivytestready.o -L. $(EXTRALIB) -livy -lpcrecpp  
+	$(CC)  $(CFLAGS) $(EXTRAINC) -o $@ ivytestready.o $(EXTRALIB) -livy $(PCRELIB) -lpcrecpp  
 
 ivyprobe_efence: ivyprobe.o ../src/libivy.a
-	$(CPP)  $(CFLAGS) $(EXTRAINC) -o $@ ivyprobe.o -L. -livy -lpcrecpp $(PCRELIB) $(EXTRALIB) -lefence
+	$(CC)  $(CFLAGS) $(EXTRAINC) -o $@ ivyprobe.o  $(EXTRALIB) -livy $(PCRELIB) -lpcrecpp   -lefence
 
 
 
@@ -34,7 +34,7 @@ ivyprobe_omp: ivyprobe.o ../src/libivy_omp.a
 	$(CC)  $(CFLAGS) $(EXTRAINC) -o $@ ivyprobe.o -L. -livy_omp $(PCRELIB) $(EXTRALIB) $(OMPLIB)
 
 ivythroughput_omp: ivythroughput.o ../src/libivy_omp.a
-	$(CPP)  $(CFLAGS) $(EXTRAINC) -o $@ ivythroughput.o -L. -livy_omp -lpcrecpp $(PCRELIB) $(EXTRALIB) $(OMPLIB)
+	$(CXX)  $(CFLAGS) $(EXTRAINC) -o $@ ivythroughput.o -L. -livy_omp -lpcrecpp $(PCRELIB) $(EXTRALIB) $(OMPLIB)
 
 ivyprobe.o : ivyprobe.c 
 	$(CC)  $(CFLAGS) $(EXTRAINC) $(REGEXP) -c ivyprobe.c -o $@
