@@ -159,7 +159,7 @@ void TimerScan()
 	/* recherche des timers echu dans la liste */
 	IVY_LIST_EACH_SAFE( timers , timer, next )
 	{
-	  if ( timer->when <= stamp )
+	  if ( timer->when <= stamp && (!timer->mark2Remove) )
 	    {
 	      timer_echu++;
 	      delta = stamp - timer->when;
