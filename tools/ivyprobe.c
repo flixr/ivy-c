@@ -106,6 +106,7 @@ char * Chop(char *arg)
 
 void HandleStdin (Channel channel, HANDLE fd, void *data)
 {
+	static const char *separator = "#";
 	char buf[4096];
 	char *line;
 	char *cmd;
@@ -133,15 +134,18 @@ void HandleStdin (Channel channel, HANDLE fd, void *data)
 			}
 
 		} else if (strcmp(cmd, "dieall-yes-i-am-sure") == 0) {
-			arg = IvyGetApplicationList("#");
-			arg = strtok (arg, "#");
+			arg = IvyGetApplicationList(separator);
+			arg = strtok (arg, separator);
 			while  (arg) {
 				app = IvyGetApplication (arg);
 				if  (app)
+				{
+					printf ("Killing '%s'...\n",arg);
 					IvySendDieMsg (app);
+				}
 				else
 					printf ("No Application %s!!!\n",arg);
-				arg = strtok (NULL, " ");
+				arg = strtok (NULL, separator);
 			}
 			
 		} else if (strcmp(cmd,  "bind") == 0) {
