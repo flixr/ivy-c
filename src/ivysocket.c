@@ -806,11 +806,12 @@ Client SocketBroadcastCreate (unsigned short port,
 	struct sockaddr_in local;
 	int on = 1;
 
+  memset( &local,0,sizeof(local) );
 	local.sin_family = AF_INET;
 	local.sin_addr.s_addr = INADDR_ANY;
 	local.sin_port = htons (port);
 
-	if ((handle = socket (AF_INET, SOCK_DGRAM, 0)) < 0){
+	if ((handle = socket (AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0){
 		perror ("*** dgram socket ***");
 		return NULL;
 	};
@@ -885,7 +886,9 @@ void SocketSendBroadcast (Client client, unsigned long host, unsigned short port
 	va_start (ap, fmt );
 	buffer.offset = 0;
 	len = make_message (&buffer, fmt, ap );
+	va_end (ap );
 	/* Send UDP packet to the dest */
+	memset( &remote,0,sizeof(remote) );
 	remote.sin_family = AF_INET;
 	remote.sin_addr.s_addr = htonl (host );
 	remote.sin_port = htons(port);
@@ -894,7 +897,8 @@ void SocketSendBroadcast (Client client, unsigned long host, unsigned short port
 			(struct sockaddr *)&remote,sizeof(remote));
 	if (err != len) {
 		perror ("*** send ***");
-	}	va_end (ap );
+	}	
+	
 }
 
 /* Socket Multicast */
