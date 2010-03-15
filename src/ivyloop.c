@@ -183,6 +183,7 @@ void IvyChannelInit (void)
   /* pour eviter les plantages quand les autres applis font core-dump */
   signal (SIGPIPE, SIG_IGN);
 #endif
+  MainLoop = 1;
   if (channel_initialized) return;
 
   FD_ZERO (&open_fds);
