@@ -62,6 +62,7 @@ struct _server {
 	HANDLE fd;
 	Channel channel;
 	unsigned short port;
+	int ipv6;
 	void *(*create)(Client client);
 	void (*handle_delete)(Client client, const void *data);
 	void (*handle_decongestion)(Client client, const void *data);
@@ -73,8 +74,9 @@ struct _client {
 	HANDLE fd;
 	Channel channel;
 	unsigned short port;
-        char app_uuid[128];
-	struct sockaddr_in from;
+	char app_uuid[128];
+	int ipv6;
+	struct sockaddr* from; // use ptr dynamic aloca against IPV6 ou IPV4
 	SocketInterpretation interpretation;
 	void (*handle_delete)(Client client, const void *data);
 	void (*handle_decongestion)(Client client, const void *data);
@@ -91,6 +93,7 @@ struct _client {
 	omp_lock_t fdLock;
 #endif
 };
+ 
 
 static Server servers_list = NULL;
 static Client clients_list = NULL;
@@ -101,7 +104,38 @@ static int debug_send = 0;
 WSADATA	WsaData;
 #endif
 
+// tricky things to initialise socket ADDR 
+#define InitAddr(  ipv6, port ) \
+	struct sockaddr_in sock; \
+	struct sockaddr_in6 sock6; \
+	struct sockaddr* sock_addr; \
+	socklen_t sock_addr_len; \
+	\
+	if ( ipv6 ) \
+	{ \
+	memset( &sock6,0,sizeof(sock6) ); \
+	sock6.sin6_family =  AF_INET6; \
+	sock6.sin6_addr = in6addr_any; \
+	sock6.sin6_port = htons (port); \
+	sock_addr = (struct sockaddr*)&sock6; \
+	sock_addr_len = sizeof( sock6 ); \
+	} \
+	else \
+	{ \
+	memset( &sock,0,sizeof(sock) ); \
+	sock.sin_family =  AF_INET; \
+	sock.sin_addr.s_addr = INADDR_ANY; \
+	sock.sin_port = htons (port); \
+	sock_addr = (struct sockaddr*)&sock; \
+	sock_addr_len = sizeof( sock ); \
+	}\
 
+static struct sockaddr* DupAddr( struct sockaddr* addr, socklen_t len ) 
+{
+	struct sockaddr*  dupaddr = (struct sockaddr*) malloc( len );
+	memcpy( addr, dupaddr , len );
+	return dupaddr;
+}
 static SendState BufferizedSocketSendRaw (const Client client, const char *buffer, const int len );
 
 
@@ -125,7 +159,7 @@ static void DeleteSocket(void *data)
 	  IvyFifoDelete (client->ifb);
 	  client->ifb = NULL;
 	}
-	
+	free( client->from );
 	IVY_LIST_REMOVE (clients_list, client );
 }
 
@@ -168,9 +202,8 @@ static void HandleSocket (Channel channel, HANDLE fd, void *data)
 		nb_to_read = client->buffer_size - nb_occuped;
 		client->ptr = client->buffer + nb_occuped; 
 	}
-	len = sizeof (client->from );
-	nb = recvfrom (fd, client->ptr, nb_to_read,0,(struct sockaddr *)&client->from,
-		       &len);
+	len = client->ipv6 ? sizeof (struct sockaddr_in6 ) : sizeof (struct sockaddr_in ) ;
+	nb = recvfrom (fd, client->ptr, nb_to_read,0,client->from, &len);
 	if (nb  < 0) {
 		perror(" Read Socket ");
 		IvyChannelRemove (client->channel );
@@ -226,17 +259,15 @@ static void HandleServer(Channel channel, HANDLE fd, void *data)
 	Server server = (Server ) data;
 	Client client;
 	HANDLE ns;
-	socklen_t addrlen;
-	struct sockaddr_in remote2;
 #ifdef WIN32
 	u_long iMode = 1; /* non blocking Mode */
 #else
 	long   socketFlag;
 #endif
+	InitAddr( server->ipv6, 0 );
 	TRACE( "Accepting Connection...\n");
 
-	addrlen = sizeof (remote2 );
-	if ((ns = accept (fd, (struct sockaddr *)&remote2, &addrlen)) <0)
+	if ((ns = accept (fd, sock_addr, &sock_addr_len)) <0)
 		{
 		perror ("*** accept ***");
 		return;
@@ -254,7 +285,8 @@ static void HandleServer(Channel channel, HANDLE fd, void *data)
 		exit(0);
 		}
 		client->terminator = '\n';
-	client->from = remote2;
+	client->ipv6 = server->ipv6;
+	client->from = DupAddr( sock_addr, sock_addr_len );
 	client->fd = ns;
 	client->ifb = NULL;
 	strcpy (client->app_uuid, "init by HandleServer");
@@ -300,7 +332,7 @@ static void HandleServer(Channel channel, HANDLE fd, void *data)
 	
 }
 
-Server SocketServer(unsigned short port, 
+Server SocketServer(int ipv6, unsigned short port, 
 	void*(*create)(Client client),
 	void(*handle_delete)(Client client, const void *data),
         void(*handle_decongestion)(Client client, const void *data),
@@ -309,19 +341,13 @@ Server SocketServer(unsigned short port,
 	Server server;
 	HANDLE fd;
 	int one=1;
-	struct sockaddr_in local;
-	socklen_t addrlen;
+	InitAddr(  ipv6, port );
 		
 
-	if ((fd = socket (AF_INET, SOCK_STREAM, 0)) < 0){
+	if ((fd = socket (ipv6 ? AF_INET6 : AF_INET, SOCK_STREAM, 0)) < 0){
 		perror ("***open socket ***");
 		exit(0);
 		};
-
-	
-	local.sin_family = AF_INET;
-	local.sin_addr.s_addr = INADDR_ANY; 
-	local.sin_port = htons (port);
 
 	
 	if (setsockopt(fd,SOL_SOCKET,SO_REUSEADDR,(char*)&one,sizeof(one)) < 0)
@@ -344,14 +370,13 @@ Server SocketServer(unsigned short port,
 	
 	
 
-	if (bind(fd, (struct sockaddr *)&local, sizeof(local)) < 0)
+	if (bind(fd, sock_addr, sock_addr_len) < 0)
 		{
 		perror ("*** bind ***");
 		exit(0);
 		}
 
-	addrlen = sizeof (local );
-	if (getsockname(fd,(struct sockaddr *)&local, &addrlen) < 0)
+	if (getsockname(fd,sock_addr, &sock_addr_len) < 0)
 		{
 		perror ("***get socket name ***");
 		exit(0);
@@ -367,11 +392,12 @@ Server SocketServer(unsigned short port,
 	server->fd = fd;
 	server->channel = IvyChannelAdd (fd, server, DeleteServerSocket, 
 					 HandleServer, NULL);
+	server->ipv6 = ipv6;
 	server->create = create;
 	server->handle_delete = handle_delete;
 	server->handle_decongestion = handle_decongestion;
 	server->interpretation = interpretation;
-	server->port = ntohs(local.sin_port);
+	server->port = ntohs(ipv6 ? ((struct sockaddr_in6 *)(sock_addr))->sin6_port : ((struct sockaddr_in *)(sock_addr))->sin_port);
 	IVY_LIST_ADD_END (servers_list, server );
 	
 	return server;
@@ -392,17 +418,32 @@ void SocketServerClose (Server server )
 char *SocketGetPeerHost (Client client )
 {
 	int err;
-	struct sockaddr_in name;
 	struct hostent *host;
-	socklen_t len = sizeof(name);
-
+	
 	if (!client)
 		return "undefined";
-
-	err = getpeername (client->fd, (struct sockaddr *)&name, &len );
-	if (err < 0 ) return "can't get peer";
-	host = gethostbyaddr ((char *)&name.sin_addr.s_addr,sizeof(name.sin_addr.s_addr),name.sin_family);
-	if (host == NULL ) return "can't translate addr";
+	if ( client->ipv6 )
+	{
+		struct sockaddr_in6 name;
+		socklen_t len = sizeof(name);
+		err = getpeername (client->fd, (struct sockaddr *)&name, &len );
+		if (err < 0 ) return "can't get peer";
+		host = gethostbyaddr (&name.sin6_addr,sizeof(name.sin6_addr),name.sin6_family);
+	}
+	else
+	{
+		struct sockaddr_in name;
+		socklen_t len = sizeof(name);
+		err = getpeername (client->fd, (struct sockaddr *)&name, &len );
+		if (err < 0 ) return "can't get peer";
+		host = gethostbyaddr (&name.sin_addr,sizeof(name.sin_addr),name.sin_family);
+	
+	}
+	if (host == NULL ) 
+	{
+		fprintf(stderr, "SocketGetPeerHost :: gethostbyaddr %s\n", hstrerror( h_errno) );
+		return "can't translate addr";
+	}
 	return host->h_name;
 }
 
@@ -423,13 +464,14 @@ unsigned short int SocketGetRemotePort ( Client client )
 {
 	if (!client)
 		return 0;
-
-	return client->from.sin_port;
+	if ( client->ipv6 )
+		return ((struct sockaddr_in6*)(client->from ))->sin6_port;
+	return ((struct sockaddr_in*)(client->from ))->sin_port;
 }
 
-struct in_addr * SocketGetRemoteAddr (Client client )
+struct sockaddr * SocketGetRemoteAddr (Client client )
 {
-	return client ? &client->from.sin_addr : 0;
+	return client ? client->from : 0;
 }
 
 void SocketGetRemoteHost (Client client, char **host, unsigned short *port )
@@ -440,11 +482,28 @@ void SocketGetRemoteHost (Client client, char **host, unsigned short *port )
 		return;
 
 	/* extract hostname and port from last message received */
-	hostp = gethostbyaddr ((char *)&client->from.sin_addr.s_addr,
-			sizeof(client->from.sin_addr.s_addr),client->from.sin_family);
-	if (hostp == NULL ) *host = "unknown";
+	if ( client->ipv6 )
+	{
+		struct sockaddr_in6* sock_addr = (struct sockaddr_in6*)(client->from);
+		hostp = gethostbyaddr ((char *)&sock_addr->sin6_addr,
+			sizeof(sock_addr->sin6_addr),sock_addr->sin6_family);
+		*port = ntohs (sock_addr->sin6_port );
+	}
+	else
+	{
+		struct sockaddr_in* sock_addr = (struct sockaddr_in*)(client->from);
+		hostp = gethostbyaddr ((char *)&sock_addr->sin_addr,
+			sizeof(sock_addr->sin_addr),sock_addr->sin_family);
+		*port = ntohs (sock_addr->sin_port );
+	}
+	
+	if (hostp == NULL )
+	{
+		fprintf(stderr, "SocketGetRemoteHost :: gethostbyaddr %s\n", hstrerror( h_errno) );
+		*host = "unknown";
+	}
 		else *host = hostp->h_name;
-	*port = ntohs (client->from.sin_port );
+	
 }
 
 void SocketClose (Client client )
@@ -638,24 +697,24 @@ void SocketBroadcast ( char *fmt, ... )
 /*
 Ouverture d'un canal TCP/IP en mode client
 */
-Client SocketConnect (char * host, unsigned short port, 
-			void *data, 
-			SocketInterpretation interpretation,
-		        void (*handle_delete)(Client client, const void *data),
-		        void(*handle_decongestion)(Client client, const void *data)
-			)
-{
-	struct hostent *rhost;
+//Client SocketConnect (int ipv6, char * host, unsigned short port, 
+//			void *data, 
+//			SocketInterpretation interpretation,
+//		        void (*handle_delete)(Client client, const void *data),
+//		        void(*handle_decongestion)(Client client, const void *data)
+//			)
+//{
+//	struct hostent *rhost;
+//
+//	if ((rhost = gethostbyname (host )) == NULL) {
+//		fprintf(stderr, "Erreur %s Calculateur inconnu !\n",host);
+//		 return NULL;
+//	}
+//	return SocketConnectAddr (ipv6, rhost->h_addr, port, data, 
+//				  interpretation, handle_delete, handle_decongestion);
+//}
 
-	if ((rhost = gethostbyname (host )) == NULL) {
-		fprintf(stderr, "Erreur %s Calculateur inconnu !\n",host);
-		 return NULL;
-	}
-	return SocketConnectAddr ((struct in_addr*)(rhost->h_addr), port, data, 
-				  interpretation, handle_delete, handle_decongestion);
-}
-
-Client SocketConnectAddr (struct in_addr * addr, unsigned short port, 
+Client SocketConnectAddr (int ipv6, struct sockaddr * addr, unsigned short port, 
 			  void *data, 
 			  SocketInterpretation interpretation,
 			  void (*handle_delete)(Client client, const void *data),
@@ -664,23 +723,28 @@ Client SocketConnectAddr (struct in_addr * addr, unsigned short port,
 {
 	HANDLE handle;
 	Client client;
-	struct sockaddr_in remote;
 #ifdef WIN32
 	u_long iMode = 1; /* non blocking Mode */
 #else
 	long   socketFlag;
 #endif
-
-	remote.sin_family = AF_INET;
-	remote.sin_addr = *addr;
-	remote.sin_port = htons (port);
-
-	if ((handle = socket (AF_INET, SOCK_STREAM, 0)) < 0){
+	InitAddr( ipv6, port );
+	if ( ipv6 )
+	{
+		sock6.sin6_addr =  ((struct sockaddr_in6*)addr)->sin6_addr;
+		sock6.sin6_scope_id =  ((struct sockaddr_in6*)addr)->sin6_scope_id;
+		sock6.sin6_flowinfo =  ((struct sockaddr_in6*)addr)->sin6_flowinfo;
+	}
+	else
+	{
+		sock.sin_addr = ((struct sockaddr_in*)addr)->sin_addr;
+	}
+	if ((handle = socket ( ipv6 ? AF_INET6 : AF_INET, SOCK_STREAM, 0)) < 0){
 		perror ("*** client socket ***");
 		return NULL;
 	};
 
-	if (connect (handle, (struct sockaddr *)&remote, sizeof(remote) ) < 0){
+	if (connect (handle, sock_addr, sock_addr_len ) < 0){
 		perror ("*** client connect ***");
 		return NULL;
 	};
@@ -718,6 +782,7 @@ Client SocketConnectAddr (struct in_addr * addr, unsigned short port,
 		}
 		client->terminator = '\n';
 	client->fd = handle;
+	client->ipv6 = ipv6;
 	client->channel = IvyChannelAdd (handle, client,  DeleteSocket, 
 					 HandleSocket, HandleCongestionWrite );
 	client->interpretation = interpretation;
@@ -725,9 +790,7 @@ Client SocketConnectAddr (struct in_addr * addr, unsigned short port,
 	client->data = data;
 	client->handle_delete = handle_delete;
 	client->handle_decongestion = handle_decongestion;
-	client->from.sin_family = AF_INET;
-	client->from.sin_addr = *addr;
-	client->from.sin_port = htons (port);
+	client->from = DupAddr( sock_addr, sock_addr_len );
 	client->ifb = NULL;
 	strcpy (client->app_uuid, "init by SocketConnectAddr");
 
@@ -796,22 +859,17 @@ int SocketWaitForReply (Client client, char *buffer, int size, int delai)
 
 /* Socket UDP */
 
-Client SocketBroadcastCreate (unsigned short port, 
+Client SocketBroadcastCreate (int ipv6, unsigned short port, 
 				void *data, 
 				SocketInterpretation interpretation
 			)
 {
 	HANDLE handle;
 	Client client;
-	struct sockaddr_in local;
 	int on = 1;
+	InitAddr(  ipv6, port );
 
-  memset( &local,0,sizeof(local) );
-	local.sin_family = AF_INET;
-	local.sin_addr.s_addr = INADDR_ANY;
-	local.sin_port = htons (port);
-
-	if ((handle = socket (AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0){
+	if ((handle = socket ( ipv6 ? AF_INET6 : AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0){
 		perror ("*** dgram socket ***");
 		return NULL;
 	};
@@ -837,9 +895,9 @@ Client SocketBroadcastCreate (unsigned short port,
 			return NULL;
 		};
 
-	if (bind(handle, (struct sockaddr *)&local, sizeof(local)) < 0)
+	if (bind(handle, sock_addr, sock_addr_len ) < 0)
 		{
-			perror ("*** test BIND ***");
+			perror ("*** BIND ***");
 			return NULL;
 		};
 
@@ -854,6 +912,8 @@ Client SocketBroadcastCreate (unsigned short port,
 		}
 	client->terminator = '\n';
 	client->fd = handle;
+	client->ipv6 = ipv6;
+	client->from = DupAddr( sock_addr, sock_addr_len );
 	client->channel = IvyChannelAdd (handle, client,  DeleteSocket, 
 					 HandleSocket, HandleCongestionWrite);
 	client->interpretation = interpretation;
@@ -869,7 +929,7 @@ Client SocketBroadcastCreate (unsigned short port,
 	
 	return client;
 }
-
+/* TODO unifier les deux fonctions */
 void SocketSendBroadcast (Client client, unsigned long host, unsigned short port, char *fmt, ... )
 {
 	struct sockaddr_in remote;
@@ -901,6 +961,38 @@ void SocketSendBroadcast (Client client, unsigned long host, unsigned short port
 	
 }
 
+void SocketSendBroadcast6 (Client client, struct in6_addr* host, unsigned short port, char *fmt, ... )
+{
+	struct sockaddr_in6 remote;
+	static IvyBuffer buffer = { NULL, 0, 0 }; /* Use satic mem to eliminate multiple call to malloc /free */
+#ifdef OPENMP
+#pragma omp threadprivate (buffer)
+#endif
+	va_list ap;
+	int err,len;
+
+	if (!client)
+		return;
+
+	va_start (ap, fmt );
+	buffer.offset = 0;
+	len = make_message (&buffer, fmt, ap );
+	va_end (ap );
+	/* Send UDP packet to the dest */
+	memset( &remote,0,sizeof(remote) );
+	remote.sin6_family = AF_INET6;
+	remote.sin6_addr = *host;
+	remote.sin6_port = htons(port);
+	err = sendto (client->fd, 
+			buffer.data, len,0,
+			(struct sockaddr *)&remote,sizeof(remote));
+	if (err != len) {
+		perror ("*** send ***");
+	}	
+	
+}
+
+
 /* Socket Multicast */
 
 int SocketAddMember(Client client, unsigned long host )
@@ -919,7 +1011,7 @@ Multicast datagrams with initial TTL 255 are unrestricted in scope.
 
 	imr.imr_multiaddr.s_addr = htonl( host );
 	imr.imr_interface.s_addr = INADDR_ANY; 
-	if(setsockopt(client->fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char *)&imr,sizeof(struct ip_mreq)) == -1 )
+	if(setsockopt(client->fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char *)&imr,sizeof(imr)) == -1 )
 		{
       	perror("setsockopt() Cannot join group");
       	fprintf(stderr, "Does your kernel support IP multicast extensions ?\n");
@@ -932,6 +1024,41 @@ Multicast datagrams with initial TTL 255 are unrestricted in scope.
       	fprintf(stderr, "Does your kernel support IP multicast extensions ?\n");
       	return 0;
     		}
+
+	return 1;
+}
+
+int SocketAddMember6(Client client, struct in6_addr* host )
+{
+	struct ipv6_mreq imr;
+/*
+Multicast datagrams with initial TTL 0 are restricted to the same host. 
+Multicast datagrams with initial TTL 1 are restricted to the same subnet. 
+Multicast datagrams with initial TTL 32 are restricted to the same site. 
+Multicast datagrams with initial TTL 64 are restricted to the same region. 
+Multicast datagrams with initial TTL 128 are restricted to the same continent. 
+Multicast datagrams with initial TTL 255 are unrestricted in scope. 
+*/
+	//unsigned char ttl = 64 ; /* Arbitrary TTL value. */
+	/* wee need to broadcast */
+
+	imr.ipv6mr_multiaddr = *host;
+	imr.ipv6mr_interface = 0;  /// TODO: Attention ca fait quoi ca ???
+	if(setsockopt(client->fd, IPPROTO_IPV6, IPV6_ADD_MEMBERSHIP, (char *)&imr,sizeof(imr)) == -1 )
+		{
+      	perror("setsockopt() Cannot join group");
+      	fprintf(stderr, "Does your kernel support IP multicast extensions ?\n");
+      	return 0;
+    		}
+				
+  	/*
+	if(setsockopt(client->fd, IPPROTO_IPV6, IPV6_MULTICAST_TTL, (char *)&ttl, sizeof(ttl)) < 0 )
+		{
+      	perror("setsockopt() Cannot set TTL");
+      	fprintf(stderr, "Does your kernel support IP multicast extensions ?\n");
+      	return 0;
+    		}
+	*/
 
 	return 1;
 }

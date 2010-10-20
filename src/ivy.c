@@ -134,6 +134,9 @@ int debug_filter = 0;
 /* flag pour le debug en cas de Filter de regexp */
 int debug_binary_msg = 0;
 
+/* mode IPV6 pour les sockets */
+static int ipv6 = 0; /* IPV4 par default */
+
 /* server  pour la socket application */
 static Server server;
 
@@ -476,8 +479,8 @@ RegexpCallUnique (const MsgSndDictPtr msg, const char * const message, const
 static RWIvyClientPtr CheckConnected( Client sclnt )
 {
   RWIvyClientPtr iclient;
-  struct in_addr *addr1;
-  struct in_addr *addr2;
+  struct sockaddr* addr1;
+  struct sockaddr* addr2;
   char *remotehost;
   unsigned short remoteport;
 	
@@ -494,7 +497,16 @@ static RWIvyClientPtr CheckConnected( Client sclnt )
 				/* et meme machine */
 				addr1 = SocketGetRemoteAddr( iclient->client );
 				addr2 = SocketGetRemoteAddr( sclnt );
-				if ( addr1->s_addr == addr2->s_addr ) 
+				int same = 0;
+				if ( ipv6 )
+				{
+					same = memcmp( &((struct sockaddr_in6 *)addr1)->sin6_addr,  &( (struct sockaddr_in6 *)addr2)->sin6_addr, sizeof( struct in6_addr) )== 0  ;
+				}
+				else
+				{
+					same = ( (struct sockaddr_in *)addr1)->sin_addr.s_addr == ( (struct sockaddr_in *)addr2)->sin_addr.s_addr;
+				}
+				if ( same ) 
 				{
 					TRACE ("DBG> CheckConnected "
 						"clnt->app_uuid[%s] et iclient->app_uuid[%s] %s\n",
@@ -804,7 +816,7 @@ static void *ClientCreate( Client client )
 
 static void BroadcastReceive( Client client, const void *data, char *line )
 {	
-	Client app;
+	Client app=NULL;
 	int err;
 	int version;
 	unsigned short serviceport;
@@ -840,7 +852,7 @@ static void BroadcastReceive( Client client, const void *data, char *line )
 #endif /*DEBUG */
 
 	/* connect to the service and send the regexp */
-	app = SocketConnectAddr(SocketGetRemoteAddr(client), serviceport, 0, Receive, 
+	app = SocketConnectAddr(ipv6,SocketGetRemoteAddr(client), serviceport, 0, Receive, 
 				ClientDelete, ClientDecongestion );
 	if (app) {
 		IvyClientPtr clnt;
@@ -915,7 +927,7 @@ void IvyStop (void)
 
 void IvyStart (const char* bus)
 {
-
+	struct in6_addr ipv6addr;
 	struct in_addr baddr;
 	unsigned int mask = 0xffffffff; 
 	unsigned char elem = 0;
@@ -923,19 +935,12 @@ void IvyStart (const char* bus)
 	int numelem = 0;
 	int error = 0;
 	const char* p = bus;	/* used for decoding address list */
-	const char* q;		/* used for decoding port number */
-	unsigned short port;
+	const char* q;			/* used for decoding port number */
+	char addr[1024];	/* used for decoding addr */
+	unsigned short port=0;
 
 	
-	/*
-	 * Initialize TCP port
-	 */
-	server = SocketServer (ANYPORT, ClientCreate, ClientDelete, 
-			       ClientDecongestion, Receive);
-	ApplicationPort = SocketServerGetPort (server);
-	ApplicationID = GenApplicationUniqueIdentifier();
-
-	        
+	
 	/*
 	 * Find network list as well as broadcast port
 	 * (we accept things like 123.231,123.123:2000 or 123.231 or :2000),
@@ -950,21 +955,63 @@ void IvyStart (const char* bus)
 		p = DefaultIvyBus;
 
 	/* then, let's get a port number */
-	q = strchr (p, ':');
+	q = strrchr (p, ':');
 	if (q && (port = atoi (q+1)))
+	{
 		SupervisionPort = port;
+		strncpy( addr, p, q-p );
+	}
 	else
 		SupervisionPort = IVY_DEFAULT_BUS;
 
+	/* test IPV6 mode */
+
+	error =  inet_pton(AF_INET6, addr, &ipv6addr);
+	if ( error ==1 )
+	{
+		ipv6 = 1 ;
+		printf("Ivy Using IPV6 mode\n");
+	}
+	printf("ivp6=%d addr %s, int port %d\n", ipv6, addr, port );
+	/*
+	 * Initialize TCP port
+	 */
+	server = SocketServer (ipv6, ANYPORT, ClientCreate, ClientDelete, 
+			       ClientDecongestion, Receive);
+	ApplicationPort = SocketServerGetPort (server);
+	ApplicationID = GenApplicationUniqueIdentifier();
+
+	        
 	/*
 	 * Now we have a port number it's time to initialize the UDP port
 	 */
-	broadcast =  SocketBroadcastCreate (SupervisionPort, 0, BroadcastReceive );
+	broadcast =  SocketBroadcastCreate (ipv6, SupervisionPort, 0, BroadcastReceive );
 
 		
 	/* then, if we only have a port number, resort to default value for network */
 	if (p == q)
 		p = DefaultIvyBus;
+
+	if ( ipv6 )
+	{
+		char dst[1024];
+		char * bcast_addr = inet_ntop(AF_INET6, &ipv6addr,
+			dst, sizeof(dst) );
+		if ( bcast_addr )
+		{
+		printf ("Broadcasting on network %s, port %d\n", 
+					dst, SupervisionPort);
+		/* test mask value agaisnt CLASS D */
+		if ( IN6_IS_ADDR_MULTICAST( &ipv6addr ) )
+			SocketAddMember6 (broadcast ,  &ipv6addr );
+
+		SocketSendBroadcast6 (broadcast,  &ipv6addr, SupervisionPort, 
+				     "%d %hu %s %s\n", IVYMAJOR_VERSION, ApplicationPort, 
+				     ApplicationID, ApplicationName); 
+		}
+	}
+	else
+	{
 
 	/* and finally, parse network list and send broadcast handshakes.
 	   This is painful but inet_aton is sloppy.
@@ -1027,7 +1074,7 @@ void IvyStart (const char* bus)
 			break;
 		++p;
 	}
-
+	}
 	TRACE ("Listening on TCP:%hu\n",ApplicationPort);
 
 }

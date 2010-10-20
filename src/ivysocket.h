@@ -58,7 +58,7 @@ typedef void (*SocketInterpretation) (Client client, const void *data, char *lig
 
 /* Server Part */
 typedef struct _server *Server;
-extern Server SocketServer(unsigned short port, 
+extern Server SocketServer(int ipv6, unsigned short port, 
 	void*(*create)(Client client),
 	void(*handle_delete)(Client client, const void *data),
 	void(*handle_decongestion)(Client client, const void *data),
@@ -76,14 +76,14 @@ extern char *SocketGetPeerHost( Client client );
 extern void SocketSetData( Client client, const void *data );
 extern const void *SocketGetData( Client client );
 extern void SocketBroadcast( char *fmt, ... );
-extern Client SocketConnect( char * host, unsigned short port,
+extern Client SocketConnect( int ipv6, char * host, unsigned short port,
 			void *data, 
 			SocketInterpretation interpretation,
  	                void (*handle_delete)(Client client, const void *data),
 			void(*handle_decongestion)(Client client, const void *data)
  );
 
-extern Client SocketConnectAddr( struct in_addr * addr, unsigned short port, 
+extern Client SocketConnectAddr( int ipv6, struct sockaddr* addr, unsigned short port, 
 			void *data, 
 			SocketInterpretation interpretation,
   		        void (*handle_delete)(Client client, const void *data),
@@ -96,15 +96,17 @@ extern int SocketWaitForReply( Client client, char *buffer, int size, int delai)
 /* Creation d'une socket en mode non connecte */
 /* et ecoute des messages */
 extern Client SocketBroadcastCreate(
+			int ipv6, 
 			unsigned short port, 
 			void *data, 
 			SocketInterpretation interpretation
 			);
 /* Socket Multicast */
 extern int SocketAddMember( Client client, unsigned long host );
+extern int SocketAddMember6( Client client, struct in6_addr* host );
 
 /* recuperation de l'emetteur du message */
-extern struct in_addr * SocketGetRemoteAddr( Client client );
+extern struct sockaddr* SocketGetRemoteAddr( Client client );
 extern void SocketSetUuid (Client client, const char *uuid);
 extern  const char* SocketGetUuid (const Client client);
 extern int  SocketCmpUuid (const Client c1, const Client c2);
@@ -114,6 +116,7 @@ extern unsigned short int SocketGetLocalPort ( Client client );
 extern unsigned short int SocketGetRemotePort ( Client client );
 /* emmission d'un broadcast UDP */
 extern void SocketSendBroadcast( Client client, unsigned long host, unsigned short port, char *fmt, ... );
+extern void SocketSendBroadcast6( Client client, struct in6_addr* host, unsigned short port, char *fmt, ... );
 
 #ifdef __cplusplus
 }
