@@ -25,6 +25,7 @@
 
 #include <stdlib.h>
 #ifdef WIN32
+#include <Ws2tcpip.h>
 #include <windows.h>
 #define snprintf _snprintf
 #else
@@ -494,19 +495,19 @@ static RWIvyClientPtr CheckConnected( Client sclnt )
       /* client different mais port identique */
       if ((iclient->client != sclnt) && (remoteport == iclient->app_port)) 
       {
+				int same_addr = 0;
 				/* et meme machine */
 				addr1 = SocketGetRemoteAddr( iclient->client );
 				addr2 = SocketGetRemoteAddr( sclnt );
-				int same = 0;
 				if ( ipv6 )
 				{
-					same = memcmp( &((struct sockaddr_in6 *)addr1)->sin6_addr,  &( (struct sockaddr_in6 *)addr2)->sin6_addr, sizeof( struct in6_addr) )== 0  ;
+					same_addr = memcmp( &((struct sockaddr_in6 *)addr1)->sin6_addr,  &( (struct sockaddr_in6 *)addr2)->sin6_addr, sizeof( struct in6_addr) )== 0  ;
 				}
 				else
 				{
-					same = ( (struct sockaddr_in *)addr1)->sin_addr.s_addr == ( (struct sockaddr_in *)addr2)->sin_addr.s_addr;
+					same_addr = ( (struct sockaddr_in *)addr1)->sin_addr.s_addr == ( (struct sockaddr_in *)addr2)->sin_addr.s_addr;
 				}
-				if ( same ) 
+				if ( same_addr ) 
 				{
 					TRACE ("DBG> CheckConnected "
 						"clnt->app_uuid[%s] et iclient->app_uuid[%s] %s\n",
@@ -995,7 +996,7 @@ void IvyStart (const char* bus)
 	if ( ipv6 )
 	{
 		char dst[1024];
-		char * bcast_addr = inet_ntop(AF_INET6, &ipv6addr,
+		const char * bcast_addr = inet_ntop(AF_INET6, &ipv6addr,
 			dst, sizeof(dst) );
 		if ( bcast_addr )
 		{

@@ -21,6 +21,7 @@
 #endif
 
 #ifdef WIN32
+#include <Ws2tcpip.h>
 #include <windows.h>
 #endif
 #include <stdlib.h>
@@ -428,7 +429,7 @@ char *SocketGetPeerHost (Client client )
 		socklen_t len = sizeof(name);
 		err = getpeername (client->fd, (struct sockaddr *)&name, &len );
 		if (err < 0 ) return "can't get peer";
-		host = gethostbyaddr (&name.sin6_addr,sizeof(name.sin6_addr),name.sin6_family);
+		host = gethostbyaddr ((const char*)&name.sin6_addr,sizeof(name.sin6_addr),name.sin6_family);
 	}
 	else
 	{
@@ -436,12 +437,25 @@ char *SocketGetPeerHost (Client client )
 		socklen_t len = sizeof(name);
 		err = getpeername (client->fd, (struct sockaddr *)&name, &len );
 		if (err < 0 ) return "can't get peer";
-		host = gethostbyaddr (&name.sin_addr,sizeof(name.sin_addr),name.sin_family);
+		host = gethostbyaddr ((const char*)&name.sin_addr,sizeof(name.sin_addr),name.sin_family);
 	
 	}
 	if (host == NULL ) 
 	{
+#ifdef WIN32
+		DWORD dwError = WSAGetLastError();
+        if (dwError != 0) {
+            if (dwError == WSAHOST_NOT_FOUND) {
+                fprintf(stderr, "SocketGetPeerHost :: gethostbyaddr Host not found\n");
+            } else if (dwError == WSANO_DATA) {
+                fprintf(stderr, "SocketGetPeerHost :: gethostbyaddr No data record found\n");
+            } else {
+                fprintf(stderr, "SocketGetPeerHost :: gethostbyaddr Function failed with error: %ld\n", dwError);
+            }
+		}
+#else
 		fprintf(stderr, "SocketGetPeerHost :: gethostbyaddr %s\n", hstrerror( h_errno) );
+#endif
 		return "can't translate addr";
 	}
 	return host->h_name;
@@ -499,7 +513,20 @@ void SocketGetRemoteHost (Client client, char **host, unsigned short *port )
 	
 	if (hostp == NULL )
 	{
+#ifdef WIN32
+		DWORD dwError = WSAGetLastError();
+        if (dwError != 0) {
+            if (dwError == WSAHOST_NOT_FOUND) {
+                fprintf(stderr, "SocketGetRemoteHost :: gethostbyaddr Host not found\n");
+            } else if (dwError == WSANO_DATA) {
+                fprintf(stderr, "SocketGetRemoteHost :: gethostbyaddr No data record found\n");
+            } else {
+                fprintf(stderr, "SocketGetRemoteHost :: gethostbyaddr Function failed with error: %ld\n", dwError);
+            }
+		}
+#else
 		fprintf(stderr, "SocketGetRemoteHost :: gethostbyaddr %s\n", hstrerror( h_errno) );
+#endif
 		*host = "unknown";
 	}
 		else *host = hostp->h_name;
