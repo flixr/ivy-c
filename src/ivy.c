@@ -973,7 +973,6 @@ void IvyStart (const char* bus)
 		ipv6 = 1 ;
 		printf("Ivy Using IPV6 mode\n");
 	}
-	printf("ivp6=%d addr %s, int port %d\n", ipv6, addr, port );
 	/*
 	 * Initialize TCP port
 	 */
