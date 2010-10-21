@@ -19,6 +19,7 @@
 #include <string.h>
 #ifdef WIN32
 #include <windows.h>
+#include "getopt.h"
 #ifdef __MINGW32__
 #include <regex.h> 
 #include <getopt.h>
@@ -71,14 +72,20 @@ void Reply (IvyClientPtr app, void *user_data, int argc, char *argv[])
 }
 void Pong (IvyClientPtr app, void *user_data, int argc, char *argv[])
 {
+	double current;
+	double ts;
+	double tr;
+	double roundtrip1;
+	double roundtrip2;
+	double roundtrip3;
 	nbMsgReceive++;
 	
-	double current = currentTime() - origin ;
-	double ts = atof( *argv++ );
-	double tr = atof( *argv++ );
-	double roundtrip1 = tr-ts;
-	double roundtrip2 = current - tr;
-	double roundtrip3 = current - ts;
+	current = currentTime() - origin ;
+	ts = atof( *argv++ );
+	tr = atof( *argv++ );
+	roundtrip1 = tr-ts;
+	roundtrip2 = current - tr;
+	roundtrip3 = current - ts;
 	if ( roundtrip3 > maxRoundTrip ) maxRoundTrip = roundtrip3;
 	if ( roundtrip3 < minRoundTrip ) minRoundTrip = roundtrip3;
 	averageRoundTrip = (averageRoundTrip * ( nbMsgReceive - 1 ) + roundtrip3) /nbMsgReceive;
@@ -125,10 +132,17 @@ void binCB( IvyClientPtr app, void *user_data, int id, const char* regexp,  IvyB
 int main(int argc, char *argv[])
 {
 	long time=200;
-	
+	int c;
+	const char * bus = NULL;
+	while ((c = getopt(argc, argv, "b:")) != EOF)
+			switch (c) {
+			case 'b':
+				bus = optarg;
+				break;
+	}
 	/* Mainloop management */
-	if ( argc > 1 ) time = atol( argv[1] );
-	if ( argc > 2 ) nbMsg = atol( argv[2] );
+	if ( optind < argc ) time = atol( argv[optind++] );
+	if ( optind < argc ) nbMsg = atol( argv[optind] );
 
 	IvyInit ("IvyPerf", "IvyPerf ready", NULL,NULL,NULL,NULL);
 	IvySetFilter( sizeof( mymessages )/ sizeof( char *),mymessages );
@@ -137,7 +151,7 @@ int main(int argc, char *argv[])
 	IvyBindMsg (Pong, NULL, "^pong ts=(.*) tr=(.*)");
 	  
 	origin = currentTime();
-	IvyStart (0);
+	IvyStart (bus);
 
 	if ( nbMsg )
 		send_timer = TimerRepeatAfter (TIMER_LOOP, time, TimerCall, (void*)nbMsg);
