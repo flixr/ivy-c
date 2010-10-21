@@ -961,6 +961,7 @@ void IvyStart (const char* bus)
 	{
 		SupervisionPort = port;
 		strncpy( addr, p, q-p );
+		addr[q-p] ='\0';
 	}
 	else
 		SupervisionPort = IVY_DEFAULT_BUS;
