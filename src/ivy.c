@@ -480,8 +480,8 @@ RegexpCallUnique (const MsgSndDictPtr msg, const char * const message, const
 static RWIvyClientPtr CheckConnected( Client sclnt )
 {
   RWIvyClientPtr iclient;
-  struct sockaddr* addr1;
-  struct sockaddr* addr2;
+  struct sockaddr_storage* addr1;
+  struct sockaddr_storage* addr2;
   char *remotehost;
   unsigned short remoteport;
 	

@@ -83,7 +83,7 @@ extern Client SocketConnect( int ipv6, char * host, unsigned short port,
 			void(*handle_decongestion)(Client client, const void *data)
  );
 
-extern Client SocketConnectAddr( int ipv6, struct sockaddr* addr, unsigned short port, 
+extern Client SocketConnectAddr( int ipv6, struct sockaddr_storage* addr, unsigned short port, 
 			void *data, 
 			SocketInterpretation interpretation,
   		        void (*handle_delete)(Client client, const void *data),
@@ -106,7 +106,7 @@ extern int SocketAddMember( Client client, unsigned long host );
 extern int SocketAddMember6( Client client, struct in6_addr* host );
 
 /* recuperation de l'emetteur du message */
-extern struct sockaddr* SocketGetRemoteAddr( Client client );
+extern struct sockaddr_storage* SocketGetRemoteAddr( Client client );
 extern void SocketSetUuid (Client client, const char *uuid);
 extern  const char* SocketGetUuid (const Client client);
 extern int  SocketCmpUuid (const Client c1, const Client c2);
