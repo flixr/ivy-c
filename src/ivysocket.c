@@ -49,13 +49,6 @@ typedef long ssize_t;
 #include <signal.h>
 #endif
 
-#ifndef IPV6_ADD_MEMBERSHIP
-#ifdef  IPV6_JOIN_GROUP
-#define IPV6_ADD_MEMBERSHIP IPV6_JOIN_GROUP
-#define IPV6_DROP_MEMBERSHIP IPV6_LEAVE_GROUP
-#endif
-#endif
-
 #include "param.h"
 #include "list.h"
 #include "ivychannel.h"
@@ -1098,7 +1091,7 @@ Multicast datagrams with initial TTL 255 are unrestricted in scope.
 
 	imr.ipv6mr_multiaddr = *host;
 	imr.ipv6mr_interface = 0;  /// TODO: Attention ca fait quoi ca ???
-	if(setsockopt(client->fd, IPPROTO_IPV6, IPV6_ADD_MEMBERSHIP, (char *)&imr,sizeof(imr)) == -1 )
+	if(setsockopt(client->fd, IPPROTO_IPV6, IPV6_JOIN_GROUP, (char *)&imr,sizeof(imr)) == -1 )
 		{
       	perror("setsockopt() Cannot join group");
       	fprintf(stderr, "Does your kernel support IP multicast extensions ?\n");
