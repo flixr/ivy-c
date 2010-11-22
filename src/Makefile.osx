@@ -1,13 +1,12 @@
-PERHAPS64 := $(shell uname -m | perl -ne "print /64/ ? '64' : '';")
-LIB = /lib$(PERHAPS64)
-ifeq ($(PERHAPS64), "64")
-	FPIC=
+LBITS := $(shell getconf LONG_BIT)
+ifeq ($(LBITS),64)
+  FPIC = -fPIC   
 else
-	FPIC=-fPIC
+  FPIC =
 endif
 
 ifndef PREFIX
-    PREFIX=/opt/rosx
+    PREFIX=/opt/local
 endif
 
 PCREINC = `pcre-config --cflags`
@@ -24,6 +23,7 @@ REGEXP= -DUSE_PCRE_REGEX -DPCRE_OPT=$(PCRE_OPT)
 
 OBJ = ivyloop.o timer.o ivysocket.o ivy.o ivybuffer.o ivyfifo.o ivybind.o intervalRegexp.o param.o
 OMPOBJ = ivyloop.o timer.o ivysocket_omp.o ivy_omp.o ivybuffer.o ivyfifo.o ivybind.o intervalRegexp.o param.o
+GLIBOBJ = ivyglibloop.o ivysocket.o ivy.o ivybuffer.o ivyfifo.o ivybind.o intervalRegexp.o param.o
 
 TOOLS_DIR = ../tools
 
@@ -35,6 +35,9 @@ OMPCPP =  g++-mp-4.4
 OMPLIBTOOL =ar q
 OMPCFLAGS = -g -Wall $(FPIC) -fopenmp -DOPENMP=1
 OMPLIB = -lgomp -lpthread
+
+GLIBINC = `pkg-config --cflags glib-2.0`
+GLIBLIB = `pkg-config --libs glib-2.0`
 
 
 LIBTOOL=ar q # linux and solaris
@@ -56,15 +59,15 @@ CFLAGS = -g -Wall -Wshadow $(FPIC)
 	$(CPP) $(CFLAGS)  -c $*.cpp
 
 
-all: static-libs tools # shared-libs 
+all: static-libs  shared-libs tools 
 libomp: libivy_omp.a 
 
 omp: libomp
 	@(cd $(TOOLS_DIR) && $(MAKE) -f Makefile.osx omp) 
 
-static-libs: libivy.a
+static-libs: libivy.a libglibivy.a
 
-shared-libs: libivy.dylib
+shared-libs: libivy.dylib libglibivy.dylib
 
 ivybind.o: ivybind.c
 	$(CC) -c $(CFLAGS) $(REGEXP) $(PCREINC) ivybind.c
@@ -74,7 +77,9 @@ ivy_omp.o: ivy.c
 
 ivysocket_omp.o: ivysocket.c
 	$(OMPCC) -c $(OMPCFLAGS)  -o ivysocket_omp.o ivysocket.c
-
+	
+ivyglibloop.o: ivyglibloop.c ivyglibloop.h
+	$(CC) -c $(CFLAGS) $(GLIBINC) ivyglibloop.c	
 
 libivy.a: $(OBJ)
 	rm -f $@
@@ -85,19 +90,32 @@ libivy_omp.a: $(OMPOBJ)
 	$(LIBTOOL) $@ $(OMPOBJ)
 
 libivy.dylib: $(OBJ)
-	$(CC) -dynamiclib -o $@ $(OBJ) $(PCRELIB)
+	#$(CC) $(CFLAGS) -dynamiclib -install_name $(DESTDIR)$(PREFIX)/lib/libivy.dylib -o $@ $(OBJ) $(PCRELIB)
+	$(CC) $(CFLAGS) -dynamiclib  -o $@ $(OBJ) $(PCRELIB)
 
 libivy_omp.dylib: $(OMPOBJ)
-	$(OMPCC) -dynamiclib -o $@ $(OMPOBJ) $(PCRELIB) $(OMPLIB) 
+	#$(OMPCC) -dynamiclib -install_name $(DESTDIR)$(PREFIX)$(LIB)/lib/libivy_omp.dylib -o $@ $(OMPOBJ) $(PCRELIB) $(OMPLIB)
+	$(OMPCC) -dynamiclib -o $@ $(OMPOBJ) $(PCRELIB) $(OMPLIB)
+	
+libglibivy.a: $(GLIBOBJ)
+	rm -f $@
+	$(LIBTOOL) $@ $(GLIBOBJ)
+
+libglibivy.dylib: $(GLIBOBJ)
+	#$(CC) $(CFLAGS)  -dynamiclib -install_name $(DESTDIR)$(PREFIX)/lib/libglibivy.dylib  -o $@ $(GLIBOBJ) $(PCRELIB) $(GLIBLIB)	
+	$(CC) $(CFLAGS)  -dynamiclib -o $@ $(GLIBOBJ) $(PCRELIB) $(GLIBLIB)
+
+ 
 
 # ------------------------------------------------------------------------------------------
 
 installlibs: static-libs shared-libs
 	test -d $(DESTDIR)$(PREFIX)$(LIB)  || mkdir -p $(DESTDIR)$(PREFIX)$(LIB)
-	install -m644 libivy.a		$(DESTDIR)$(PREFIX)$(LIB)
-	install -m644 libivy.dylib	$(DESTDIR)$(PREFIX)$(LIB)
-	@(cd $(TOOLS_DIR) && $(MAKE) -f Makefile.osx install)
-
+	install -m644 libivy.a		$(DESTDIR)$(PREFIX)/lib/
+	install -m644 libivy.dylib	$(DESTDIR)$(PREFIX)/lib/
+	install -m644 libglibivy.a	$(DESTDIR)$(PREFIX)/lib/
+	install -m644 libglibivy.dylib	$(DESTDIR)$(PREFIX)/lib/
+	
 includes:
 	test -d $(DESTDIR)$(PREFIX)/include/Ivy || mkdir -p $(DESTDIR)$(PREFIX)/include/Ivy
 	install -m644 ivy.h			$(DESTDIR)$(PREFIX)/include/Ivy/
@@ -111,10 +129,10 @@ includes:
 	install -m644 timer.h		$(DESTDIR)$(PREFIX)/include/Ivy/
 	install -m644 version.h		$(DESTDIR)$(PREFIX)/include/Ivy/
 
-installbins: commands
+installbins: tools
 	test -d $(DESTDIR)$(PREFIX)/bin || mkdir -p $(DESTDIR)$(PREFIX)/bin
-	install -m755 ivyprobe $(DESTDIR)$(PREFIX)/bin
-	install -m755 ivyperf $(DESTDIR)$(PREFIX)/bin
+	install -m755 $(TOOLS_DIR)/ivyprobe $(DESTDIR)$(PREFIX)/bin
+	install -m755 $(TOOLS_DIR)/ivyperf $(DESTDIR)$(PREFIX)/bin
 
 tools: static-libs 
 	@(cd $(TOOLS_DIR) && $(MAKE) -f Makefile.osx)
