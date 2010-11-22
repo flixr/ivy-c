@@ -19,7 +19,7 @@
 MAJOR=3
 MINOR=11
 
-PERHAPS64 := $(shell uname -m | perl -ne "print /64/ ? '64' : '';")
+PERHAPS64 := $(shell getconf LONG_BIT | perl -ne "print /64/ ? '64' : '';")
 LIB = /lib$(PERHAPS64)
 ifeq ($(PERHAPS64), "64")
 	FPIC=
