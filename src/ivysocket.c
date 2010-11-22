@@ -49,6 +49,13 @@ typedef long ssize_t;
 #include <signal.h>
 #endif
 
+#ifndef IPV6_ADD_MEMBERSHIP
+#ifdef  IPV6_JOIN_GROUP
+#define IPV6_ADD_MEMBERSHIP IPV6_JOIN_GROUP
+#define IPV6_DROP_MEMBERSHIP IPV6_LEAVE_GROUP
+#endif
+#endif
+
 #include "param.h"
 #include "list.h"
 #include "ivychannel.h"
@@ -345,7 +352,7 @@ Server SocketServer(int ipv6, unsigned short port,
 		local6->sin6_family =  AF_INET6; 
 		local6->sin6_addr = in6addr_any; 
 		local6->sin6_port = htons (port); 
-
+		addrlen = sizeof(struct sockaddr_in6); 
 	} 
 	else 
 	{ 
@@ -353,16 +360,15 @@ Server SocketServer(int ipv6, unsigned short port,
 		local4->sin_family =  AF_INET; 
 		local4->sin_addr.s_addr = INADDR_ANY; 
 		local4->sin_port = htons (port); 
-
+		addrlen = sizeof(struct sockaddr_in);
 	}
 
-	if (bind(fd,(struct sockaddr*) &local, sizeof(local)) < 0)
+	if (bind(fd,(struct sockaddr*) &local, addrlen) < 0)
 		{
 		perror ("*** bind ***");
 		exit(0);
 		}
 
-	addrlen = sizeof(local);
 	if (getsockname(fd, (struct sockaddr*)&local, &addrlen) < 0)
 		{
 		perror ("***get socket name ***");
@@ -898,6 +904,7 @@ Client SocketBroadcastCreate (int ipv6, unsigned short port,
 	Client client;
 	int on = 1;
 	struct sockaddr_storage local;
+	socklen_t addrlen;
 
 	memset( &local,0,sizeof(local) ); 
 	if ( ipv6 ) 
@@ -906,7 +913,7 @@ Client SocketBroadcastCreate (int ipv6, unsigned short port,
 		local6->sin6_family =  AF_INET6; 
 		local6->sin6_addr = in6addr_any; 
 		local6->sin6_port = htons (port); 
-
+		addrlen = sizeof( struct sockaddr_in6 );
 	} 
 	else 
 	{ 
@@ -914,7 +921,7 @@ Client SocketBroadcastCreate (int ipv6, unsigned short port,
 		local4->sin_family =  AF_INET; 
 		local4->sin_addr.s_addr = INADDR_ANY; 
 		local4->sin_port = htons (port); 
-
+		addrlen = sizeof( struct sockaddr_in );
 	}
 	
 	if ((handle = socket ( ipv6 ? AF_INET6 : AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0){
@@ -943,7 +950,7 @@ Client SocketBroadcastCreate (int ipv6, unsigned short port,
 			return NULL;
 		};
 
-	if (bind(handle, (struct sockaddr*)&local, sizeof(local) ) < 0)
+	if (bind(handle, (struct sockaddr*)&local,  addrlen ) < 0)
 		{
 			perror ("*** BIND ***");
 			return NULL;

@@ -40,10 +40,10 @@ OMPLIB = -lgomp -lpthread
 LIBTOOL=ar q # linux and solaris
 CFLAGS = -g -Wall $(FPIC)
 
-#CC=gcc
-#CPP=g++
-CC = $(OMPCC)
-CPP = $(OMPCPP)
+CC=gcc
+CPP=g++
+#CC = $(OMPCC)
+#CPP = $(OMPCPP)
 LIBTOOL = $(OMPLIBTOOL)
 CFLAGS = -g -Wall -Wshadow $(FPIC)
 
