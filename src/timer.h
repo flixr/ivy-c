@@ -28,9 +28,9 @@ typedef void (*TimerCb)( TimerId id , void *user_data, unsigned long delta );
 
 /* API  le temps est en millisecondes */
 #define TIMER_LOOP -1			/* timer en boucle infinie */
-TimerId TimerRepeatAfter( int count, long time, TimerCb cb, void *user_data );
+TimerId TimerRepeatAfter( int count, long timeout, TimerCb cb, void *user_data );
 
-void TimerModify( TimerId id, long time );
+void TimerModify( TimerId id, long timeout );
 
 void TimerRemove( TimerId id );
 
