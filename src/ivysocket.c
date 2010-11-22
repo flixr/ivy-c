@@ -745,6 +745,7 @@ Client SocketConnectAddr (int ipv6, struct sockaddr_storage * addr, unsigned sho
 	HANDLE handle;
 	Client client;
 	struct sockaddr_storage remote;
+	socklen_t addrlen;
 #ifdef WIN32
 	u_long iMode = 1; /* non blocking Mode */
 #else
@@ -765,6 +766,7 @@ Client SocketConnectAddr (int ipv6, struct sockaddr_storage * addr, unsigned sho
 		remote6->sin6_scope_id =  ((struct sockaddr_in6*)addr)->sin6_scope_id;
 		remote6->sin6_flowinfo =  ((struct sockaddr_in6*)addr)->sin6_flowinfo;
 		remote6->sin6_port = htons (port);
+		addrlen = sizeof(struct sockaddr_in6);
 	}
 	else
 	{
@@ -772,9 +774,10 @@ Client SocketConnectAddr (int ipv6, struct sockaddr_storage * addr, unsigned sho
 		remote4->sin_family = AF_INET;
 		remote4->sin_addr = ((struct sockaddr_in*)addr)->sin_addr;
 		remote4->sin_port = htons (port);
+		addrlen = sizeof(struct sockaddr_in);
 	}
 
-	if (connect (handle, (const struct sockaddr*)&remote, sizeof( remote ) ) < 0){
+	if (connect (handle, (const struct sockaddr*)&remote, addrlen ) < 0){
 		perror ("*** client connect ***");
 		return NULL;
 	};
