@@ -111,6 +111,8 @@ libglibivy.dylib: $(GLIBOBJ)
 
 installlibs: static-libs shared-libs
 	test -d $(DESTDIR)$(PREFIX)$(LIB)  || mkdir -p $(DESTDIR)$(PREFIX)$(LIB)
+	install_name_tool -id $(DESTDIR)$(PREFIX)/lib/libivy.dylib libivy.dylib
+	install_name_tool -id $(DESTDIR)$(PREFIX)/lib/libglibivy.dylib libglibivy.dylib
 	install -m644 libivy.a		$(DESTDIR)$(PREFIX)/lib/
 	install -m644 libivy.dylib	$(DESTDIR)$(PREFIX)/lib/
 	install -m644 libglibivy.a	$(DESTDIR)$(PREFIX)/lib/
