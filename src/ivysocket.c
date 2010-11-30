@@ -24,6 +24,7 @@
 #include <Ws2tcpip.h>
 #include <windows.h>
 #endif
+
 #include <stdlib.h>
 #include <errno.h>
 #include <stdio.h>
@@ -78,6 +79,7 @@ struct _client {
 	char app_uuid[128];
 	int ipv6;
 	struct sockaddr_storage from; //  IPV6 ou IPV4
+	socklen_t from_len;
 	SocketInterpretation interpretation;
 	void (*handle_delete)(Client client, const void *data);
 	void (*handle_decongestion)(Client client, const void *data);
@@ -154,7 +156,7 @@ static void HandleSocket (Channel channel, HANDLE fd, void *data)
 	long nb_to_read = 0;
 	long nb;
 	long nb_occuped;
-	socklen_t len;
+	long len;
 	
 	/* limitation taille buffer */
 	nb_occuped = client->ptr - client->buffer;
@@ -171,8 +173,8 @@ static void HandleSocket (Channel channel, HANDLE fd, void *data)
 		nb_to_read = client->buffer_size - nb_occuped;
 		client->ptr = client->buffer + nb_occuped; 
 	}
-	len = sizeof (client->from );
-	nb = recvfrom (fd, client->ptr, nb_to_read, 0, (struct sockaddr*)&client->from, &len);
+	client->from_len = sizeof (client->from );
+	nb = recvfrom (fd, client->ptr, nb_to_read, 0, (struct sockaddr*)&(client->from), &(client->from_len));
 	if (nb  < 0) {
 		perror(" Read Socket ");
 		IvyChannelRemove (client->channel );
@@ -257,6 +259,7 @@ static void HandleServer(Channel channel, HANDLE fd, void *data)
 		client->terminator = '\n';
 	client->ipv6 = server->ipv6;
 	client->from = remote;
+	client->from_len = addrlen;
 	client->fd = ns;
 	client->ifb = NULL;
 	strcpy (client->app_uuid, "init by HandleServer");
@@ -486,8 +489,14 @@ void SocketGetRemoteHost (Client client, char **hostptr, unsigned short *port )
 	
 	if (!client)
 		return;
-	
-	err = getnameinfo((struct sockaddr*)&client->from, sizeof(client->from), host, sizeof( host), serv, sizeof( serv ), NI_NOFQDN  );
+	if( client->from_len == 0 )
+	{
+		fprintf(stderr, "SocketGetRemoteHost :: getnameinfo bad Addr Len\n" );
+		*hostptr = "unknown";
+		*port = 0;
+		return;
+	}
+	err = getnameinfo((struct sockaddr*)&client->from, client->from_len, host, sizeof( host), serv, sizeof( serv ), NI_NOFQDN  );
 
 	
 	if (err != 0 )
@@ -504,7 +513,7 @@ void SocketGetRemoteHost (Client client, char **hostptr, unsigned short *port )
             }
 		}
 #else
-		fprintf(stderr, "SocketGetRemoteHost :: getnameinfo %s\n", hstrerror( err ) );
+		fprintf(stderr, "SocketGetRemoteHost :: getnameinfo (%d) %s\n", err, hstrerror( err ) );
 #endif
 		*hostptr = "unknown";
 	}

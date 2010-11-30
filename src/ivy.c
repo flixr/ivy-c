@@ -482,10 +482,9 @@ static RWIvyClientPtr CheckConnected( Client sclnt )
   RWIvyClientPtr iclient;
   struct sockaddr_storage* addr1;
   struct sockaddr_storage* addr2;
-  char *remotehost;
   unsigned short remoteport;
 	
-  SocketGetRemoteHost( sclnt, &remotehost, &remoteport );
+  remoteport = SocketGetRemotePort( sclnt );
 
   if ( remoteport == 0 ) /* Old Ivy Protocol Dont check */
     return 0;
