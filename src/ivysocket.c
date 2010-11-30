@@ -432,7 +432,7 @@ char *SocketGetPeerHost (Client client )
             }
 		}
 #else
-		fprintf(stderr, "SocketGetPeerHost :: getnameinfo %s\n", hstrerror( h_errno) );
+		fprintf(stderr, "SocketGetPeerHost :: getnameinfo %s\n", hstrerror( err ) );
 #endif
 		return "can't translate addr";
 	}
@@ -504,7 +504,7 @@ void SocketGetRemoteHost (Client client, char **hostptr, unsigned short *port )
             }
 		}
 #else
-		fprintf(stderr, "SocketGetRemoteHost :: getnameinfo %s\n", hstrerror( h_errno) );
+		fprintf(stderr, "SocketGetRemoteHost :: getnameinfo %s\n", hstrerror( err ) );
 #endif
 		*hostptr = "unknown";
 	}
