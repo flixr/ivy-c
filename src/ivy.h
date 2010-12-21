@@ -70,6 +70,7 @@ void IvyInit(
 	 IvyDieCallback die_callback,	/* last change callback before die */
 	 void *die_data 		/* user data */
 	 );
+void IvyTerminate();
   
 void IvySetBindCallback(	 
 			  IvyBindCallback bind_callback,

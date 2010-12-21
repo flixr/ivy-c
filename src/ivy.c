@@ -895,15 +895,23 @@ void IvyInit (const char *appname, const char *ready,
 			 )
 {
 	SocketInit();
-
-	ApplicationName = appname;
+	if ( appname )
+		ApplicationName = strdup(appname);
 	application_callback = callback;
 	application_user_data = data;
 	application_die_callback = die_callback;
 	application_die_user_data = die_data;
-	ready_message = ready;
+	if ( ready )
+		ready_message = strdup(ready);
 
 	if ( getenv( "IVY_DEBUG_BINARY" )) debug_binary_msg = 1;
+}
+void IvyTerminate()
+{
+	if ( ApplicationName )
+		free( ApplicationName );
+	if ( ready_message )
+		free( ready_message );
 }
 
 void IvySetBindCallback( IvyBindCallback bind_callback, void *bind_data )
