@@ -1,3 +1,12 @@
+ivy-c (3.11.7) unstable; urgency=low
+
+  * copy string buffer for message ready instead of referencing it since
+	we have no clue if this buffer will remain valid atfer the caller
+	calls init
+    function ivyTerminate dealloc allocated string
+	
+ -- Alexandre Bustico <bustico@cena.fr>  Mon, 6 Jul 2009 16:43:00 +0200
+
 ivy-c (3.11.6) unstable; urgency=low
 
   * desactivation of the nagle buffering for TCP sockets, 
