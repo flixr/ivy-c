@@ -120,7 +120,7 @@ installlibs: static-libs shared-libs
 	
 includes:
 	test -d $(DESTDIR)$(PREFIX)/include/Ivy || mkdir -p $(DESTDIR)$(PREFIX)/include/Ivy
-	install -m644 ivy.h			$(DESTDIR)$(PREFIX)/include/Ivy/
+	install -m644 ivy.h		$(DESTDIR)$(PREFIX)/include/Ivy/
 	install -m644 ivybind.h		$(DESTDIR)$(PREFIX)/include/Ivy/
 	install -m644 ivybuffer.h	$(DESTDIR)$(PREFIX)/include/Ivy/
 	install -m644 ivychannel.h	$(DESTDIR)$(PREFIX)/include/Ivy/
@@ -130,6 +130,7 @@ includes:
 	install -m644 list.h		$(DESTDIR)$(PREFIX)/include/Ivy/
 	install -m644 timer.h		$(DESTDIR)$(PREFIX)/include/Ivy/
 	install -m644 version.h		$(DESTDIR)$(PREFIX)/include/Ivy/
+	install -m644 ivyglibloop.h	$(DESTDIR)$(PREFIX)/include/Ivy/
 
 installbins: tools
 	test -d $(DESTDIR)$(PREFIX)/bin || mkdir -p $(DESTDIR)$(PREFIX)/bin
