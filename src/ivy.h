@@ -70,14 +70,14 @@ void IvyInit(
 	 IvyDieCallback die_callback,	/* last change callback before die */
 	 void *die_data 		/* user data */
 	 );
-void IvyTerminate();
+void IvyTerminate(void);
   
 void IvySetBindCallback(	 
 			  IvyBindCallback bind_callback,
 			  void *bind_data );
 
 void IvyStart (const char*);
-void IvyStop ();
+void IvyStop (void);
 
 /* query sur les applications connectees */
 char *IvyGetApplicationName( IvyClientPtr app );
