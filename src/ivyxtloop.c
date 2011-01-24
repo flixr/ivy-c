@@ -48,7 +48,7 @@ struct _channel {
 	XtInputId id_write;
 	XtInputId id_delete;
 
-	HANDLE fd;
+	IVY_HANDLE fd;
 	void *data;
 	ChannelHandleDelete handle_delete;
 	ChannelHandleRead handle_read;
@@ -117,7 +117,7 @@ void IvyXtChannelAppContext( XtAppContext cntx )
 	app = cntx;
 }
 
-Channel IvyChannelAdd(HANDLE fd, void *data,
+Channel IvyChannelAdd(IVY_HANDLE fd, void *data,
 				ChannelHandleDelete handle_delete,
 				ChannelHandleRead handle_read,
 		                ChannelHandleWrite handle_write

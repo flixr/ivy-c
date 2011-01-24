@@ -42,7 +42,7 @@
 
 struct _channel {
   Channel next;
-  HANDLE fd;
+  IVY_HANDLE fd;
   void *data;
   int tobedeleted;
   ChannelHandleDelete handle_delete;
@@ -56,7 +56,7 @@ static int channel_initialized = 0;
 
 static fd_set open_fds;
 static fd_set wrdy_fds;
-static HANDLE highestFd=0;
+static IVY_HANDLE highestFd=0;
 
 static int MainLoop = 1;
 
@@ -99,7 +99,7 @@ ChannelDefferedDelete ()
   }
 }
 
-Channel IvyChannelAdd (HANDLE fd, void *data, 
+Channel IvyChannelAdd (IVY_HANDLE fd, void *data, 
 		       ChannelHandleDelete handle_delete,
 		       ChannelHandleRead handle_read,
 		       ChannelHandleWrite handle_write

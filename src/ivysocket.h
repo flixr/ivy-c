@@ -32,13 +32,13 @@ extern "C" {
 #ifdef __MINGW32__
 #include <ws2tcpip.h>
 #endif
-#define HANDLE SOCKET
+#define IVY_HANDLE SOCKET
 #define socklen_t int
 #ifndef IN_MULTICAST
 #define IN_MULTICAST(i)            (((long)(i) & 0xf0000000) == 0xe0000000)
 #endif
 #else
-#define HANDLE int
+#define IVY_HANDLE int
 #include <netinet/in.h>
 #endif
 #ifdef __INTERIX
@@ -69,10 +69,10 @@ extern void SocketServerClose( Server server );
 /* Client Part */
 
 extern void SocketClose( Client client );
-extern SendState SocketSend( Client client, char *fmt, ... );
+extern SendState SocketSend( Client client, const char *fmt, ... );
 extern SendState SocketSendRaw( const Client client, const char *buffer, const int len );
 extern SendState SocketSendRawWithId( const Client client, const char *id, const char *buffer, const int len );
-extern char *SocketGetPeerHost( Client client );
+extern const char *SocketGetPeerHost( Client client );
 extern void SocketSetData( Client client, const void *data );
 extern const void *SocketGetData( Client client );
 extern void SocketBroadcast( char *fmt, ... );
@@ -110,13 +110,13 @@ extern struct sockaddr_storage* SocketGetRemoteAddr( Client client );
 extern void SocketSetUuid (Client client, const char *uuid);
 extern  const char* SocketGetUuid (const Client client);
 extern int  SocketCmpUuid (const Client c1, const Client c2);
-extern void SocketGetRemoteHost (Client client, char **host, unsigned short *port );
+extern void SocketGetRemoteHost (Client client, const char **host, unsigned short *port );
 
 extern unsigned short int SocketGetLocalPort ( Client client );
 extern unsigned short int SocketGetRemotePort ( Client client );
 /* emmission d'un broadcast UDP */
-extern void SocketSendBroadcast( Client client, unsigned long host, unsigned short port, char *fmt, ... );
-extern void SocketSendBroadcast6( Client client, struct in6_addr* host, unsigned short port, char *fmt, ... );
+extern void SocketSendBroadcast( Client client, unsigned long host, unsigned short port, const char *fmt, ... );
+extern void SocketSendBroadcast6( Client client, struct in6_addr* host, unsigned short port, const char *fmt, ... );
 
 #ifdef __cplusplus
 }

@@ -90,7 +90,7 @@ static void IvyGlutHandleChannelDelete( int source, GLUTInputId id, void *data )
 	(*channel->handle_delete)(channel->data);
 }
 
-Channel IvyChannelAdd(HANDLE fd, void *data,
+Channel IvyChannelAdd(IVY_HANDLE fd, void *data,
 				ChannelHandleDelete handle_delete,
 				ChannelHandleRead handle_read
 				)						

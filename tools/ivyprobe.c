@@ -104,7 +104,7 @@ char * Chop(char *arg)
 	return arg;
 }
 
-void HandleStdin (Channel channel, HANDLE fd, void *data)
+void HandleStdin (Channel channel, IVY_HANDLE fd, void *data)
 {
 	static const char *separator = "#";
 	char buf[4096];
@@ -220,8 +220,8 @@ void HandleStdin (Channel channel, HANDLE fd, void *data)
 
 void ApplicationCallback (IvyClientPtr app, void *user_data, IvyApplicationEvent event)
 {
-	char *appname;
-	char *host;
+	const char *appname;
+	const char *host;
 /*	char **msgList;*/
 	appname = IvyGetApplicationName (app);
 	host = IvyGetApplicationHost (app);

@@ -31,9 +31,9 @@ extern "C" {
 
 #ifdef WIN32
 #include <windows.h>
-#define HANDLE SOCKET
+#define IVY_HANDLE SOCKET
 #else
-#define HANDLE int
+#define IVY_HANDLE int
 #endif
 
 /*

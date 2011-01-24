@@ -12,7 +12,8 @@
    
   ° traitement des options :
     -v (affi version) -b bus, -r regexp file, -m message file, -n : nombre de recepteurs
-    -t [type de test => ml (memory leak), tp (throughput)
+    -t [type de test => ml (memory leak), tp (throughput), dx (gestion des deconnexions 
+       intenpestives)
 
     test memory leak
   ° fork d'un emetteur et d'un (ou plusieurs) recepteur : le recepteur s'abonne à toutes les regexps,
@@ -24,6 +25,10 @@
   ° l'emetteur envoie en boucle tous les messages du fichier de message
   ° l'emetteur note le temps d'envoi des messages
   ° l'emetteur envoie un die all et quitte
+
+  UTILISATION TYPIQUES:
+  pour la deconnexion intenpestive : 
+  ivythroughput -R 500 -t dx -d 40 -n 2
 */
 
 #include <sys/time.h>
@@ -61,7 +66,7 @@ typedef std::map<string, InfoBind> MapBindByClnt;
 
 #define MILLISEC 1000.0
 
-typedef enum  {memoryLeak1, memoryLeak2, throughput} KindOfTest ;
+typedef enum  {memoryLeak1, memoryLeak2, throughput, disconnect} KindOfTest ;
 
 
 typedef struct {
@@ -97,6 +102,7 @@ void endOfSeqCB (IvyClientPtr app, void *user_data, int argc, char *argv[]);
 void desabonneEtReabonneCB (TimerId id, void *user_data, unsigned long delta);
 void changeRegexpCB (TimerId id, void *user_data, unsigned long delta);
 void exitCB (TimerId id, void *user_data, unsigned long delta);
+void doNothingAndSuicideCB (TimerId id, void *user_data, unsigned long delta);
 
 unsigned int nbMess=0, nbReg=0, numClients =1, globalInst, numRegexps=1e6, numMessages=1e6;
 MapUintToBool   recReady;
@@ -155,6 +161,8 @@ int main(int argc, char *argv[])
 	kindOfTest = memoryLeak2;
       } else if (strcasecmp (optarg, "tp") == 0) {
 	kindOfTest = throughput;
+      } else if (strcasecmp (optarg, "dx") == 0) {
+	kindOfTest = disconnect;
       } else {
 	printf("usage: %s %s",argv[0],helpmsg);
 	exit(1);
@@ -208,6 +216,9 @@ int main(int argc, char *argv[])
 	break;
       case memoryLeak2 :
 	recepteur_tp (bus, kindOfTest, i, regexps, testDuration-5);
+	break;
+      case disconnect :
+	recepteur_tp (bus, kindOfTest, i, regexps, testDuration);
 	break;
       }
       exit (0);
@@ -297,8 +308,10 @@ void recepteur_tp (const char* bus, KindOfTest kod, unsigned int inst,
 
   if (kod == memoryLeak2) {
     TimerRepeatAfter (1, exitAfter*1000, exitCB, NULL);
+  } else if  (kod == disconnect) {
+    TimerRepeatAfter (1, exitAfter*1000/3, doNothingAndSuicideCB, (void *) exitAfter);
   }
-
+  
   //usleep (inst * 50 * 1000);
   IvyStart (bus);
   IvyMainLoop ();
@@ -646,3 +659,16 @@ void exitCB (TimerId id, void *user_data, unsigned long delta)
   printf ("DBG> client exit\n");
   exit (0);
 }
+
+void doNothingAndSuicideCB (TimerId id, void *user_data, unsigned long delta)
+{
+  printf (".");
+  long time = (long) user_data;
+  time = ((time-2)/2) * 1000;
+  printf ("DBG> client hanging for %d milliseconds\n", time);
+  usleep (time * 1000);
+  printf ("DBG> client suicide\n");
+  _exit(42);
+  printf ("DBG> CECI NE DEVRAIT JAMAIS ETRE AFFICHE\n");
+}
+

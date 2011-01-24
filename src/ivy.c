@@ -62,7 +62,7 @@
  * effectuée si on stringifie directement dans la macro GenerateIvyBus */
 #define str(bus) #bus
 #define GenerateIvyBus(domain,bus) str(domain)":"str(bus)
-static char* DefaultIvyBus = GenerateIvyBus(DEFAULT_DOMAIN,IVY_DEFAULT_BUS);
+static const char* DefaultIvyBus = GenerateIvyBus(DEFAULT_DOMAIN,IVY_DEFAULT_BUS);
 
 typedef enum {
 	Bye,			/* l'application emettrice se termine */
@@ -252,7 +252,7 @@ static SendState MsgSendTo(IvyClientPtr ivyClient,
 			       IvyApplicationCongestion);
 #ifdef DEBUG
       {
-	char *remotehost;
+	const char *remotehost;
 	unsigned short remoteport;
 	/* probably bogus call, but this is for debug only anyway */
 	SocketGetRemoteHost( ivyClient->client, &remotehost, &remoteport );
@@ -266,7 +266,7 @@ static SendState MsgSendTo(IvyClientPtr ivyClient,
 			       IvyApplicationFifoFull);
 #ifdef DEBUG
       {
-	char *remotehost;
+	const char *remotehost;
 	unsigned short remoteport;
 	/* probably bogus call, but this is for debug only anyway */
 	SocketGetRemoteHost( ivyClient->client, &remotehost, &remoteport );
@@ -321,7 +321,7 @@ ClientCall (IvyClientPtr clnt, const char *message)
   MsgSndDictPtr msgSendDict;
   
   for (msgSendDict=messSndByRegexp; msgSendDict != NULL; 
-       msgSendDict=msgSendDict->hh.next) {
+       msgSendDict= (MsgSndDictPtr) msgSendDict->hh.next) {
     match_count += RegexpCallUnique (msgSendDict, message, clnt->client);
   }
   
@@ -392,7 +392,7 @@ RegexpCall (const MsgSndDictPtr msg, const char * const message)
 				 IvyApplicationCongestion);
 #ifdef DEBUG
 	{
-	  char *remotehost;
+	  const char *remotehost;
 	  unsigned short remoteport;
 	  /* probably bogus call, but this is for debug only anyway */
 	  SocketGetRemoteHost( clnt->client, &remotehost, &remoteport );
@@ -406,7 +406,7 @@ RegexpCall (const MsgSndDictPtr msg, const char * const message)
 				 IvyApplicationFifoFull);
 #ifdef DEBUG
 	{
-	  char *remotehost;
+	  const char *remotehost;
 	  unsigned short remoteport;
 	  /* probably bogus call, but this is for debug only anyway */
 	  SocketGetRemoteHost( clnt->client, &remotehost, &remoteport );
@@ -749,7 +749,7 @@ static void ClientDelete( Client client, const void *data )
 	IvyClientPtr clnt;
 
 #ifdef DEBUG
-	char *remotehost;
+	const char *remotehost;
 	unsigned short remoteport;
 #endif
 	clnt = (IvyClientPtr)data;
@@ -770,7 +770,7 @@ static void ClientDecongestion ( Client client, const void *data )
   IvyClientPtr clnt;
   
 #ifdef DEBUG
-  char *remotehost;
+  const char *remotehost;
   unsigned short remoteport;
 #endif
   clnt = (IvyClientPtr)data;
@@ -791,7 +791,7 @@ static void *ClientCreate( Client client )
 {
 
   char appName[64];
-  char *remotehost;
+  const char *remotehost;
   unsigned short remoteport;
 
   SocketGetRemoteHost( client, &remotehost, &remoteport );
@@ -823,7 +823,7 @@ static void BroadcastReceive( Client client, const void *data, char *line )
 	char appid[128];
 	char appname[2048];
 	unsigned short remoteport;
-	char *remotehost = 0;
+	const char *remotehost = 0;
 
 	memset( appid, 0, sizeof( appid ) );
 	memset( appname, 0, sizeof( appname ) );
@@ -909,9 +909,9 @@ void IvyInit (const char *appname, const char *ready,
 void IvyTerminate()
 {
 	if ( ApplicationName )
-		free( ApplicationName );
+	  free((void *) ApplicationName );
 	if ( ready_message )
-		free( ready_message );
+		free((void *)  ready_message );
 }
 
 void IvySetBindCallback( IvyBindCallback bind_callback, void *bind_data )
@@ -1249,7 +1249,7 @@ int IvySendMsg(const char *fmt, ...) /* version dictionnaire */
 
 #else // PAS OPENMP
 
-  for (msgSendDict=messSndByRegexp; msgSendDict ; msgSendDict=msgSendDict->hh.next) {
+  for (msgSendDict=messSndByRegexp; msgSendDict ; msgSendDict=(MsgSndDictPtr) msgSendDict->hh.next) {
     match_count += RegexpCall (msgSendDict, buffer.data);
   }
 #endif
@@ -1309,14 +1309,14 @@ void IvySendDieMsg(IvyClientPtr app )
   MsgSendTo(app, Die, 0, "" );
 }
 
-char *IvyGetApplicationName(IvyClientPtr app )
+const char *IvyGetApplicationName(IvyClientPtr app )
 {
 	if ( app && app->app_name ) 
 		return app->app_name;
 	else return "Unknown";
 }
 
-char *IvyGetApplicationHost(IvyClientPtr app )
+const char *IvyGetApplicationHost(IvyClientPtr app )
 {
 	if ( app && app->client ) 
 		return SocketGetPeerHost (app->client );
@@ -1420,7 +1420,7 @@ static void substituteInterval (IvyBuffer *src)
     char *itvPos;
     IvyBuffer dst = {NULL, 0, 0};
     dst.size = 8192;
-    dst.data = malloc (dst.size);
+    dst.data = (char *) malloc (dst.size);
 
     curPos = src->data;
     while ((itvPos = strstr (curPos, "(?I")) != NULL) {
@@ -1578,7 +1578,8 @@ static void delAllRegexpsFromDictionary ()
   RWIvyClientPtr  client;
 
   /* pour toutes les entrees du dictionnaire des regexps */
-  for (msgSendDict=messSndByRegexp; msgSendDict ; msgSendDict=msgSendDict->hh.next) {
+  for (msgSendDict=messSndByRegexp; msgSendDict ; 
+       msgSendDict= (MsgSndDictPtr) msgSendDict->hh.next) {
     /* on efface le binding */
     IvyBindingFree (msgSendDict->binding);
     /* pour chaque client abonne a cette regexp */
@@ -1623,7 +1624,7 @@ static void addRegexpToDictionary (const char* regexp, IvyClientPtr client)
     const char *errbuf;
     int erroffset;
 
-    msgSendDict = malloc (sizeof (struct _msg_snd_dict));
+    msgSendDict = (MsgSndDictPtr) malloc (sizeof (struct _msg_snd_dict));
     msgSendDict->regexp_src = strdup (regexp);
     
     msgSendDict->binding = IvyBindingCompile(regexp, & erroffset, & errbuf );
@@ -1641,11 +1642,11 @@ static void addRegexpToDictionary (const char* regexp, IvyClientPtr client)
     {// DEBUG
       int debugSize=0, nDebugSize=0;
       MsgSndDictPtr msd;
-      for (msd=messSndByRegexp; msd ; msd=msd->hh.next) {
+      for (msd=messSndByRegexp; msd ; msd= (MsgSndDictPtr) msd->hh.next) {
 	debugSize++;
       }
       HASH_ADD_KEYPTR(hh, messSndByRegexp, msgSendDict->regexp_src, strlen (msgSendDict->regexp_src), msgSendDict); 
-      for (msd=messSndByRegexp; msd ; msd=msd->hh.next) {
+      for (msd=messSndByRegexp; msd ; msd= (MsgSndDictPtr) msd->hh.next) {
 	nDebugSize++;
       }
       if ((nDebugSize-debugSize) != 1) {
@@ -1737,7 +1738,8 @@ static void delOneClient (const Client client)
   // on libère la mémoire de l'element courrant dans le corp de la boucle
   // ce qui oblige a recuperer le champ next avant de faire ce free
   for ( msgSendDict = messSndByRegexp ; 
-	(mnext = msgSendDict ? msgSendDict->hh.next: msgSendDict ),msgSendDict ; 
+	(mnext = msgSendDict ? (MsgSndDictPtr) msgSendDict->hh.next
+	                     :  msgSendDict ),msgSendDict ; 
 	msgSendDict = mnext ) {
     delOneClientFromDictionaryEntry (msgSendDict, client);
   }

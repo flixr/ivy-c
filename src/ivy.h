@@ -80,8 +80,8 @@ void IvyStart (const char*);
 void IvyStop (void);
 
 /* query sur les applications connectees */
-char *IvyGetApplicationName( IvyClientPtr app );
-char *IvyGetApplicationHost( IvyClientPtr app );
+const char *IvyGetApplicationName( IvyClientPtr app );
+const char *IvyGetApplicationHost( IvyClientPtr app );
 IvyClientPtr IvyGetApplication( char *name );
 char *IvyGetApplicationList(const char *sep);
 char **IvyGetApplicationMessages( IvyClientPtr app); /* demande de reception d'un message */

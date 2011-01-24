@@ -29,7 +29,7 @@ static void IvyFifoDrain(IvyFifoBuffer *f, int size);
 int IvyFifoInit(IvyFifoBuffer *f)
 {
   f->wptr = f->rptr =
-    f->buffer = malloc(IVY_FIFO_ALLOC_SIZE);
+    f->buffer = (char *) malloc(IVY_FIFO_ALLOC_SIZE);
   f->end = f->buffer + IVY_FIFO_ALLOC_SIZE;
   f->full = 0;
 
@@ -47,7 +47,7 @@ void IvyFifoFree (IvyFifoBuffer *f)
 
 IvyFifoBuffer* IvyFifoNew (void)
 {
-  IvyFifoBuffer* ifb = malloc (sizeof (IvyFifoBuffer));
+  IvyFifoBuffer* ifb = (IvyFifoBuffer*) malloc (sizeof (IvyFifoBuffer));
   IvyFifoInit (ifb);
   return (ifb);
 }
@@ -93,7 +93,7 @@ void IvyFifoRealloc (IvyFifoBuffer *f, unsigned int new_size)
     IvyFifoBuffer f2;
     
     f2.wptr = f2.rptr =
-      f2.buffer = malloc(alignedNewSize);
+      f2.buffer = (char *) malloc(alignedNewSize);
     f2.end = f2.buffer + alignedNewSize;
     f2.full = 0;
     

@@ -61,7 +61,7 @@ typedef long ssize_t;
 
 struct _server {
 	Server next;
-	HANDLE fd;
+	IVY_HANDLE fd;
 	Channel channel;
 	unsigned short port;
 	int ipv6;
@@ -73,7 +73,7 @@ struct _server {
 
 struct _client {
 	Client next;
-	HANDLE fd;
+	IVY_HANDLE fd;
 	Channel channel;
 	unsigned short port;
 	char app_uuid[128];
@@ -148,7 +148,7 @@ static void DeleteServerSocket(void *data)
 }
 
 
-static void HandleSocket (Channel channel, HANDLE fd, void *data)
+static void HandleSocket (Channel channel, IVY_HANDLE fd, void *data)
 {
 	Client client = (Client)data;
 	char *ptr;
@@ -163,7 +163,7 @@ static void HandleSocket (Channel channel, HANDLE fd, void *data)
 	nb_to_read = client->buffer_size - nb_occuped;
 	if (nb_to_read == 0 ) {
 		client->buffer_size *= 2; /* twice old size */
-		client->buffer = realloc( client->buffer, client->buffer_size );
+		client->buffer = (char *) realloc( client->buffer, client->buffer_size );
 		if (!client->buffer )
 		{
 		fprintf(stderr,"HandleSocket Buffer Memory Alloc Error\n");
@@ -186,7 +186,7 @@ static void HandleSocket (Channel channel, HANDLE fd, void *data)
 	}
 	client->ptr += nb;
 	ptr = client->buffer;
-	while ((ptr_nl = memchr (ptr, client->terminator,  client->ptr - ptr )))
+	while ((ptr_nl = (char *) memchr (ptr, client->terminator,  client->ptr - ptr )))
 		{
 		*ptr_nl ='\0';
 		if (client->interpretation )
@@ -208,7 +208,7 @@ static void HandleSocket (Channel channel, HANDLE fd, void *data)
 
 
 
-static void HandleCongestionWrite (Channel channel, HANDLE fd, void *data)
+static void HandleCongestionWrite (Channel channel, IVY_HANDLE fd, void *data)
 {
   Client client = (Client)data;
   
@@ -225,11 +225,11 @@ static void HandleCongestionWrite (Channel channel, HANDLE fd, void *data)
 }
 
 
-static void HandleServer(Channel channel, HANDLE fd, void *data)
+static void HandleServer(Channel channel, IVY_HANDLE fd, void *data)
 {
 	Server server = (Server ) data;
 	Client client;
-	HANDLE ns;
+	IVY_HANDLE ns;
 	socklen_t addrlen;
 	struct sockaddr_storage remote;
 #ifdef WIN32
@@ -250,7 +250,7 @@ static void HandleServer(Channel channel, HANDLE fd, void *data)
 	IVY_LIST_ADD_START (clients_list, client );
 	
 	client->buffer_size = IVY_BUFFER_SIZE;
-	client->buffer = malloc( client->buffer_size );
+	client->buffer = (char *) malloc( client->buffer_size );
 	if (!client->buffer )
 		{
 		fprintf(stderr,"HandleSocket Buffer Memory Alloc Error\n");
@@ -312,7 +312,7 @@ Server SocketServer(int ipv6, unsigned short port,
 	void(*interpretation) (Client client, const void *data, char *ligne))
 {
 	Server server;
-	HANDLE fd;
+	IVY_HANDLE fd;
 	int one=1;
 	struct sockaddr_storage local;
 	socklen_t addrlen;
@@ -404,7 +404,7 @@ void SocketServerClose (Server server )
 	IvyChannelRemove (server->channel );
 }
 
-char *SocketGetPeerHost (Client client )
+const char *SocketGetPeerHost (Client client )
 {
 	int err;
 	struct sockaddr_storage name;
@@ -481,7 +481,7 @@ struct sockaddr_storage * SocketGetRemoteAddr (Client client )
 	return client ? &client->from : 0;
 }
 
-void SocketGetRemoteHost (Client client, char **hostptr, unsigned short *port )
+void SocketGetRemoteHost (Client client, const char **hostptr, unsigned short *port )
 {
 	int err;
 	static char host[NI_MAXHOST];
@@ -681,7 +681,7 @@ void SocketSetData (Client client, const void *data )
   }
 }
 
-SendState SocketSend (Client client, char *fmt, ... )
+SendState SocketSend (Client client, const char *fmt, ... )
 {
   SendState state;
   static IvyBuffer buffer = {NULL, 0, 0 }; /* Use static mem to eliminate multiple call to malloc /free */
@@ -751,7 +751,7 @@ Client SocketConnectAddr (int ipv6, struct sockaddr_storage * addr, unsigned sho
 		          void(*handle_decongestion)(Client client, const void *data)
 			  )
 {
-	HANDLE handle;
+	IVY_HANDLE handle;
 	Client client;
 	struct sockaddr_storage remote;
 	socklen_t addrlen;
@@ -816,7 +816,7 @@ Client SocketConnectAddr (int ipv6, struct sockaddr_storage * addr, unsigned sho
 	IVY_LIST_ADD_START(clients_list, client );
 	
 	client->buffer_size = IVY_BUFFER_SIZE;
-	client->buffer = malloc( client->buffer_size );
+	client->buffer = (char *) malloc( client->buffer_size );
 	if (!client->buffer )
 		{
 		fprintf(stderr,"HandleSocket Buffer Memory Alloc Error\n");
@@ -855,7 +855,7 @@ int SocketWaitForReply (Client client, char *buffer, int size, int delai)
 	char *ptr_nl;
 	long nb_to_read = 0;
 	long nb;
-	HANDLE fd;
+	IVY_HANDLE fd;
 
 	fd = client->fd;
 	ptr = buffer;
@@ -905,7 +905,7 @@ Client SocketBroadcastCreate (int ipv6, unsigned short port,
 				SocketInterpretation interpretation
 			)
 {
-	HANDLE handle;
+	IVY_HANDLE handle;
 	Client client;
 	int on = 1;
 	struct sockaddr_storage local;
@@ -964,7 +964,7 @@ Client SocketBroadcastCreate (int ipv6, unsigned short port,
 	IVY_LIST_ADD_START(clients_list, client );
 	
 	client->buffer_size = IVY_BUFFER_SIZE;
-	client->buffer = malloc( client->buffer_size );
+	client->buffer = (char *) malloc( client->buffer_size );
 	if (!client->buffer )
 		{
 		perror("HandleSocket Buffer Memory Alloc Error: ");
@@ -989,7 +989,7 @@ Client SocketBroadcastCreate (int ipv6, unsigned short port,
 	return client;
 }
 /* TODO unifier les deux fonctions */
-void SocketSendBroadcast (Client client, unsigned long host, unsigned short port, char *fmt, ... )
+void SocketSendBroadcast (Client client, unsigned long host, unsigned short port, const char *fmt, ... )
 {
 	struct sockaddr_in remote;
 	static IvyBuffer buffer = { NULL, 0, 0 }; /* Use satic mem to eliminate multiple call to malloc /free */
@@ -1020,7 +1020,7 @@ void SocketSendBroadcast (Client client, unsigned long host, unsigned short port
 	
 }
 
-void SocketSendBroadcast6 (Client client, struct in6_addr* host, unsigned short port, char *fmt, ... )
+void SocketSendBroadcast6 (Client client, struct in6_addr* host, unsigned short port, const char *fmt, ... )
 {
 	struct sockaddr_in6 remote;
 	static IvyBuffer buffer = { NULL, 0, 0 }; /* Use satic mem to eliminate multiple call to malloc /free */

@@ -40,7 +40,7 @@ int make_message(IvyBuffer* buffer, const char *fmt, va_list ap)
 		{
 		buffer->size = IVY_BUFFER_SIZE;
 		buffer->offset = 0;
-		buffer->data = malloc (IVY_BUFFER_SIZE);
+		buffer->data = (char *) malloc (IVY_BUFFER_SIZE);
 		if ( buffer->data == NULL )
 			{
 			perror(" Ivy make message MALLOC error: " );
@@ -69,7 +69,7 @@ int make_message(IvyBuffer* buffer, const char *fmt, va_list ap)
         buffer->size = buffer->offset + n+1; /* precisely what is needed */
     else           /* glibc 2.0 */
         buffer->size *= 2;  /* twice the old size */
-    if ((buffer->data = realloc (buffer->data, buffer->size)) == NULL)
+    if ((buffer->data = (char *) realloc (buffer->data, buffer->size)) == NULL)
 		{
        		perror(" Ivy make message REALLOC error: " );
 		return -1;

@@ -99,7 +99,7 @@ IvyBinding IvyBindingCompile( const char * expression,  int *erroffset, const ch
 				free( bind->ovector );
 			// + 1 pour la capture totale
 			bind->ovectorsize = (capture_count+1) * 3;
-			bind->ovector = malloc( sizeof( int )* bind->ovectorsize);
+			bind->ovector = (int *) malloc( sizeof( int )* bind->ovectorsize);
 		}
 		else
 		{

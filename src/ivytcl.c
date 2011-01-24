@@ -40,7 +40,7 @@
 /* Il n'y a pas de Tcl_MakeTCPserver */
 
 struct _channel {
-	HANDLE fd;
+	IVY_HANDLE fd;
 	void *data;
 	Tcl_Channel tcl_channel;
         ChannelHandleDelete handle_delete;
@@ -102,7 +102,7 @@ void IvyChannelRemove( Channel channel )
 }
 
 
-Channel IvyChannelAdd(HANDLE fd, void *data,
+Channel IvyChannelAdd(IVY_HANDLE fd, void *data,
 				ChannelHandleDelete handle_delete,
 				ChannelHandleRead handle_read,
 		                ChannelHandleWrite handle_write
@@ -194,7 +194,7 @@ IvyAppCB(IvyClientPtr	app,
 	 void		*user_data, /* script a appeler */
 	 IvyApplicationEvent event)
 {
-  static char	*app_event_str[] = {
+  static const char	*app_event_str[] = {
     "Connected", "Disconnected" };
   filter_struct	*filter = (filter_struct *) user_data;
   int		result, size, dummy;
@@ -541,7 +541,7 @@ IvyApplicationHostCmd(ClientData	clientData,
     return TCL_ERROR;    
   }
 
-  Tcl_SetResult(interp, IvyGetApplicationHost((IvyClientPtr) Tcl_GetHashValue(entry)),
+  Tcl_SetResult(interp, (char *) IvyGetApplicationHost((IvyClientPtr) Tcl_GetHashValue(entry)),
 		TCL_STATIC);
   
   return TCL_OK;

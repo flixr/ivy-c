@@ -111,7 +111,7 @@ void TimerCall(TimerId id, void *user_data, unsigned long delta)
 
 void binCB( IvyClientPtr app, void *user_data, int id, const char* regexp,  IvyBindEvent event ) 
 {
-	char *app_name = IvyGetApplicationName( app );
+	const char *app_name = IvyGetApplicationName( app );
 	switch ( event )
 	{
 	case IvyAddBind:

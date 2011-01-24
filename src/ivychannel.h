@@ -25,17 +25,17 @@ extern "C" {
 
 #ifdef WIN32
 #include <windows.h>
-#define HANDLE SOCKET
+#define IVY_HANDLE SOCKET
 #else
-#define HANDLE int
+#define IVY_HANDLE int
 #endif
 
 typedef struct _channel *Channel;
 /* callback declenche par la gestion de boucle  sur evenement exception sur le canal */
 typedef void (*ChannelHandleDelete)( void *data );
 /* callback declenche par la gestion de boucle sur donnees pretes sur le canal */
-typedef void (*ChannelHandleRead)( Channel channel, HANDLE fd, void *data);
-typedef void (*ChannelHandleWrite)( Channel channel, HANDLE fd, void *data);
+typedef void (*ChannelHandleRead)( Channel channel, IVY_HANDLE fd, void *data);
+typedef void (*ChannelHandleWrite)( Channel channel, IVY_HANDLE fd, void *data);
 
 /* fonction appele par le bus pour initialisation */
 extern void IvyChannelInit(void);
@@ -44,11 +44,11 @@ extern void IvyChannelStop (void);
 
 /* fonction appele par le bus pour mise en place des callback sur le canal */
 extern Channel IvyChannelAdd(
-	HANDLE fd,
+	IVY_HANDLE fd,
 	void *data,
 	ChannelHandleDelete handle_delete,
 	ChannelHandleRead handle_read,
-	ChannelHandleRead handle_write
+	ChannelHandleWrite handle_write
 );
 
 /* fonction appele par le bus pour suppression des callback sur le canal */

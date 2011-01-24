@@ -67,7 +67,7 @@ void IvyChannelInit(void) {
 
 
 
-Channel IvyChannelAdd(HANDLE fd, void *data,
+Channel IvyChannelAdd(IVY_HANDLE fd, void *data,
 		      ChannelHandleDelete handle_delete,
 		      ChannelHandleRead handle_read,
 		      ChannelHandleWrite handle_write
@@ -85,7 +85,7 @@ Channel IvyChannelAdd(HANDLE fd, void *data,
     channel->io_channel = io_channel;
     channel->id_read = g_io_add_watch( io_channel, G_IO_IN, 
 				       IvyGlibHandleChannelRead, channel);
-    channel->id_delete = g_io_add_watch( io_channel, G_IO_ERR | G_IO_HUP, 
+    channel->id_delete = g_io_add_watch( io_channel, (GIOCondition) (G_IO_ERR | G_IO_HUP), 
 					 IvyGlibHandleChannelDelete, channel);
   }
   return channel;

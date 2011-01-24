@@ -34,7 +34,9 @@ typedef struct  {
 } NextMax ;
 
 
+#ifndef __cplusplus
 typedef  char bool;
+#endif
 
 const bool success = 1;
 const bool fail = 0;
@@ -389,7 +391,7 @@ static char* reverse (char *string)
   int i;
   size_t len = strlen (string);
 
-  locBuf = malloc (len+1);
+  locBuf = (char *) malloc (len+1);
   for (i=len-1; i >= 0; i--) {
     locBuf[len-i-1]= string[i];
     /*printf ("DBG> reverse  locBuf[%d]= %c\n",len- i-1, string[i]); */
