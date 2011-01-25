@@ -59,6 +59,14 @@ typedef long ssize_t;
 #include "ivyfifo.h"
 #include "ivydebug.h"
 
+
+union sockaddr_46 {
+  struct sockaddr_in  s4;
+  struct sockaddr_in6 s6;
+  struct sockaddr     sa;
+  struct sockaddr_storage ss;
+};
+
 struct _server {
 	Server next;
 	IVY_HANDLE fd;
@@ -314,7 +322,7 @@ Server SocketServer(int ipv6, unsigned short port,
 	Server server;
 	IVY_HANDLE fd;
 	int one=1;
-	struct sockaddr_storage local;
+	union sockaddr_46 local;
 	socklen_t addrlen;
 
 	if ((fd = socket (ipv6 ? AF_INET6 : AF_INET, SOCK_STREAM, 0)) < 0){
@@ -344,7 +352,7 @@ Server SocketServer(int ipv6, unsigned short port,
 	memset( &local,0,sizeof(local) ); 
 	if ( ipv6 ) 
 	{ 
-		struct sockaddr_in6*  local6= (struct sockaddr_in6*)&local;
+		struct sockaddr_in6*  local6= &local.s6;
 		local6->sin6_family =  AF_INET6; 
 		local6->sin6_addr = in6addr_any; 
 		local6->sin6_port = htons (port); 
@@ -352,20 +360,20 @@ Server SocketServer(int ipv6, unsigned short port,
 	} 
 	else 
 	{ 
-		struct sockaddr_in*  local4= (struct sockaddr_in*)&local;
+		struct sockaddr_in*  local4= &local.s4;
 		local4->sin_family =  AF_INET; 
 		local4->sin_addr.s_addr = INADDR_ANY; 
 		local4->sin_port = htons (port); 
 		addrlen = sizeof(struct sockaddr_in);
 	}
 
-	if (bind(fd,(struct sockaddr*) &local, addrlen) < 0)
+	if (bind(fd, &local.sa, addrlen) < 0)
 		{
 		perror ("*** bind ***");
 		exit(0);
 		}
 
-	if (getsockname(fd, (struct sockaddr*)&local, &addrlen) < 0)
+	if (getsockname(fd, &local.sa, &addrlen) < 0)
 		{
 		perror ("***get socket name ***");
 		exit(0);
@@ -386,7 +394,7 @@ Server SocketServer(int ipv6, unsigned short port,
 	server->handle_delete = handle_delete;
 	server->handle_decongestion = handle_decongestion;
 	server->interpretation = interpretation;
-	server->port = ntohs(ipv6 ? ((struct sockaddr_in6 *)(&local))->sin6_port : ((struct sockaddr_in *)(&local))->sin_port);
+	server->port = ntohs(ipv6 ? local.s6.sin6_port : local.s4.sin_port);
 	IVY_LIST_ADD_END (servers_list, server );
 	
 	return server;
@@ -446,22 +454,22 @@ unsigned short int SocketGetLocalPort ( Client client )
 {
 	int err;
 	unsigned short port;
-	struct sockaddr_storage name;
+	union sockaddr_46 name;
 	socklen_t len = sizeof(name);
 
 	if (!client)
 		return 0;
 
-	err = getsockname (client->fd, (struct sockaddr *)&name, &len );
+	err = getsockname (client->fd, &name.sa, &len );
 	if (err < 0 ) return 0;
-	if ( name.ss_family == AF_INET6 )
+	if ( name.ss.ss_family == AF_INET6 )
 	{
-		struct sockaddr_in6*  local6= (struct sockaddr_in6*)&name;
+		struct sockaddr_in6*  local6= &name.s6;
 		port = ntohs(local6->sin6_port);
 	} 
 	else 
 	{ 
-		struct sockaddr_in*  local4= (struct sockaddr_in*)&name;
+		struct sockaddr_in*  local4= &name.s4;
 		port = ntohs(local4->sin_port);
 	}
 	
@@ -753,7 +761,7 @@ Client SocketConnectAddr (int ipv6, struct sockaddr_storage * addr, unsigned sho
 {
 	IVY_HANDLE handle;
 	Client client;
-	struct sockaddr_storage remote;
+	union sockaddr_46 remote;
 	socklen_t addrlen;
 #ifdef WIN32
 	u_long iMode = 1; /* non blocking Mode */
@@ -769,7 +777,7 @@ Client SocketConnectAddr (int ipv6, struct sockaddr_storage * addr, unsigned sho
 	
 	if ( ipv6 )
 	{
-		struct sockaddr_in6* remote6= (struct sockaddr_in6*)&remote;
+		struct sockaddr_in6* remote6= &remote.s6;
 		remote6->sin6_family = AF_INET6;
 		remote6->sin6_addr =  ((struct sockaddr_in6*)addr)->sin6_addr;
 		remote6->sin6_scope_id =  ((struct sockaddr_in6*)addr)->sin6_scope_id;
@@ -779,14 +787,14 @@ Client SocketConnectAddr (int ipv6, struct sockaddr_storage * addr, unsigned sho
 	}
 	else
 	{
-		struct sockaddr_in* remote4= (struct sockaddr_in*)&remote;
+		struct sockaddr_in* remote4= &remote.s4;
 		remote4->sin_family = AF_INET;
 		remote4->sin_addr = ((struct sockaddr_in*)addr)->sin_addr;
 		remote4->sin_port = htons (port);
 		addrlen = sizeof(struct sockaddr_in);
 	}
 
-	if (connect (handle, (const struct sockaddr*)&remote, addrlen ) < 0){
+	if (connect (handle, &remote.sa, addrlen ) < 0){
 		perror ("*** client connect ***");
 		return NULL;
 	};
@@ -908,13 +916,13 @@ Client SocketBroadcastCreate (int ipv6, unsigned short port,
 	IVY_HANDLE handle;
 	Client client;
 	int on = 1;
-	struct sockaddr_storage local;
+	union sockaddr_46 local;
 	socklen_t addrlen;
 
 	memset( &local,0,sizeof(local) ); 
 	if ( ipv6 ) 
 	{ 
-		struct sockaddr_in6*  local6= (struct sockaddr_in6*)&local;
+		struct sockaddr_in6*  local6= &local.s6;
 		local6->sin6_family =  AF_INET6; 
 		local6->sin6_addr = in6addr_any; 
 		local6->sin6_port = htons (port); 
@@ -922,7 +930,7 @@ Client SocketBroadcastCreate (int ipv6, unsigned short port,
 	} 
 	else 
 	{ 
-		struct sockaddr_in*  local4= (struct sockaddr_in*)&local;
+		struct sockaddr_in*  local4= &local.s4;
 		local4->sin_family =  AF_INET; 
 		local4->sin_addr.s_addr = INADDR_ANY; 
 		local4->sin_port = htons (port); 
@@ -955,7 +963,7 @@ Client SocketBroadcastCreate (int ipv6, unsigned short port,
 			return NULL;
 		};
 
-	if (bind(handle, (struct sockaddr*)&local,  addrlen ) < 0)
+	if (bind(handle, &local.sa,  addrlen ) < 0)
 		{
 			perror ("*** BIND ***");
 			return NULL;
