@@ -66,8 +66,8 @@ static bool perr (const char* func, const char *fmt, ...);
 */
 int regexpGen (char *regexp, size_t buflen, long min, long max, int flottant)
 {
-  char *decimalPart = "";
-  char *boundDecimalPart = "";
+  const char *decimalPart = "";
+  const char *boundDecimalPart = "";
   char locBuf [8192] = "(?:";
 
   

@@ -18,6 +18,10 @@
 
 typedef struct _binding *IvyBinding;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Mise en place des Filtrages */
 int IvyBindingGetFilterCount();
 void IvyBindingSetFilter( int argc, const char ** argv );
@@ -32,4 +36,8 @@ void IvyBindingFree( IvyBinding _bind );
 int IvyBindingExec( IvyBinding _bind, const char * message );
 /* Get Argument */
 void IvyBindingMatch( IvyBinding _bind, const char *message, int argnum, int *arglen, const char **arg );
+
+#ifdef __cplusplus
+}
+#endif
 
