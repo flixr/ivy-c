@@ -44,7 +44,7 @@ const char *mymessages[] = { "IvyPerf", "ping", "pong" };
 static double origin = 0;
 int nbMsgReceive=0;
 int nbMsgEmit=0;
-int nbMsg = 10;
+long nbMsg = 10;
 
 
 double minRoundTrip=1e12;

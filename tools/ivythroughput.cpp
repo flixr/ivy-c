@@ -665,7 +665,7 @@ void doNothingAndSuicideCB (TimerId id, void *user_data, unsigned long delta)
   printf (".");
   long time = (long) user_data;
   time = ((time-2)/2) * 1000;
-  printf ("DBG> client hanging for %d milliseconds\n", time);
+  printf ("DBG> client hanging for %ld milliseconds\n", time);
   usleep (time * 1000);
   printf ("DBG> client suicide\n");
   _exit(42);

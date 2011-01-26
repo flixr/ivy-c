@@ -45,28 +45,28 @@ char ready_bind[1000] = "^B ready";
 
 void Ready (IvyClientPtr app, void *user_data, int argc, char *argv[])
 {
-	char *name = IvyGetApplicationName( app );
+	const char *name = IvyGetApplicationName( app );
 	int count = IvySendMsg ("are you there %s",name);
 	printf("Application %s received '%s' from %s sent question 'are you there %s'= %d\n", me, ready_bind, name, name, count);
 }
 
 void Question (IvyClientPtr app, void *user_data, int argc, char *argv[])
 {
-	char *name = IvyGetApplicationName( app );
+	const char *name = IvyGetApplicationName( app );
 	int count = IvySendMsg ("yes i am %s",me);
 	printf("Application %s Reply to %s are you there = %d\n", me, name, count);
 	
 }
 void Reply (IvyClientPtr app, void *user_data, int argc, char *argv[])
 {
-	char *name = IvyGetApplicationName( app );
+	const char *name = IvyGetApplicationName( app );
 	printf("Application %s Reply to our question! %s\n", name, argv[0]);
 	
 }
 
 void binCB( IvyClientPtr app, void *user_data, int id, const char* regexp,  IvyBindEvent event ) 
 {
-	char *app_name = IvyGetApplicationName( app );
+	const char *app_name = IvyGetApplicationName( app );
 	switch ( event )
 	{
 	case IvyAddBind:
