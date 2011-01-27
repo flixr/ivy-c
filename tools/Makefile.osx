@@ -10,7 +10,7 @@ CPP='g++'
 
 PCRELIB = `pcre-config --libs`
 PCREINCL = `pcre-config --cflags`
-EXTRALIB= -L../src
+EXTRALIB= -L../src 
 EXTRAINC=-I../src
 
 .SUFFIXES: .c .o

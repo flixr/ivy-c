@@ -55,7 +55,11 @@
 #define ARG_START "\002"
 #define ARG_END "\003"
 
+#ifdef __APPLE__
 #define DEFAULT_DOMAIN 127.0.0.1
+#else
+#define DEFAULT_DOMAIN 127.255.255.255
+#endif
 
 /* stringification et concatenation du domaine et du port en 2 temps :
  * Obligatoire puisque la substitution de domain, et de bus n'est pas
