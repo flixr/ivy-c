@@ -17,7 +17,7 @@
 
 # change this in version.h too !!!!
 MAJOR=3
-MINOR=11
+MINOR=12
 
 PERHAPS64 := $(shell getconf LONG_BIT | perl -ne "print /64/ ? '64' : '';")
 LIB = /lib$(PERHAPS64)
@@ -41,6 +41,7 @@ export
 
 XTINC = -I$(X11_PREFIX)/include
 XTLIB = -L$(X11_PREFIX)$(LIB) -lXt -lX11 -lSM -lICE
+HAVE_GLIB = $(shell pkg-config --exists glib-2.0 && echo 'yes')
 GLIBINC = `pkg-config --cflags glib-2.0`
 GLIBLIB = `pkg-config --libs glib-2.0`
 GLUTINC = -I/usr/include -I.
@@ -121,9 +122,17 @@ XTOBJ = ivyxtloop.o ivysocket.o ivy.o ivybuffer.o ivyfifo.o ivybind.o intervalRe
 GLIBOBJ = ivyglibloop.o ivysocket.o ivy.o ivybuffer.o ivyfifo.o ivybind.o intervalRegexp.o param.o
 GLUTOBJ = ivyglutloop.o ivysocket.o ivy.o ivybuffer.o ivyfifo.o ivybind.o intervalRegexp.o param.o
 TCLOBJ = ivytcl.o  timer.o ivysocket.o givy.o ivybuffer.o ivyfifo.o ivybind.o intervalRegexp.o param.o
-
 # WINDOWS add ivyloop.o if TCL_CHANNEL_INTEGRATION is not set
-TARGETLIBS=libivy.so.$(MAJOR).$(MINOR) libgivy.so.$(MAJOR).$(MINOR) libxtivy.so.$(MAJOR).$(MINOR) libglibivy.so.$(MAJOR).$(MINOR) libtclivy.so.$(MAJOR).$(MINOR)
+
+TARGETLIBS=libivy.so.$(MAJOR).$(MINOR) libgivy.so.$(MAJOR).$(MINOR) libxtivy.so.$(MAJOR).$(MINOR)  libtclivy.so.$(MAJOR).$(MINOR)
+STATICTARGETLIBS=libivy.a libgivy.a libxtivy.a libtclivy.a
+
+ifeq ($(HAVE_GLIB),yes)
+		TARGETLIBS += libglibivy.so.$(MAJOR).$(MINOR)
+		STATICTARGETLIBS += libglibivy.a 
+endif
+
+
 # not yet need Modified Glut ivyglutprobe
 
 .c.o:
@@ -136,7 +145,7 @@ libomp: libivy_omp.a libivy_omp.so.$(MAJOR).$(MINOR)
 omp: libomp
 	@(cd $(TOOLS_DIR) && $(MAKE) omp) 
 
-static-libs: libivy.a libgivy.a libxtivy.a libglibivy.a libtclivy.a 
+static-libs:  $(STATICTARGETLIBS)
 # not yet need Modified Glut libglutivy.a
 
 shared-libs: $(TARGETLIBS)

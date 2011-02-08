@@ -61,6 +61,8 @@ typedef struct _msg_rcv *MsgRcvPtr;
 
 /* filtrage des regexps */
 void IvySetFilter( int argc, const char **argv);
+void IvyAddFilter( const char *arg);
+void IvyRemoveFilter( const char *arg);
 
 void IvyInit(
 	 const char *AppName,		/* nom de l'application */

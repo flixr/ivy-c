@@ -62,10 +62,15 @@ struct _binding {
 	};
 
 /* classes de messages emis par l'application utilise pour le filtrage */
-static int	messages_classes_count = 0;
-static const char **messages_classes = 0;
+typedef struct _filtred_word * FiltredWordPtr;
+struct _filtred_word {                       /* requete d'emission d'un client */
+        FiltredWordPtr next;
+        const char *word;           /* entete de regexp a conserver */
+};
+
+static FiltredWordPtr messages_classes =0 ;
 /* regexp d'extraction du mot clef des regexp client pour le filtrage des regexp , ca va c'est clair ??? */
-static IvyBinding token_extract;
+static IvyBinding token_extract =0;
 
 IvyBinding IvyBindingCompile( const char * expression,  int *erroffset, const char **errmessage )
 {
@@ -213,35 +218,62 @@ void IvyBindingMatch( IvyBinding bind, const char *message, int argnum, int *arg
 }
 
 /*filter Expression Bind  */
-int IvyBindingGetFilterCount()
-{
-return messages_classes_count;
-}
+
 void IvyBindingSetFilter( int argc, const char **argv)
+{
+	int i;
+	for ( i = 0 ; i < argc; i++ )
+	{
+	IvyBindingAddFilter( argv[i] );
+	}
+
+}
+
+void IvyBindingAddFilter( const char *arg)
 {
 	const char *errbuf;
 	int erroffset;
+	if ( arg )
+	{
+	FiltredWordPtr word=0;
+	IVY_LIST_ADD_START( messages_classes, word );
+	word->word = strdup(arg);
+  IVY_LIST_ADD_END( messages_classes, word );
 
-	messages_classes_count = argc;
-	messages_classes = argv;
+	}
 	/* compile the token extraction regexp */
-
-	token_extract = IvyBindingCompile("^\\^([a-zA-Z_0-9-]+).*", & erroffset, & errbuf);
 	if ( !token_extract )
 	{
-		printf("Error compiling Token Extract regexp: %s\n", errbuf);
+		token_extract = IvyBindingCompile("^\\^([a-zA-Z_0-9-]+).*", & erroffset, & errbuf);
+		if ( !token_extract )
+		{
+			printf("Error compiling Token Extract regexp: %s\n", errbuf);
+		}
+	}
+}
+void IvyBindingRemoveFilter( const char *arg)
+{
+	FiltredWordPtr word=0;
+	FiltredWordPtr next=0;
+	IVY_LIST_EACH_SAFE( messages_classes, word, next )
+	{
+		if ( strcmp( arg, word->word) == 0 )
+			{
+			free( (void*)word->word );
+			IVY_LIST_REMOVE( messages_classes, word );
+			}
 	}
 }
 	
 int IvyBindingFilter(const char *expression)
 {
-	int i;
+	FiltredWordPtr word=0;
 	int err;
 	int regexp_ok = 1; /* accepte tout par default */
 	int tokenlen;
 	const char *token;
 	
-	if ( *expression =='^' && messages_classes_count !=0 )
+	if ( *expression =='^' && messages_classes !=0 )
 	{
 		regexp_ok = 0;
 		
@@ -249,27 +281,41 @@ int IvyBindingFilter(const char *expression)
 		err = IvyBindingExec( token_extract, expression );
 		if ( err < 1 ) return 1;
 		IvyBindingMatch( token_extract, expression , 1, &tokenlen, &token );
-		for ( i = 0 ; i < messages_classes_count; i++ )
-		{
-		  if (strncmp( messages_classes[i], token, tokenlen ) == 0) {
-		    return 1; }
+
+		IVY_LIST_ITER( messages_classes, word, strncmp( word->word, token, tokenlen ) != 0);
+
+		if (word) {
+		    return 1; 
+		    }
 		  /*		  else { */
 		  /*printf ("DBG> %s eliminé [%s]\n", token, expression); */
 		  /*} */
-		}
+		
  	}
 	return regexp_ok;
 }
 /* recherche si le message commence par un mot clef de la table */
 void IvyBindindFilterCheck( const char *message )
 {
-	int i;
-	for ( i = 0 ; i < messages_classes_count; i++ )
-	{
-	if (strcmp( messages_classes[i], message ) == 0)
+	FiltredWordPtr word=0;
+	IVY_LIST_ITER( messages_classes, word, strcmp( word->word, message ) != 0);
+
+	if (word)
 		{
 		return; 
-	    }
 	}
+	
 	fprintf(stderr,"*** WARNING *** message '%s' not sent due to missing keyword in filter table!!!\n", message );    
+}
+void IvyBindingTerminate()
+{
+	FiltredWordPtr word=0;
+	FiltredWordPtr next=0;
+	
+	IVY_LIST_EACH_SAFE( messages_classes, word, next )
+  {
+  free((void*) word->word );
+  }
+	IVY_LIST_EMPTY( messages_classes );
+	messages_classes = 0;
 }

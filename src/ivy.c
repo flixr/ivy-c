@@ -915,7 +915,8 @@ void IvyTerminate()
 	if ( ApplicationName )
 	  free((void *) ApplicationName );
 	if ( ready_message )
-		free((void *)  ready_message );
+	  free((void *) ready_message );
+	IvyBindingTerminate();
 }
 
 void IvySetBindCallback( IvyBindCallback bind_callback, void *bind_data )
@@ -929,6 +930,16 @@ void IvySetFilter( int argc, const char **argv)
 	IvyBindingSetFilter( argc, argv );
 	if ( getenv( "IVY_DEBUG_FILTER" )) debug_filter = 1;
 
+}
+void IvyAddFilter( const char *arg)
+{
+	IvyBindingAddFilter( arg );
+	if ( getenv( "IVY_DEBUG_FILTER" )) debug_filter = 1;
+
+}
+void IvyRemoveFilter( const char *arg)
+{
+	IvyBindingRemoveFilter( arg );
 }
 
 void IvyStop (void)

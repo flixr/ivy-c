@@ -25,6 +25,8 @@ extern "C" {
 /* Mise en place des Filtrages */
 int IvyBindingGetFilterCount();
 void IvyBindingSetFilter( int argc, const char ** argv );
+void IvyBindingAddFilter( const char * argv );
+void IvyBindingRemoveFilter( const char * arg );
 int IvyBindingFilter( const char *expression );
 void IvyBindindFilterCheck( const char *message );
 
@@ -36,6 +38,11 @@ void IvyBindingFree( IvyBinding _bind );
 int IvyBindingExec( IvyBinding _bind, const char * message );
 /* Get Argument */
 void IvyBindingMatch( IvyBinding _bind, const char *message, int argnum, int *arglen, const char **arg );
+
+/*
+Liberation de memoire en fin d'execution 
+*/
+void IvyBindingTerminate();
 
 #ifdef __cplusplus
 }
