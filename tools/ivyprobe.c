@@ -409,14 +409,20 @@ int main(int argc, char *argv[])
 	if ( regex_file )
 		BindMsgOfFile( regex_file );
 	for  (; optind < argc; optind++)
+	{
+		printf("Binding to '%s'\n", argv[optind] );
 		IvyBindMsg (Callback, NULL, argv[optind]);
+	}
 
-	if  (wait_count == 0)
-#ifndef WIN32
+	
+#ifdef WIN32
+	printf("Stdin not compatible with select , select only accept socket on Windows\n");	
+#else
 /* Stdin not compatible with select , select only accept socket */
+	if  (wait_count == 0)
 	  IvyChannelAdd (0, NULL, NULL, HandleStdin, NULL);
 #endif
-
+	
 	IvyStart (bus);
 
 	if  (timer_test) {

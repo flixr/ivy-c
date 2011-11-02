@@ -16,8 +16,8 @@
 #
 
 
-RM=del
-#RM=rm -f
+#RM=del
+RM=rm -f
 XTINC = 
 XTLIB =  
 GTKINC = `gtk-config --cflags`
@@ -26,19 +26,20 @@ GLUTINC = -I/usr/include -I.
 GLUTLIB = -L.
 TCLINCL	= -I/usr/include/tcl8.4
 TCLLIB = -ltcl84
-EXTRALIB= -L../src -lwsock32 -lregex
+
+EXTRALIB= -L../src -lws2_32 
 EXTRAINC=-I../src
 
 
 CC=gcc
-CFLAGS = -g 
+#CFLAGS = -g 
 # IVY full debug
-#CFLAGS = -g  -DDEBUG
+CFLAGS = -g  -DDEBUG
 TARGETS = ivyprobe 
 # not yiet ivygtkprobe ivyxtprobe  need Modified Glut ivyglutprobe
 
 .c.o:
-	$(CC) $(CFLAGS) $(EXTRAINC) -c $*.c
+	$(CC) $(CFLAGS)  $(PCREINC) $(EXTRAINC) -c $*.c
 
 all: $(TARGETS)
 
