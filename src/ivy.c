@@ -28,6 +28,13 @@
 #include <Ws2tcpip.h>
 #include <windows.h>
 #define snprintf _snprintf
+#ifdef __MINGW32__
+// should be removed in when defined in MinGW include of ws2tcpip.h
+extern const char * WSAAPI inet_ntop(int af, const void *src,
+                             char *dst, socklen_t size);
+extern int WSAAPI inet_pton(int af, const char *src, void *dst);
+
+#endif
 #else
 #include <sys/time.h>
 #include <arpa/inet.h>

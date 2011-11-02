@@ -245,7 +245,7 @@ static void HandleServer(Channel channel, IVY_HANDLE fd, void *data)
 #else
 	long   socketFlag;
 #endif
-	TRACE( "Accepting Connection...\n");
+	TRACE( "Accepting Connection...\n", );
 	addrlen = sizeof (remote );
 	if ((ns = accept (fd, (struct sockaddr*)&remote, &addrlen)) <0)
 		{
@@ -253,7 +253,7 @@ static void HandleServer(Channel channel, IVY_HANDLE fd, void *data)
 		return;
 		};
 
-	TRACE( "Accepting Connection ret\n");
+	TRACE( "Accepting Connection ret\n", );
 
 	IVY_LIST_ADD_START (clients_list, client );
 	
