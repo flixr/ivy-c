@@ -1,3 +1,9 @@
+ivy-c (3.11.9) unstable; urgency=low
+
+  * headers path modification in ivytestreplay.c
+	
+ -- Alexandre Bustico <bustico@cena.fr>  Wed, 21 December 2011 10:03:00 +0100
+ 
 ivy-c (3.11.8) unstable; urgency=low
 
   * correct broadcast adress for loopback (not the same beetween linux/windows and osx)
