@@ -32,10 +32,10 @@ extern int optind;
 #endif
 
 
-#include "Ivy/ivysocket.h"
-#include "Ivy/ivy.h"
-#include "Ivy/timer.h"
-#include "Ivy/ivyloop.h"
+#include "ivysocket.h"
+#include "ivy.h"
+#include "timer.h"
+#include "ivyloop.h"
 #define MILLISEC 1000.0
 
 const char * me = "A";
