@@ -52,8 +52,8 @@ clean:
 install: installbins 
 
 installbins: commands
-	test -d $(PREFIX)/usr/bin || mkdirhier $(PREFIX)/usr/bin
-	test -d $(PREFIX)/usr/X11R6/bin || mkdirhier $(PREFIX)/usr/X11R6/bin
+	test -d $(PREFIX)/usr/bin || mkdir -p $(PREFIX)/usr/bin
+	test -d $(PREFIX)/usr/X11R6/bin || mkdir -p $(PREFIX)/usr/X11R6/bin
 	install -m755 ivyprobe $(PREFIX)/usr/bin
 #	install -m755 ivyglutprobe $(PREFIX)/usr/X11R6/bin
 

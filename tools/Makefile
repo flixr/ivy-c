@@ -61,11 +61,11 @@ ivyglutprobe: ivyglutprobe.o ../src/libglutivy.a
 	$(CC) -o ivyglutprobe ivyglutprobe.o -L. $(GLUTLIB) -lglutivy $(PCRELIB) $(EXTRALIB
 
 installbins: $(TARGETS)
-	test -d $(DESTDIR)$(PREFIX)/bin || mkdirhier $(DESTDIR)$(PREFIX)/bin
+	test -d $(DESTDIR)$(PREFIX)/bin || mkdir -p $(DESTDIR)$(PREFIX)/bin
 	install -m755 ivyprobe $(DESTDIR)$(PREFIX)/bin
 
 installbins_omp:  $(OMP_TARGET)
-	test -d $(DESTDIR)$(PREFIX)/bin || mkdirhier $(DESTDIR)$(PREFIX)/bin
+	test -d $(DESTDIR)$(PREFIX)/bin || mkdir -p $(DESTDIR)$(PREFIX)/bin
 	install -m755 ivyprobe_omp $(DESTDIR)$(PREFIX)/bin
 
 install: installbins 

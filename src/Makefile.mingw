@@ -159,9 +159,9 @@ clean:
 	@(cd $(TOOLS_DIR) && $(MAKE) -f Makefile.mingw clean)
 
 installlibs: static-libs shared-libs
-	test -d $(PREFIX)/usr/lib || mkdirhier $(PREFIX)/usr/lib
-	test -d $(PREFIX)/usr/X11R6/lib || mkdirhier $(PREFIX)/usr/X11R6/lib
-	test -d $(PREFIX)/usr/include || mkdirhier $(PREFIX)/usr/include
+	test -d $(PREFIX)/usr/lib || mkdir -p $(PREFIX)/usr/lib
+	test -d $(PREFIX)/usr/X11R6/lib || mkdir -p $(PREFIX)/usr/X11R6/lib
+	test -d $(PREFIX)/usr/include || mkdir -p $(PREFIX)/usr/include
 	install -m644 libivy.a $(PREFIX)/usr/lib
 	install -m644 libgivy.a $(PREFIX)/usr/lib
 	install -m644 libxtivy.a $(PREFIX)/usr/X11R6/lib
@@ -194,11 +194,11 @@ installbins:
 	@(cd $(TOOLS_DIR) && $(MAKE) -f Makefile.mingw install)
 
 installdocs:
-	test -d $(PREFIX)/usr/doc/ivy-c || mkdirhier $(PREFIX)/usr/doc/ivy-c
+	test -d $(PREFIX)/usr/doc/ivy-c || mkdir -p $(PREFIX)/usr/doc/ivy-c
 	for f in `find  ../doc/*.html -type f -maxdepth 1`; do \
                 install -m 644 $$f $(PREFIX)/usr/doc/ivy-c; \
         done
-	test -d $(PREFIX)/usr/man/man1 || mkdirhier $(PREFIX)/usr/man/man1
+	test -d $(PREFIX)/usr/man/man1 || mkdir -p $(PREFIX)/usr/man/man1
 	for f in `find  ../doc/*.1 -type f -maxdepth 1`; do \
                 install -m 644 $$f $(PREFIX)/usr/man/man1; \
         done

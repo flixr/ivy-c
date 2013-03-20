@@ -247,8 +247,8 @@ clean:
 
 
 installlibs: static-libs shared-libs
-	test -d $(DESTDIR)$(PREFIX)$(LIB)  || mkdirhier $(DESTDIR)$(PREFIX)$(LIB)
-	-test -d $(DESTDIR)$(X11_PREFIX)$(LIB)  || mkdirhier $(DESTDIR)$(X11_PREFIX)$(LIB)
+	test -d $(DESTDIR)$(PREFIX)$(LIB)  || mkdir -p $(DESTDIR)$(PREFIX)$(LIB)
+	-test -d $(DESTDIR)$(X11_PREFIX)$(LIB)  || mkdir -p $(DESTDIR)$(X11_PREFIX)$(LIB)
 
 	install -m644 libivy.a						$(DESTDIR)$(PREFIX)$(LIB)
 	install -m644 libgivy.a						$(DESTDIR)$(PREFIX)$(LIB)
@@ -263,14 +263,14 @@ installlibs: static-libs shared-libs
 	install -m644 libglibivy.so.$(MAJOR).$(MINOR)			$(DESTDIR)$(PREFIX)$(LIB)
 
 installlibs_omp: static-libs shared-libs
-	test -d $(DESTDIR)$(PREFIX)$(LIB)  || mkdirhier $(DESTDIR)$(PREFIX)$(LIB)
-	-test -d $(DESTDIR)$(X11_PREFIX)$(LIB)  || mkdirhier $(DESTDIR)$(X11_PREFIX)$(LIB)
+	test -d $(DESTDIR)$(PREFIX)$(LIB)  || mkdir -p $(DESTDIR)$(PREFIX)$(LIB)
+	-test -d $(DESTDIR)$(X11_PREFIX)$(LIB)  || mkdir -p $(DESTDIR)$(X11_PREFIX)$(LIB)
 
 	install -m644 libivy_omp.a					$(DESTDIR)$(PREFIX)$(LIB)
 	install -m644 libivy_omp.so.$(MAJOR).$(MINOR)			$(DESTDIR)$(PREFIX)$(LIB)
 
 includes:
-	test -d $(DESTDIR)$(PREFIX)/include/Ivy || mkdirhier $(DESTDIR)$(PREFIX)/include/Ivy
+	test -d $(DESTDIR)$(PREFIX)/include/Ivy || mkdir -p $(DESTDIR)$(PREFIX)/include/Ivy
 	install -m644 ivy.h						$(DESTDIR)$(PREFIX)/include/Ivy/
 	install -m644 ivybind.h						$(DESTDIR)$(PREFIX)/include/Ivy/
 	install -m644 ivybuffer.h					$(DESTDIR)$(PREFIX)/include/Ivy/
@@ -306,15 +306,15 @@ installbins_omp:
 
 
 installdocs:
-	test -d $(DESTDIR)$(PREFIX)/share/doc/ivy-c || mkdirhier $(DESTDIR)$(PREFIX)/share/doc/ivy-c
+	test -d $(DESTDIR)$(PREFIX)/share/doc/ivy-c || mkdir -p $(DESTDIR)$(PREFIX)/share/doc/ivy-c
 	for f in `find	../doc/*.html -type f -maxdepth 1`; do \
 		install -m 644 $$f					$(DESTDIR)$(PREFIX)/share/doc/ivy-c; \
 	done
-	test -d $(DESTDIR)$(PREFIX)/man/man1 || mkdirhier $(DESTDIR)$(PREFIX)/man/man1
+	test -d $(DESTDIR)$(PREFIX)/man/man1 || mkdir -p $(DESTDIR)$(PREFIX)/man/man1
 	for f in `find	../doc/*.1 -type f -maxdepth 1`; do \
 		install -m 644 $$f					$(DESTDIR)$(PREFIX)/man/man1; \
 	done
-	test -d $(DESTDIR)$(PREFIX)/share/doc/ivy-c/examples || mkdirhier $(DESTDIR)$(PREFIX)/share/doc/ivy-c/examples
+	test -d $(DESTDIR)$(PREFIX)/share/doc/ivy-c/examples || mkdir -p $(DESTDIR)$(PREFIX)/share/doc/ivy-c/examples
 	install -m 644 version.h					$(DESTDIR)$(PREFIX)/share/doc/ivy-c/copyright
 	install -m 644 ../examples/motifButtonIvy.c			$(DESTDIR)$(PREFIX)/share/doc/ivy-c/examples
 	install -m 644 ../examples/testUnbind.c				$(DESTDIR)$(PREFIX)/share/doc/ivy-c/examples
@@ -335,5 +335,5 @@ pkgconf:
 	sed -e 's,@PREFIX@,$(PREFIX),; s,@DESTDIR@,$(DESTDIR),; s,@MAJOR@,$(MAJOR),; s,@MINOR@,$(MINOR),; s,@PCREINC@,$(PCREINC),; s,@REGEXP@,$(REGEXP),; s,@PCRELIB@,$(PCRELIB),; s,@EXTRALIB@,$(EXTRALIB),' ivy-glib.pc.in > ivy-glib.pc
 
 installpkgconf:
-	test -d $(DESTDIR)$(PREFIX)/lib/pkgconfig || mkdirhier $(DESTDIR)$(PREFIX)/lib/pkgconfig
+	test -d $(DESTDIR)$(PREFIX)/lib/pkgconfig || mkdir -p $(DESTDIR)$(PREFIX)/lib/pkgconfig
 	install -m 644 ivy-glib.pc						$(DESTDIR)$(PREFIX)/lib/pkgconfig
