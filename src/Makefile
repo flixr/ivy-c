@@ -21,10 +21,10 @@ MINOR=13
 
 PERHAPS64 := $(shell getconf LONG_BIT | perl -ne "print /64/ ? '64' : '';")
 LIB = /lib$(PERHAPS64)
-ifeq ($(PERHAPS64), "64")
-	FPIC=
-else
+ifeq ($(PERHAPS64),64)
 	FPIC=-fPIC
+else
+	FPIC=
 endif
 
 ifndef PREFIX
