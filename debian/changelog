@@ -1,3 +1,9 @@
+ivy-c (3.14.0) unstable; urgency=low
+
+  * complete implementation of ping/pong protocol message
+
+ --  Alexandre Bustico <alexandre.bustico@enac.fr> Wed, 19 June 2013 14:37:00 +0200
+
 ivy-c (3.13.0) unstable; urgency=low
 
   * update debian packaging

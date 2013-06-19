@@ -86,6 +86,18 @@ void DirectCallback(IvyClientPtr app, void *user_data, int id, char *msg )
 }
 
 
+void PongCallback (IvyClientPtr app, int roundTripOrTimout)
+{
+	int i;
+	if (roundTripOrTimout >= 0) {
+	  printf ("%s respond to ping in %.3f ms\n", IvyGetApplicationName(app),
+		  roundTripOrTimout/1000.0);
+	} else {
+	  printf ("%s ping timout after %.3f ms\n", IvyGetApplicationName(app),
+		  -roundTripOrTimout/1000.0);
+	}
+}
+
 void Callback (IvyClientPtr app, void *user_data, int argc, char *argv[])
 {
 	int i;
@@ -188,6 +200,16 @@ void HandleStdin (Channel channel, IVY_HANDLE fd, void *data)
 		} else if  (strcmp(cmd, "who") == 0) {
 			printf("Apps: %s\n", IvyGetApplicationList(","));
 
+		} else if  (strcmp(cmd, "ping") == 0) {
+		  arg = strtok (NULL, " \n");
+		  if  (arg) {
+		    app = IvyGetApplication (arg);
+		    if  (app) {
+		      IvySendPing (app);
+		    }
+		    else 
+		      printf ("No Application %s!!!\n",arg);
+		  }
 		} else if  (strcmp(cmd, "help") == 0) {
 			fprintf(stderr,"Commands list:\n");
 			printf("	.help						- this help\n");
@@ -195,6 +217,7 @@ void HandleStdin (Channel channel, IVY_HANDLE fd, void *data)
 			printf("	.die appname				- send die msg to appname\n");
 			printf("	.dieall-yes-i-am-sure		- send die msg to all applis\n");
 			printf("	.direct appname	id 'arg'	- send direct msg to appname\n");
+			printf("	.ping appname	                - send ping to appname\n");
 			printf("	.where appname				- on which host is appname\n");
 			printf("	.bind 'regexp'				- add a msg to receive\n");
 			printf("	.showbind					- show bindings \n");
@@ -402,7 +425,7 @@ int main(int argc, char *argv[])
 #endif
 	IvyInit (agentname, agentready, ApplicationCallback,NULL,NULL,NULL);
 	IvySetBindCallback(IvyPrintBindCallback, NULL);
-			        
+	IvySetPongCallback(PongCallback);		        
 	IvyBindDirectMsg( DirectCallback,NULL);
 	if ( classes )
 		BuildFilterRegexp();
