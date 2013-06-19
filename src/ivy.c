@@ -73,6 +73,8 @@ extern int WSAAPI inet_pton(int af, const char *src, void *dst);
  * effectuée si on stringifie directement dans la macro GenerateIvyBus */
 #define str(bus) #bus
 #define GenerateIvyBus(domain,bus) str(domain)":"str(bus)
+#define       MIN(a, b)   ((a) > (b) ? (b) : (a))
+
 static const char* DefaultIvyBus = GenerateIvyBus(DEFAULT_DOMAIN,IVY_DEFAULT_BUS);
 
 typedef enum {
@@ -122,6 +124,12 @@ struct _msg_snd_dict {			/* requete de reception d'un client */
 
 /* liste de clients, champ de la struct _msg_snd_dict qui est valeur du dictionnaire */
 /* typedef IvyClientPtr */
+
+struct _ping_timestamp {
+  struct timeval ts;
+  int		 id;
+};
+
 struct _clnt_lst_dict {
 	RWIvyClientPtr next;
 	Client client;			/* la socket  client */
@@ -135,9 +143,11 @@ struct _clnt_lst_dict {
 #ifdef OPENMP
        int endRegexpReceived;
 #endif // OPENMP
-	int readyToSend;			/* comptage des endRegexps recu et emis */
-	int ignore_subsequent_msg;	/* pour ignore les messages venant
-																	d'une socket ferme, mais donc les donnees sont deja en buffer */
+       int readyToSend;		        /* comptage des endRegexps recu et emis */
+       int ignore_subsequent_msg;	/* pour ignorer les messages venant
+					   d'une socket ferme, mais donc les donnees sont deja en buffer */
+       struct  _ping_timestamp ping_timestamp;   /* on enregistre le timestamp du ping pour envoyer le roundtrip à 
+					   la reception du pong */
 };
 
 /* flag pour le debug en cas de Filter de regexp */
@@ -180,6 +190,10 @@ static void *application_bind_data = NULL;
 /* callback appele sur demande de terminaison d'application */
 static IvyDieCallback application_die_callback;
 static void *application_die_user_data = NULL;
+
+/* callback appele sur reception d'une trame PONG */
+static IvyPongCallback application_pong_callback = NULL;
+
 
 /* liste des messages a recevoir */
 static MsgRcvPtr msg_recv = NULL;
@@ -713,9 +727,28 @@ static void Receive( Client client, const void *data, char *line )
 		case Pong:
 			
 			TRACE("Pong Message\n");
-			printf("Receive unhandled Pong message (ivy-c not able to send ping)\n");
-			break;
+			if (application_pong_callback != NULL) {
+			  if (timerisset (&(clnt->ping_timestamp.ts))) {
+			    struct timeval now, diff;
+			    int roundTripOrTimout;
+			    gettimeofday (&now, NULL);
+			    timersub (&now, &(clnt->ping_timestamp.ts), &diff);
+			    roundTripOrTimout = (MIN(diff.tv_sec, 2000) *1000000) + (diff.tv_usec);
+			    timerclear (&(clnt->ping_timestamp.ts));
 
+			    // if received id is not the last sent id, it means that whe have not
+			    // received the pong of previous ping, so we send negative value which mean
+			    // this value is a timout
+			    if (id != clnt->ping_timestamp.id) {
+			      roundTripOrTimout *= -1;
+			    }
+			    (*application_pong_callback)( clnt, roundTripOrTimout);
+			  }
+			} else {
+			  fprintf(stderr, "Receive unhandled Pong message (no registered pong callback defined)\n");
+			} 
+			break;
+			
 		default:
 			printf("Receive unhandled message %s\n",  line);
 			break;
@@ -733,6 +766,8 @@ static RWIvyClientPtr SendService( Client client, const char *appname )
 		clnt->app_port = 0;
 		clnt->readyToSend = 0;
 		clnt->ignore_subsequent_msg =0;
+		clnt->ping_timestamp.ts.tv_sec = clnt->ping_timestamp.ts.tv_usec = 0;
+		clnt->ping_timestamp.id=0;
 		MsgSendTo(clnt, StartRegexp, ApplicationPort, ApplicationName);
 		IVY_LIST_EACH(msg_recv, msg )
 			{
@@ -930,6 +965,11 @@ void IvySetBindCallback( IvyBindCallback bind_callback, void *bind_data )
 {
   application_bind_callback=bind_callback;
   application_bind_data=bind_data;
+}
+
+void IvySetPongCallback( IvyPongCallback pong_callback )
+{
+  application_pong_callback = pong_callback;
 }
 
 void IvySetFilter( int argc, const char **argv)
@@ -1324,6 +1364,19 @@ void IvyBindDirectMsg( MsgDirectCallback callback, void *user_data)
 void IvySendDirectMsg(IvyClientPtr app, int id, char *msg )
 {
   MsgSendTo( app, DirectMsg, id, msg);
+}
+
+void IvySendPing( IvyClientPtr app)
+{
+  if (application_pong_callback != NULL) {
+    RWIvyClientPtr clnt = (RWIvyClientPtr) app;
+    
+    gettimeofday (&(clnt->ping_timestamp.ts), NULL);
+    MsgSendTo( clnt, Ping, ++clnt->ping_timestamp.id, "");
+  } else {
+    fprintf(stderr,"Application: %s useless IvySendPing issued since no pong callback defined\n",
+	    IvyGetApplicationName( app ));
+  }
 }
 
 void IvySendDieMsg(IvyClientPtr app )

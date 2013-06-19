@@ -15,6 +15,7 @@
  *	copyright notice regarding this software
  */
 
+
 #ifndef IVY_H
 #define IVY_H
 
@@ -50,6 +51,9 @@ typedef void (*IvyBindCallback)( IvyClientPtr app, void *user_data, int id, cons
 /* callback appele sur reception de die */
 typedef void (*IvyDieCallback)( IvyClientPtr app, void *user_data, int id ) ;
 
+/* callback appele sur reception de pong */
+typedef void (*IvyPongCallback)( IvyClientPtr app, int round_trip_delay) ;
+
 /* callback appele sur reception de messages normaux */
 typedef void (*MsgCallback)( IvyClientPtr app, void *user_data, int argc, char **argv ) ;
 
@@ -77,6 +81,8 @@ void IvyTerminate(void);
 void IvySetBindCallback(	 
 			  IvyBindCallback bind_callback,
 			  void *bind_data );
+void IvySetPongCallback(	 
+			  IvyPongCallback pong_callback );
 
 void IvyStart (const char*);
 void IvyStop (void);
@@ -112,6 +118,16 @@ __attribute__((format(printf,1,2))); /* avec sprintf prealable */
 
 void IvyBindDirectMsg( MsgDirectCallback callback, void *user_data);
 void IvySendDirectMsg( IvyClientPtr app, int id, char *msg );
+
+  /* to use ping protocol, you need to bind a callback to pong with IvySetPongCallback 
+   prior to sending ping 
+   When pong is received, your supplied callback will be called with an int argument which is :
+   ° if positive value : the round trip time in micro seconds
+   ° if negative value : the timout of the previous ping (for the same application) 
+                         which has not yet been answered
+   see ivyprobe.c to see a simple example of usage
+*/
+void IvySendPing( IvyClientPtr app);
 
 #ifdef __cplusplus
 }

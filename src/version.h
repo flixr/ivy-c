@@ -26,4 +26,4 @@
  *
  */
 #define IVYMAJOR_VERSION 3
-#define IVYMINOR_VERSION 13
+#define IVYMINOR_VERSION 14
