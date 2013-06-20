@@ -27,6 +27,7 @@
 #ifdef WIN32
 #include <Ws2tcpip.h>
 #include <windows.h>
+#include "timer.h"
 #define snprintf _snprintf
 #ifdef __MINGW32__
 // should be removed in when defined in MinGW include of ws2tcpip.h
