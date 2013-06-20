@@ -261,7 +261,7 @@ void emetteur (const char* bus, KindOfTest kod, int testDuration,
   //  double origin = currentTime();
 
 
-  IvySetBindCallback (binCB, (void *) (regexpSize+2));
+  IvySetBindCallback (binCB, (void *) (regexpSize+2l));
   IvyBindMsg (recepteurReadyCB, (void *) &messages, 
 	      "^IvyThroughputReceive_(\\d+)\\s+Ready");
 
@@ -281,6 +281,10 @@ void emetteur (const char* bus, KindOfTest kod, int testDuration,
 #                | |    |  __/ | (__  |  __/ | |     \ |_   |  __/ | |_| | | |
 #                |_|     \___|  \___|  \___| |_|      \__|   \___|  \__,_| |_|
 */
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-security"
+#endif
 void recepteur_tp (const char* bus, KindOfTest kod, unsigned int inst, 
 		const ListOfString& regexps,  unsigned int exitAfter)
 {
@@ -301,7 +305,7 @@ void recepteur_tp (const char* bus, KindOfTest kod, unsigned int inst,
     debugInt++;
     string reg = *iter;
     if (regexpAreUniq) { ((reg += "(") += stream.str()) += ")?";}
-    IvyBindMsg (recepteurCB, (void *) inst, reg.c_str());
+    IvyBindMsg (recepteurCB, (void *) long(inst), reg.c_str());
   }
   IvyBindMsg (startOfSeqCB, NULL, "^start(OfSequence)");
   IvyBindMsg (endOfSeqCB, NULL, "^end(OfSequence)");
@@ -309,13 +313,16 @@ void recepteur_tp (const char* bus, KindOfTest kod, unsigned int inst,
   if (kod == memoryLeak2) {
     TimerRepeatAfter (1, exitAfter*1000, exitCB, NULL);
   } else if  (kod == disconnect) {
-    TimerRepeatAfter (1, exitAfter*1000/3, doNothingAndSuicideCB, (void *) exitAfter);
+    TimerRepeatAfter (1, exitAfter*1000/3, doNothingAndSuicideCB, (void *) long(exitAfter));
   }
   
   //usleep (inst * 50 * 1000);
   IvyStart (bus);
   IvyMainLoop ();
 }
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
 
 void recepteur_ml (const char* bus, KindOfTest kod, unsigned int inst, 
 		const ListOfString& regexps)
@@ -339,7 +346,15 @@ void recepteur_ml (const char* bus, KindOfTest kod, unsigned int inst,
     debugInt++;
     string reg = *iter;
     if (regexpAreUniq) { (reg += " ") += stream.str();}
-    bindIdList.push_back (IvyBindMsg (recepteurCB, (void *) inst, reg.c_str()));
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-security"
+#endif
+    bindIdList.push_back (IvyBindMsg (recepteurCB, (void *) long(inst), reg.c_str()));
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+
   }
   IvyBindMsg (startOfSeqCB, NULL, "^start(OfSequence)");
   IvyBindMsg (endOfSeqCB, NULL, "^end(OfSequence)");
@@ -540,7 +555,14 @@ void sendAllMessageCB (TimerId id, void *user_data, unsigned long delta)
   IvySendMsg ("startOfSequence");
   ListOfString::iterator  iter;  
   for (iter=messages->begin(); iter != messages->end(); iter++) {
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-security"
+#endif
     envoyes += IvySendMsg ((*iter).c_str());
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
   }
   IvySendMsg ("endOfSequence");
 
@@ -619,7 +641,15 @@ void desabonneEtReabonneCB (TimerId id, void *user_data, unsigned long delta)
   ListOfString::const_iterator  iter2;  
   for (iter2=mds->regexps->begin(); iter2 != mds->regexps->end(); iter2++) {
     string reg = *iter2;
-    mds->bindIdList->push_back (IvyBindMsg (recepteurCB, (void *) mds->inst, reg.c_str()));
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-security"
+#endif
+    mds->bindIdList->push_back (IvyBindMsg (recepteurCB, (void *) long(mds->inst), 
+					    reg.c_str()));
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
   }
 
   // CHANGE REGEXP

@@ -85,6 +85,10 @@ void binCB( IvyClientPtr app, void *user_data, int id, const char* regexp,  IvyB
 
 	}
 }
+
+
+
+
 int main(int argc, char *argv[])
 {
 	
@@ -98,8 +102,17 @@ int main(int argc, char *argv[])
 	}
 
 	IvyInit (me, ready_message, NULL,NULL,NULL,NULL);
-	IvySetBindCallback( binCB, 0 ),
+	IvySetBindCallback( binCB, 0 );
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-security"
+#endif
 	IvyBindMsg (Ready, NULL, ready_bind);
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+
 	IvyBindMsg (Question, NULL, "^are you there %s",me);
 	IvyBindMsg (Reply, NULL, "^(yes i am %s)",other);
 	 

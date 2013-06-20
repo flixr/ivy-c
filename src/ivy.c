@@ -673,10 +673,9 @@ static void Receive( Client client, const void *data, char *line )
 			clnt->readyToSend++;
 			if ( ready_message && clnt->readyToSend == 2 )
 				{
-				int count;
-				count = ClientCall( clnt, ready_message );
+				  /* int count = */ ClientCall( clnt, ready_message );
 				// count = IvySendMsg ("%s", ready_message );
-				//				printf ("%s sending READY MESSAGE %d\n", clnt->app_name, count);
+				// printf ("%s sending READY MESSAGE %d\n", clnt->app_name, count);
 				}
 			break;
 		case Msg:
@@ -780,10 +779,9 @@ static RWIvyClientPtr SendService( Client client, const char *appname )
 	clnt->readyToSend++;
 	if ( ready_message && clnt->readyToSend == 2 )
 				{
-				int count;
-				count = ClientCall( clnt, ready_message );
+				  /* int count = */ ClientCall( clnt, ready_message );
 				// count = IvySendMsg ("%s", ready_message );
-				//				printf ("%s sending READY MESSAGE %d\n", clnt->app_name, count);
+				// printf ("%s sending READY MESSAGE %d\n", clnt->app_name, count);
 				}
 	  //printf ("DBG> SendService addAllClient: name=%s; client->client=%p\n", appname, clnt->client);
 

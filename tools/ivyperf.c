@@ -74,17 +74,11 @@ void Pong (IvyClientPtr app, void *user_data, int argc, char *argv[])
 {
 	double current;
 	double ts;
-	double tr;
-	double roundtrip1;
-	double roundtrip2;
 	double roundtrip3;
 	nbMsgReceive++;
 	
 	current = currentTime() - origin ;
 	ts = atof( *argv++ );
-	tr = atof( *argv++ );
-	roundtrip1 = tr-ts;
-	roundtrip2 = current - tr;
 	roundtrip3 = current - ts;
 	if ( roundtrip3 > maxRoundTrip ) maxRoundTrip = roundtrip3;
 	if ( roundtrip3 < minRoundTrip ) minRoundTrip = roundtrip3;

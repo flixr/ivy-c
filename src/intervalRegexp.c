@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
+#include <unistd.h>
 
 #include "intervalRegexp.h"
 
@@ -42,17 +43,17 @@ const bool success = 1;
 const bool fail = 0;
 
 
-static bool strictPosRegexpGen (char *regexp, size_t buflen, long min, long max, const char* decimalPart, 
-								   const char* boundDecimalPart);
-static bool genAtRank (char *regexp, size_t buflen, const char *min, const char *max, int rank);
-static bool genPreRank (char *preRank, size_t buflen, const char *min, const char *max, int rank);
-static bool genRank (char *outRank, size_t buflen, const char *min, const char *max, int rank);
-static bool genPostRank (char *postRank, size_t buflen, int rank);
-static bool substr (char *substring, size_t buflen, const char* expr, size_t pos, size_t len);
-static char* reverse (char *string);
-static char* longtoa (char *string, size_t buflen, long n);
-static NextMax nextMax (const char *min, const char *max);
-static bool perr (const char* func, const char *fmt, ...);
+static bool	strictPosRegexpGen (char *regexp, size_t buflen, long min, long max, 
+				    const char* decimalPart, const char* boundDecimalPart);
+static bool	genAtRank (char *regexp, size_t buflen, const char *min, const char *max, int rank);
+static bool	genPreRank (char *preRank, size_t buflen, const char *min, const char *max, int rank);
+static bool	genRank (char *outRank, size_t buflen, const char *min, const char *max, int rank);
+static bool	genPostRank (char *postRank, size_t buflen, int rank);
+static bool	substr (char *substring, size_t buflen, const char* expr, size_t pos, size_t len);
+static char*	reverse (char *string);
+static char*	longtoa (char *string, size_t buflen, long n);
+static NextMax	nextMax (const char *min, const char *max);
+static bool	perr (const char* func, const char *fmt, ...);
 
 
 
@@ -139,12 +140,11 @@ static bool strictPosRegexpGen (char *regexp, size_t buflen, long min, long max,
 #define maxSubReg 64
 #define digitRegSize 128
 
-  char regList[maxSubReg][digitRegSize];
-  char locBuf[maxSubReg*digitRegSize] ;
-  size_t regIndex=0,i;
-  size_t nbRank;
-  char maxAsString[32], minAsString[32];
-  NextMax nMax;
+  char		regList[maxSubReg][digitRegSize];
+  char		locBuf[maxSubReg*digitRegSize] ;
+  size_t	regIndex = 0,i;
+  char		maxAsString[32], minAsString[32];
+  NextMax	nMax;
 
 
   if ((min <= 0) || (max <= 0)) return Perr ("min or max <= 0");
@@ -154,7 +154,6 @@ static bool strictPosRegexpGen (char *regexp, size_t buflen, long min, long max,
       
     max--;
   
-    nbRank = strlen (longtoa (maxAsString, sizeof (maxAsString), max));
     do {
       nMax = nextMax (longtoa (minAsString, sizeof (minAsString), min), 
 		      longtoa (maxAsString, sizeof (maxAsString), max));
@@ -421,14 +420,12 @@ static char* longtoa (char *string, size_t buflen, long n)
 */
 static bool perr (const char* func, const char *fmt, ...)
 {
-  char err[4096], buffer[2048];
+  char buffer[2048];
   va_list args;
   va_start( args, fmt );     
   vsprintf( buffer, fmt, args );
   va_end( args );
 
-
-  sprintf (err, "Erreur %s @ %s\n", buffer, func);
-  fprintf (stderr, err);
+  fprintf (stderr, "Erreur %s @ %s\n", buffer, func);
   return (fail);
 }

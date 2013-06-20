@@ -88,7 +88,6 @@ void DirectCallback(IvyClientPtr app, void *user_data, int id, char *msg )
 
 void PongCallback (IvyClientPtr app, int roundTripOrTimout)
 {
-	int i;
 	if (roundTripOrTimout >= 0) {
 	  printf ("%s respond to ping in %.3f ms\n", IvyGetApplicationName(app),
 		  roundTripOrTimout/1000.0);
@@ -172,7 +171,14 @@ void HandleStdin (Channel channel, IVY_HANDLE fd, void *data)
 			  printf("Error compiling '%s', %s, not bound\n", arg, errbuf);
 		    } else {
 			  IvyBindingFree( binding );
-		      IvyBindMsg (Callback, NULL, arg);
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-security"
+#endif
+			  IvyBindMsg (Callback, NULL, arg);
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
 		    }
 		  }
 
@@ -236,7 +242,14 @@ void HandleStdin (Channel channel, IVY_HANDLE fd, void *data)
 		}
 	} else {
 		cmd = strtok (buf, "\n");
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-security"
+#endif
 		err = IvySendMsg (cmd);
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
 		printf("-> Sent to %d peer%s\n", err, err == 1 ? "" : "s");
 	}
 }
@@ -341,7 +354,14 @@ void BindMsgOfFile( const char * regex_file )
 		if ( size > 1 )
 			{
 			line[size-1] = '\0'; /* supress \n */
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-security"
+#endif
 			IvyBindMsg (Callback, NULL, line);
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
 			}
 		}
 	}
@@ -434,7 +454,14 @@ int main(int argc, char *argv[])
 	for  (; optind < argc; optind++)
 	{
 		printf("Binding to '%s'\n", argv[optind] );
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-security"
+#endif
 		IvyBindMsg (Callback, NULL, argv[optind]);
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
 	}
 
 	
