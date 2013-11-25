@@ -54,7 +54,7 @@ ifndef TCLVERS
 TCLVERS:= $(shell perl -e '@_=sort map (m|/usr/lib64/libtcl(\d\.\d)\.so|, glob ("/usr/lib64/libtcl*")); print pop @_')
 endif
 ifndef TCLVERS
-TCLVERS=8.3
+TCLVERS=8.4
 endif
 
 TCLINCL = -I/usr/include/tcl$(TCLVERS)

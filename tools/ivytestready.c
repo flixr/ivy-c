@@ -104,12 +104,12 @@ int main(int argc, char *argv[])
 	IvyInit (me, ready_message, NULL,NULL,NULL,NULL);
 	IvySetBindCallback( binCB, 0 );
 
-#if defined(__GNUC__)
+#if defined(__GNUC__) && __GNUC_PREREQ(4,7)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wformat-security"
 #endif
 	IvyBindMsg (Ready, NULL, ready_bind);
-#if defined(__GNUC__)
+#if defined(__GNUC__) && __GNUC_PREREQ(4,7)
 #pragma GCC diagnostic pop
 #endif
 
