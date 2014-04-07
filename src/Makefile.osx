@@ -9,8 +9,8 @@ ifndef PREFIX
     PREFIX=/opt/local
 endif
 
-PCREINC = `pcre-config --cflags`
-PCRELIB = `pcre-config --libs`
+PCREINC = $(shell pcre-config --cflags)
+PCRELIB = $(shell pcre-config --libs)
 CASESENSITIVE = "yes"
 ifeq ($(CASESENSITIVE), "no")
 	PCRE_OPT=PCRE_CASELESS
@@ -59,7 +59,7 @@ CFLAGS = -g -Wall -Wshadow $(FPIC)
 	$(CPP) $(CFLAGS)  -c $*.cpp
 
 
-all: static-libs  shared-libs tools 
+all: static-libs  shared-libs pkgconf tools
 libomp: libivy_omp.a 
 
 omp: libomp
@@ -90,20 +90,20 @@ libivy_omp.a: $(OMPOBJ)
 	$(LIBTOOL) $@ $(OMPOBJ)
 
 libivy.dylib: $(OBJ)
-	#$(CC) $(CFLAGS) -dynamiclib -install_name $(DESTDIR)$(PREFIX)/lib/libivy.dylib -o $@ $(OBJ) $(PCRELIB)
-	$(CC) $(CFLAGS) -dynamiclib  -o $@ $(OBJ) $(PCRELIB)
+	$(CC) $(CFLAGS) -dynamiclib -install_name $(DESTDIR)$(PREFIX)/lib/libivy.dylib -o $@ $(OBJ) $(PCRELIB)
+	#$(CC) $(CFLAGS) -dynamiclib  -o $@ $(OBJ) $(PCRELIB)
 
 libivy_omp.dylib: $(OMPOBJ)
-	#$(OMPCC) -dynamiclib -install_name $(DESTDIR)$(PREFIX)$(LIB)/lib/libivy_omp.dylib -o $@ $(OMPOBJ) $(PCRELIB) $(OMPLIB)
-	$(OMPCC) -dynamiclib -o $@ $(OMPOBJ) $(PCRELIB) $(OMPLIB)
+	$(OMPCC) -dynamiclib -install_name $(DESTDIR)$(PREFIX)$(LIB)/lib/libivy_omp.dylib -o $@ $(OMPOBJ) $(PCRELIB) $(OMPLIB)
+	#$(OMPCC) -dynamiclib -o $@ $(OMPOBJ) $(PCRELIB) $(OMPLIB)
 	
 libglibivy.a: $(GLIBOBJ)
 	rm -f $@
 	$(LIBTOOL) $@ $(GLIBOBJ)
 
 libglibivy.dylib: $(GLIBOBJ)
-	#$(CC) $(CFLAGS)  -dynamiclib -install_name $(DESTDIR)$(PREFIX)/lib/libglibivy.dylib  -o $@ $(GLIBOBJ) $(PCRELIB) $(GLIBLIB)	
-	$(CC) $(CFLAGS)  -dynamiclib -o $@ $(GLIBOBJ) $(PCRELIB) $(GLIBLIB)
+	$(CC) $(CFLAGS)  -dynamiclib -install_name $(DESTDIR)$(PREFIX)/lib/libglibivy.dylib  -o $@ $(GLIBOBJ) $(PCRELIB) $(GLIBLIB)	
+	#$(CC) $(CFLAGS)  -dynamiclib -o $@ $(GLIBOBJ) $(PCRELIB) $(GLIBLIB)
 
  
 
@@ -111,8 +111,8 @@ libglibivy.dylib: $(GLIBOBJ)
 
 installlibs: static-libs shared-libs
 	test -d $(DESTDIR)$(PREFIX)$(LIB)  || mkdir -p $(DESTDIR)$(PREFIX)$(LIB)
-	install_name_tool -id $(DESTDIR)$(PREFIX)/lib/libivy.dylib libivy.dylib
-	install_name_tool -id $(DESTDIR)$(PREFIX)/lib/libglibivy.dylib libglibivy.dylib
+	install_name_tool -id $(PREFIX)/lib/libivy.dylib libivy.dylib
+	install_name_tool -id $(PREFIX)/lib/libglibivy.dylib libglibivy.dylib
 	install -m644 libivy.a		$(DESTDIR)$(PREFIX)/lib/
 	install -m644 libivy.dylib	$(DESTDIR)$(PREFIX)/lib/
 	install -m644 libglibivy.a	$(DESTDIR)$(PREFIX)/lib/
@@ -143,10 +143,20 @@ installbins: tools
 tools: static-libs 
 	@(cd $(TOOLS_DIR) && $(MAKE) -f Makefile.osx)
 
-install: installlibs installbins includes
+install: installlibs installbins includes installpkgconf
 
 # ------------------------------------------------------------------------------------------
 
 clean:
 	-rm -f  *.o *.a *.dylib *.dylib.* *~
+	-rm -f ivy-glib.pc
 	@(cd $(TOOLS_DIR) && $(MAKE) -f Makefile.osx clean)
+
+# ------------------------------------------------------------------------------------------
+
+pkgconf: 
+	sed -e 's,@PREFIX@,$(PREFIX),; s,@DESTDIR@,$(DESTDIR),; s,@MAJOR@,$(MAJOR),; s,@MINOR@,$(MINOR),; s,@PCREINC@,$(PCREINC),; s,@REGEXP@,$(REGEXP),; s,@PCRELIB@,$(PCRELIB),; s,@EXTRALIB@,$(EXTRALIB),' ivy-glib.pc.in > ivy-glib.pc
+
+installpkgconf:
+	test -d $(DESTDIR)$(PREFIX)/lib/pkgconfig || mkdir -p $(DESTDIR)$(PREFIX)/lib/pkgconfig
+	install -m 644 ivy-glib.pc						$(DESTDIR)$(PREFIX)/lib/pkgconfig

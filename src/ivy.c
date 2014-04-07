@@ -1490,7 +1490,7 @@ static void substituteInterval (IvyBuffer *src)
   if (strstr (src->data, "(?I") == NULL) {
     return;
   } else {
-	char *curPos;
+    char *curPos;
     char *itvPos;
     IvyBuffer dst = {NULL, 0, 0};
     dst.size = 8192;
