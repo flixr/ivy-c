@@ -281,10 +281,6 @@ void emetteur (const char* bus, KindOfTest kod, int testDuration,
 #                | |    |  __/ | (__  |  __/ | |     \ |_   |  __/ | |_| | | |
 #                |_|     \___|  \___|  \___| |_|      \__|   \___|  \__,_| |_|
 */
-#if defined(__GNUC__) && __GNUC_PREREQ(4,7)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wformat-security"
-#endif
 void recepteur_tp (const char* bus, KindOfTest kod, unsigned int inst, 
 		const ListOfString& regexps,  unsigned int exitAfter)
 {
@@ -305,7 +301,7 @@ void recepteur_tp (const char* bus, KindOfTest kod, unsigned int inst,
     debugInt++;
     string reg = *iter;
     if (regexpAreUniq) { ((reg += "(") += stream.str()) += ")?";}
-    IvyBindMsg (recepteurCB, (void *) long(inst), reg.c_str());
+    IvyBindMsg (recepteurCB, (void *) long(inst), "%s", reg.c_str());
   }
   IvyBindMsg (startOfSeqCB, NULL, "^start(OfSequence)");
   IvyBindMsg (endOfSeqCB, NULL, "^end(OfSequence)");
@@ -320,9 +316,6 @@ void recepteur_tp (const char* bus, KindOfTest kod, unsigned int inst,
   IvyStart (bus);
   IvyMainLoop ();
 }
-#if defined(__GNUC__) && __GNUC_PREREQ(4,7)
-#pragma GCC diagnostic pop
-#endif
 
 void recepteur_ml (const char* bus, KindOfTest kod, unsigned int inst, 
 		const ListOfString& regexps)
@@ -346,15 +339,7 @@ void recepteur_ml (const char* bus, KindOfTest kod, unsigned int inst,
     debugInt++;
     string reg = *iter;
     if (regexpAreUniq) { (reg += " ") += stream.str();}
-#if defined(__GNUC__) && __GNUC_PREREQ(4,7)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wformat-security"
-#endif
-    bindIdList.push_back (IvyBindMsg (recepteurCB, (void *) long(inst), reg.c_str()));
-#if defined(__GNUC__) && __GNUC_PREREQ(4,7)
-#pragma GCC diagnostic pop
-#endif
-
+    bindIdList.push_back (IvyBindMsg (recepteurCB, (void *) long(inst), "%s", reg.c_str()));
   }
   IvyBindMsg (startOfSeqCB, NULL, "^start(OfSequence)");
   IvyBindMsg (endOfSeqCB, NULL, "^end(OfSequence)");
@@ -555,14 +540,7 @@ void sendAllMessageCB (TimerId id, void *user_data, unsigned long delta)
   IvySendMsg ("startOfSequence");
   ListOfString::iterator  iter;  
   for (iter=messages->begin(); iter != messages->end(); iter++) {
-#if defined(__GNUC__) && __GNUC_PREREQ(4,7)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wformat-security"
-#endif
-    envoyes += IvySendMsg ((*iter).c_str());
-#if defined(__GNUC__) && __GNUC_PREREQ(4,7)
-#pragma GCC diagnostic pop
-#endif
+    envoyes += IvySendMsg ("%s", (*iter).c_str());
   }
   IvySendMsg ("endOfSequence");
 
@@ -641,15 +619,8 @@ void desabonneEtReabonneCB (TimerId id, void *user_data, unsigned long delta)
   ListOfString::const_iterator  iter2;  
   for (iter2=mds->regexps->begin(); iter2 != mds->regexps->end(); iter2++) {
     string reg = *iter2;
-#if defined(__GNUC__) && __GNUC_PREREQ(4,7)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wformat-security"
-#endif
     mds->bindIdList->push_back (IvyBindMsg (recepteurCB, (void *) long(mds->inst), 
-					    reg.c_str()));
-#if defined(__GNUC__) && __GNUC_PREREQ(4,7)
-#pragma GCC diagnostic pop
-#endif
+					    "%s", reg.c_str()));
   }
 
   // CHANGE REGEXP

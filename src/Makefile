@@ -17,7 +17,7 @@
 
 # change this in version.h too !!!!
 MAJOR=3
-MINOR=14
+MINOR=15
 
 PERHAPS64 := $(shell getconf LONG_BIT | perl -ne "print /64/ ? '64' : '';")
 LIB = /lib$(PERHAPS64)
@@ -241,8 +241,7 @@ libtclivy.so.$(MAJOR).$(MINOR): $(TCLOBJ)
 
 distclean: clean
 clean:
-	-rm -f $(TARGETS) $(TARGETLIBS)  *.o *.a *.so *.so.* *~
-	-rm -f ivy-glib.pc
+	-rm -f $(TARGETS) $(TARGETLIBS)  *.o *.a *.so *.so.* *~ *.pc
 	@(cd $(TOOLS_DIR) && $(MAKE) clean)
 
 
@@ -331,9 +330,11 @@ tools_omp: libomp
 rpm::
 	/usr/bin/rpmize
 
-pkgconf: 
-	sed -e 's,@PREFIX@,$(PREFIX),; s,@DESTDIR@,$(DESTDIR),; s,@MAJOR@,$(MAJOR),; s,@MINOR@,$(MINOR),; s,@PCREINC@,$(PCREINC),; s,@REGEXP@,$(REGEXP),; s,@PCRELIB@,$(PCRELIB),; s,@EXTRALIB@,$(EXTRALIB),' ivy-glib.pc.in > ivy-glib.pc
+pkgconf:
+	for f in *.pc.in ; do \
+		sed -e 's,@PREFIX@,$(PREFIX),; s,@MAJOR@,$(MAJOR),; s,@MINOR@,$(MINOR),; s,@PCREINC@,$(PCREINC),; s,@REGEXP@,$(REGEXP),; s,@PCRELIB@,$(PCRELIB),; s,@EXTRALIB@,$(EXTRALIB),' $$f > $$(echo $$f | cut -f 1,2 -d .); \
+	done
 
-installpkgconf:
+installpkgconf: pkgconf
 	test -d $(DESTDIR)$(PREFIX)/lib/pkgconfig || mkdir -p $(DESTDIR)$(PREFIX)/lib/pkgconfig
-	install -m 644 ivy-glib.pc						$(DESTDIR)$(PREFIX)/lib/pkgconfig
+	install -m 644 *.pc						$(DESTDIR)$(PREFIX)/lib/pkgconfig

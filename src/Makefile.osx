@@ -1,3 +1,26 @@
+#
+#       Ivy, C interface
+#
+#       Copyright (C) 1997-2014
+#       Centre d'Études de la Navigation Aérienne
+#
+#       Makefile.osx
+#
+#       Authors: François-Régis Colin <fcolin@cena.fr>
+#                Stéphane Chatty <chatty@cena.fr>
+#                Yannick Jestin <jestin@cena.fr>
+#                Piotr Esden-Tempski <piotr@esden.net>
+#
+#       Please refer to file version.h for the
+#       copyright notice regarding this software
+#
+
+# change this in version.h too !!!!
+MAJOR=3
+MINOR=15
+
+LIB=/lib
+
 LBITS := $(shell getconf LONG_BIT)
 ifeq ($(LBITS),64)
   FPIC = -fPIC   
@@ -148,15 +171,16 @@ install: installlibs installbins includes installpkgconf
 # ------------------------------------------------------------------------------------------
 
 clean:
-	-rm -f  *.o *.a *.dylib *.dylib.* *~
-	-rm -f ivy-glib.pc
+	-rm -f  *.o *.a *.dylib *.dylib.* *~ *.pc
 	@(cd $(TOOLS_DIR) && $(MAKE) -f Makefile.osx clean)
 
 # ------------------------------------------------------------------------------------------
 
 pkgconf: 
-	sed -e 's,@PREFIX@,$(PREFIX),; s,@DESTDIR@,$(DESTDIR),; s,@MAJOR@,$(MAJOR),; s,@MINOR@,$(MINOR),; s,@PCREINC@,$(PCREINC),; s,@REGEXP@,$(REGEXP),; s,@PCRELIB@,$(PCRELIB),; s,@EXTRALIB@,$(EXTRALIB),' ivy-glib.pc.in > ivy-glib.pc
+	for f in *.pc.in ; do \
+		sed -e 's,@PREFIX@,$(PREFIX),; s,@MAJOR@,$(MAJOR),; s,@MINOR@,$(MINOR),; s,@PCREINC@,$(PCREINC),; s,@REGEXP@,$(REGEXP),; s,@PCRELIB@,$(PCRELIB),; s,@EXTRALIB@,$(EXTRALIB),' $$f > $$(echo $$f | cut -f 1,2 -d .); \
+	done
 
-installpkgconf:
+installpkgconf: pkgconf
 	test -d $(DESTDIR)$(PREFIX)/lib/pkgconfig || mkdir -p $(DESTDIR)$(PREFIX)/lib/pkgconfig
-	install -m 644 ivy-glib.pc						$(DESTDIR)$(PREFIX)/lib/pkgconfig
+	install -m 644 *.pc	$(DESTDIR)$(PREFIX)/lib/pkgconfig

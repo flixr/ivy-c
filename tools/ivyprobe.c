@@ -171,15 +171,7 @@ void HandleStdin (Channel channel, IVY_HANDLE fd, void *data)
 			  printf("Error compiling '%s', %s, not bound\n", arg, errbuf);
 		    } else {
 			  IvyBindingFree( binding );
-
-#if defined(__GNUC__) && __GNUC_PREREQ(4,7)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wformat-security"
-#endif
-			  IvyBindMsg (Callback, NULL, arg);
-#if defined(__GNUC__) && __GNUC_PREREQ(4,7)
-#pragma GCC diagnostic pop
-#endif
+			  IvyBindMsg (Callback, NULL, "%s", arg);
 		    }
 		  }
 
@@ -243,14 +235,7 @@ void HandleStdin (Channel channel, IVY_HANDLE fd, void *data)
 		}
 	} else {
 		cmd = strtok (buf, "\n");
-#if defined(__GNUC__) && __GNUC_PREREQ(4,7)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wformat-security"
-#endif
-		err = IvySendMsg (cmd);
-#if defined(__GNUC__) && __GNUC_PREREQ(4,7)
-#pragma GCC diagnostic pop
-#endif
+		err = IvySendMsg ("%s", cmd);
 		printf("-> Sent to %d peer%s\n", err, err == 1 ? "" : "s");
 	}
 }
@@ -355,14 +340,7 @@ void BindMsgOfFile( const char * regex_file )
 		if ( size > 1 )
 			{
 			line[size-1] = '\0'; /* supress \n */
-#if defined(__GNUC__) && __GNUC_PREREQ(4,7)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wformat-security"
-#endif
-			IvyBindMsg (Callback, NULL, line);
-#if defined(__GNUC__) && __GNUC_PREREQ(4,7)
-#pragma GCC diagnostic pop
-#endif
+			IvyBindMsg (Callback, NULL, "%s", line);
 			}
 		}
 	}
@@ -455,14 +433,7 @@ int main(int argc, char *argv[])
 	for  (; optind < argc; optind++)
 	{
 		printf("Binding to '%s'\n", argv[optind] );
-#if defined(__GNUC__) && __GNUC_PREREQ(4,7)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wformat-security"
-#endif
-		IvyBindMsg (Callback, NULL, argv[optind]);
-#if defined(__GNUC__) && __GNUC_PREREQ(4,7)
-#pragma GCC diagnostic pop
-#endif
+		IvyBindMsg (Callback, NULL, "%s", argv[optind]);
 	}
 
 	
