@@ -1,3 +1,11 @@
+ivy-c (3.15.0) unstable; urgency=low
+	* fix uninitialised variable in ivy-bind
+	* start tcl interpreter early
+	* add some pkg-config configuration file
+	* use header file from tcl-dev (which need to be installed)
+
+ --  Alexandre Bustico <alexandre.bustico@enac.fr> Thu, 7 January 2015 18:37:00 +0200
+
 ivy-c (3.14.3) unstable; urgency=low
 
   * protect some gcc pragma not available on old gcc version
