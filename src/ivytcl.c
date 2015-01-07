@@ -64,6 +64,7 @@ void IvyChannelInit(void)
 #endif 
 	if ( channel_initialized ) return;
 
+  Tcl_FindExecutable(NULL);
 	/* pour eviter les plantages quand les autres applis font core-dump */
 #ifndef WIN32
 	signal( SIGPIPE, SIG_IGN);

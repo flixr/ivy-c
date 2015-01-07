@@ -270,7 +270,7 @@ int IvyBindingFilter(const char *expression)
 	FiltredWordPtr word=0;
 	int err;
 	int regexp_ok = 1; /* accepte tout par default */
-	int tokenlen;
+	int tokenlen = 0;
 	const char *token;
 	
 	if ( *expression =='^' && messages_classes !=0 )
