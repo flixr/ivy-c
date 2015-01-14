@@ -1,33 +1,35 @@
 ivy-c (3.15.0) unstable; urgency=low
-	* fix uninitialised variable in ivy-bind
-	* start tcl interpreter early
-	* add some pkg-config configuration file
-	* use header file from tcl-dev (which need to be installed)
 
- --  Alexandre Bustico <alexandre.bustico@enac.fr> Thu, 7 January 2015 18:37:00 +0200
+  * fix uninitialised variable in ivy-bind
+  * start tcl interpreter early
+  * add some pkg-config configuration file
+  * use header file from tcl-dev (which need to be installed)
+
+ -- Alexandre Bustico <alexandre.bustico@enac.fr>  Thu, 7 January 2015 18:37:00 +0200
 
 ivy-c (3.14.3) unstable; urgency=low
 
   * protect some gcc pragma not available on old gcc version
 
- --  Alexandre Bustico <alexandre.bustico@enac.fr> Thu, 20 June 2013 18:37:00 +0200
+ -- Alexandre Bustico <alexandre.bustico@enac.fr>  Thu, 20 June 2013 18:37:00 +0200
+
 ivy-c (3.14.2) unstable; urgency=low
 
   * initial windows support for ping/pong implementation, to be tested and validated
 
- --  Alexandre Bustico <alexandre.bustico@enac.fr> Thu, 20 June 2013 18:37:00 +0200
+ -- Alexandre Bustico <alexandre.bustico@enac.fr>  Thu, 20 June 2013 18:37:00 +0200
 
 ivy-c (3.14.1) unstable; urgency=low
 
   * fix compilation warning
 
- --  Alexandre Bustico <alexandre.bustico@enac.fr> Thu, 20 June 2013 10:37:00 +0200
+ -- Alexandre Bustico <alexandre.bustico@enac.fr>  Thu, 20 June 2013 10:37:00 +0200
 
 ivy-c (3.14.0) unstable; urgency=low
 
   * complete implementation of ping/pong protocol message
 
- --  Alexandre Bustico <alexandre.bustico@enac.fr> Wed, 19 June 2013 14:37:00 +0200
+ -- Alexandre Bustico <alexandre.bustico@enac.fr>  Wed, 19 June 2013 14:37:00 +0200
 
 ivy-c (3.13.0) unstable; urgency=low
 
