@@ -21,11 +21,9 @@ MINOR=15
 
 PERHAPS64 := $(shell getconf LONG_BIT | perl -ne "print /64/ ? '64' : '';")
 LIB = /lib$(PERHAPS64)
-ifeq ($(PERHAPS64),64)
-	FPIC=-fPIC
-else
-	FPIC=
-endif
+
+# by default use fPIC on all systems
+FPIC ?= -fPIC
 
 ifndef PREFIX
 	export PREFIX=/usr/local
@@ -113,7 +111,7 @@ endif
 
 
 BUGGY_DEBIAN_OPTION = -DPCRECPP_EXP_DEFN="" -DPCRECPP_EXP_DECL=""
-OMPCFLAGS = $(CFLAGS) -fopenmp -DOPENMP=1
+OMPCFLAGS = $(CFLAGS) -fopenmp -DOPENMP=1 -D_REENTRANT
 OMPLIB = -lgomp -lpthread
 
 OBJ = ivyloop.o timer.o ivysocket.o ivy.o ivybuffer.o ivyfifo.o ivybind.o intervalRegexp.o param.o
@@ -338,4 +336,4 @@ pkgconf:
 
 installpkgconf: pkgconf
 	test -d $(DESTDIR)$(PREFIX)/lib/pkgconfig || mkdir -p $(DESTDIR)$(PREFIX)/lib/pkgconfig
-	install -m 644 *.pc						$(DESTDIR)$(PREFIX)/lib/pkgconfig
+	install -m 644 *.pc	$(DESTDIR)$(PREFIX)/lib/pkgconfig

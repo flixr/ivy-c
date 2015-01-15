@@ -21,12 +21,8 @@ MINOR=15
 
 LIB=/lib
 
-LBITS := $(shell getconf LONG_BIT)
-ifeq ($(LBITS),64)
-  FPIC = -fPIC
-else
-  FPIC =
-endif
+# by default use fPIC on all systems
+FPIC ?= -fPIC
 
 ifndef PREFIX
 	PREFIX=/opt/local
