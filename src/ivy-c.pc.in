@@ -6,5 +6,6 @@ includedir=${prefix}/include
 Name: ivy-c
 Description: A software bus
 Version: @MAJOR@.@MINOR@
-Libs: -L${libdir} -livy @PCREINC@ @EXTRALIB@
-Cflags: -I${includedir} @REGEXP@ @PCRELIB@
+Libs: -L${libdir} -livy
+Libs.private: @PCRELIB@ @EXTRALIB@
+Cflags: -I${includedir}

@@ -21,11 +21,9 @@ MINOR=15
 
 PERHAPS64 := $(shell getconf LONG_BIT | perl -ne "print /64/ ? '64' : '';")
 LIB = /lib$(PERHAPS64)
-ifeq ($(PERHAPS64),64)
-	FPIC=-fPIC
-else
-	FPIC=
-endif
+
+# by default use fPIC on all systems
+FPIC ?= -fPIC
 
 ifndef PREFIX
 	export PREFIX=/usr/local
@@ -45,7 +43,7 @@ HAVE_GLIB = $(shell pkg-config --exists glib-2.0 && echo 'yes')
 GLIBINC = `pkg-config --cflags glib-2.0`
 GLIBLIB = `pkg-config --libs glib-2.0`
 GLUTINC = -I/usr/include -I.
-GLUTLIB = -L. -lglut -lGLU -lGL -lX11 -lXmu 
+GLUTLIB = -L. -lglut -lGLU -lGL -lX11 -lXmu
 # use these if you want standard Tcl ( 8.3 on debian woody ... )
 
 #TCLVERS = `perl -e '@_=sort map (m|/usr/lib/libtcl(\d\.\d)\.so|, glob ("/usr/lib/libtcl*")); print pop @_'`
@@ -73,11 +71,11 @@ ifeq ($(CASESENSITIVE), "no")
 	REGCOMP_OPT=REG_ICASE
 else
 	PCRE_OPT=0
-	REGCOMP_OPT=REG_EXTENDED	
+	REGCOMP_OPT=REG_EXTENDED
 endif
 
 #PCREOBJ = `pcre-config --prefix`/lib/libpcre.a
-PCREOBJ = 
+PCREOBJ =
 
 ifeq ($(shell uname -s),SunOS)
 	EXTRALIB=-lsocket -lnsl # for solaris
@@ -96,7 +94,7 @@ LIBTOOL=ar q # linux and solaris
 REGEXP= -DUSE_PCRE_REGEX -DPCRE_OPT=$(PCRE_OPT)
 # on activeTCL , set #define CHANNEL to null, and add ivyloop.o in the ivytcl target,
 # see below
-CHANNEL = -DTCL_CHANNEL_INTEGRATION 
+CHANNEL = -DTCL_CHANNEL_INTEGRATION
 
 # DEBUG
 CFLAGS_DEBUG = -g -Wall -Wshadow -DDEBUG $(FPIC)
@@ -113,7 +111,7 @@ endif
 
 
 BUGGY_DEBIAN_OPTION = -DPCRECPP_EXP_DEFN="" -DPCRECPP_EXP_DECL=""
-OMPCFLAGS = $(CFLAGS) -fopenmp -DOPENMP=1
+OMPCFLAGS = $(CFLAGS) -fopenmp -DOPENMP=1 -D_REENTRANT
 OMPLIB = -lgomp -lpthread
 
 OBJ = ivyloop.o timer.o ivysocket.o ivy.o ivybuffer.o ivyfifo.o ivybind.o intervalRegexp.o param.o
@@ -130,7 +128,7 @@ STATICTARGETLIBS=libivy.a libgivy.a libxtivy.a libtclivy.a
 
 ifeq ($(HAVE_GLIB),yes)
 		TARGETLIBS += libglibivy.so.$(MAJOR).$(MINOR)
-		STATICTARGETLIBS += libglibivy.a 
+		STATICTARGETLIBS += libglibivy.a
 endif
 
 
@@ -144,7 +142,7 @@ endif
 all: static-libs shared-libs pkgconf  tools
 libomp: libivy_omp.a libivy_omp.so.$(MAJOR).$(MINOR)
 omp: libomp
-	@(cd $(TOOLS_DIR) && $(MAKE) omp) 
+	@(cd $(TOOLS_DIR) && $(MAKE) omp)
 
 static-libs:  $(STATICTARGETLIBS)
 # not yet need Modified Glut libglutivy.a
@@ -178,7 +176,7 @@ ivyglibloop.o: ivyglibloop.c ivyglibloop.h
 
 libivy.a: $(OBJ)
 	rm -f $@
-	$(LIBTOOL) $@ $(OBJ) 
+	$(LIBTOOL) $@ $(OBJ)
 
 libivy_omp.a: $(OMPOBJ)
 	rm -f $@
@@ -297,10 +295,10 @@ installliblinks: installlibs
 	ln -fs $(PREFIX)$(LIB)/libtclivy.so.$(MAJOR).$(MINOR)		$(DESTDIR)$(PREFIX)$(LIB)/libtclivy.so.$(MAJOR)
 	ln -fs $(PREFIX)$(LIB)/libivy_omp.so.$(MAJOR).$(MINOR)		$(DESTDIR)$(PREFIX)$(LIB)/libivy_omp.so
 
-installbins: 
+installbins:
 	@(cd $(TOOLS_DIR) && $(MAKE) install)
 
-installbins_omp: 
+installbins_omp:
 	@(cd $(TOOLS_DIR) && $(MAKE) install_omp)
 
 
@@ -333,9 +331,9 @@ rpm::
 
 pkgconf:
 	for f in *.pc.in ; do \
-		sed -e 's,@PREFIX@,$(PREFIX),; s,@MAJOR@,$(MAJOR),; s,@MINOR@,$(MINOR),; s,@PCREINC@,$(PCREINC),; s,@REGEXP@,$(REGEXP),; s,@PCRELIB@,$(PCRELIB),; s,@EXTRALIB@,$(EXTRALIB),' $$f > $$(echo $$f | cut -f 1,2 -d .); \
+		sed -e 's,@PREFIX@,$(PREFIX),; s,@MAJOR@,$(MAJOR),; s,@MINOR@,$(MINOR),; s,@PCRELIB@,$(PCRELIB),; s,@EXTRALIB@,$(EXTRALIB),' $$f > $$(echo $$f | cut -f 1,2 -d .); \
 	done
 
 installpkgconf: pkgconf
 	test -d $(DESTDIR)$(PREFIX)/lib/pkgconfig || mkdir -p $(DESTDIR)$(PREFIX)/lib/pkgconfig
-	install -m 644 *.pc						$(DESTDIR)$(PREFIX)/lib/pkgconfig
+	install -m 644 *.pc	$(DESTDIR)$(PREFIX)/lib/pkgconfig

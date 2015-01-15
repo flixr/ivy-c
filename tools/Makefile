@@ -46,7 +46,7 @@ ivyxtprobe.o : ivyprobe.c
 	$(CC)  $(CFLAGS) $(EXTRAINC) $(REGEXP) -DXTMAINLOOP -c ivyprobe.c -o $@ $(XTINC)
 
 ivyxtprobe: ivyxtprobe.o ../src/libxtivy.a
-	$(CC) -o $@ ivyxtprobe.o -L. $(XTLIB) -lxtivy  $(PCRELIB) $(EXTRALIB)
+	$(CC) -o $@ ivyxtprobe.o -L. $(EXTRALIB) $(XTLIB) -lxtivy  $(PCRELIB)
 
 ivyglibprobe.o : ivyprobe.c
 	$(CC)  $(CFLAGS) $(EXTRAINC) $(REGEXP) -DGLIBMAINLOOP -c ivyprobe.c -o ivyglibprobe.o $(GLIBINC)
