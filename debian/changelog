@@ -1,3 +1,10 @@
+ivy-c (3.15.1) unstable; urgency=low
+
+  * pkg-config: use Libs.private for pcre and extra libs
+  * compile with fPIC by default
+
+ -- Alexandre Bustico <alexandre.bustico@enac.fr>  Thu, 19 January 2015 18:37:00 +0200
+
 ivy-c (3.15.0) unstable; urgency=low
 
   * fix uninitialised variable in ivy-bind
